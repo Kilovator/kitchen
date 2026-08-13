@@ -147,7 +147,7 @@ function updateStaticTexts() {
   const mealsH2 = document.querySelector('.meals-log-card h2');
   if (mealsH2) mealsH2.textContent = tr.mealsHeader;
 
-  document.querySelectorAll<HTMLElement>('.bottom-nav .nav-item').forEach(nav => {
+  document.querySelectorAll<HTMLElement>('.nav-item').forEach(nav => {
     const target = nav.dataset.target;
     const label = nav.querySelector('.nav-label');
     if (!label) return;
@@ -166,7 +166,7 @@ function renderAll() {
 
 // --- Navigation ---
 function initNavigation() {
-  const navItems = document.querySelectorAll<HTMLButtonElement>('.bottom-nav .nav-item');
+  const navItems = document.querySelectorAll<HTMLButtonElement>('.nav-item');
   navItems.forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.target;
@@ -182,7 +182,7 @@ function switchView(targetId: string) {
     else view.classList.remove('active');
   });
 
-  document.querySelectorAll<HTMLButtonElement>('.bottom-nav .nav-item').forEach(btn => {
+  document.querySelectorAll<HTMLButtonElement>('.nav-item').forEach(btn => {
     if (btn.dataset.target === targetId) btn.classList.add('active');
     else btn.classList.remove('active');
   });

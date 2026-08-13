@@ -250,7 +250,7 @@ const state = {
 // --- DOM Elements ---
 const DOM = {
   views: document.querySelectorAll(".view-page"),
-  navButtons: document.querySelectorAll(".bottom-nav .nav-item"),
+  navButtons: document.querySelectorAll(".nav-item"),
   recipesGrid: document.getElementById("recipes-grid"),
   recipeSearch: document.getElementById("recipe-search"),
   categoryPills: document.querySelectorAll(".category-pills .pill"),
