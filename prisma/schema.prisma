@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model GeocodingCache {
+  id        String   @id @default(uuid())
+  query     String   @unique
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+}
+
+model SupermarketCache {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  data      String
+  createdAt DateTime @default(now())
+}

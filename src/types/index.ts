@@ -33,13 +33,18 @@ export interface Recipe {
 
 export interface Supermarket {
   id: string;
-  name: LocalizedString;
+  name: string;
   logo: string;
   priceMultiplier: number;
   distanceMeters: number;
   walkTime: LocalizedString;
   badge: LocalizedString;
   deliveryAvailable: boolean;
+  mapUrl: string;
+  deliveryUrl: string;
+  lat: number;
+  lng: number;
+  address: LocalizedString;
   totalCost?: number;
 }
 
@@ -68,4 +73,6 @@ export interface AppState {
   diaryConsumed: number;
   cameraStream: MediaStream | null;
   theme: 'dark' | 'light';
+  userLocation: { lat: number; lng: number } | null;
+  isStoresListExpanded?: boolean;
 }

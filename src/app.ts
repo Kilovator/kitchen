@@ -1,12 +1,29 @@
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
 import { AppState, Recipe, CategoryType } from './types';
 import { RECIPES_DATA, SCAN_PRESETS } from './data/recipes';
-import { calculateStoreTotals } from './services/storeCalculator';
+import { calculateStoreTotals, fetchRealSupermarkets, initGooglePlaces, fetchGooglePlacesSupermarkets } from './services/storeCalculator';
 import { scannerService } from './services/scanner';
 import { aiVisionScanner, VisionScanResult } from './services/aiVisionScanner';
 import { TRANSLATIONS, Language } from './i18n/translations';
 
-// Saved or default language
-const savedLang = (localStorage.getItem('cookcraft_lang') as Language) || 'ru';
+// Leaflet Map Global Variables (Declared at top to prevent TDZ ReferenceError)
+let leafletMap: any = null;
+let mapMarkers: any[] = [];
+let userLocationMarker: any = null;
+let userAccuracyCircle: any = null;
+let realOsmStores: any[] | null = null;
+let gpsWatchId: number | null = null;
+let radiusCircle: any = null;
+let lastGpsPos: { lat: number; lng: number } | null = null;
+let lastFetchTime = 0;
+
+let savedLang = localStorage.getItem('cookcraft_lang') as Language;
+if (!savedLang || savedLang === 'ru') {
+  savedLang = 'pl';
+  localStorage.setItem('cookcraft_lang', 'pl');
+}
 
 // App State
 const state: AppState = {
@@ -21,10 +38,12 @@ const state: AppState = {
   storeFilterMode: 'best-price',
   diaryConsumed: 1480,
   cameraStream: null,
-  theme: 'dark'
+  theme: 'dark',
+  userLocation: null,
+  isStoresListExpanded: false
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+function startApp() {
   initLangSwitcher();
   initNavigation();
   initRecipes();
@@ -32,7 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initScanner();
   initThemeToggle();
   renderAll();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}
 
 function t() {
   return TRANSLATIONS[state.currentLang];
@@ -186,6 +211,14 @@ function switchView(targetId: string) {
     if (btn.dataset.target === targetId) btn.classList.add('active');
     else btn.classList.remove('active');
   });
+
+  if (targetId === 'view-shopping') {
+    setTimeout(() => {
+      if (leafletMap) {
+        leafletMap.invalidateSize();
+      }
+    }, 100);
+  }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -409,6 +442,111 @@ function initShopping() {
     state.storeFilterMode = 'nearest';
     renderStores();
   });
+
+  const btnAddressSearch = document.getElementById('btn-search-address');
+  const addressInput = document.getElementById('store-address-input') as HTMLInputElement | null;
+  const searchAddr = async () => {
+    if (addressInput && addressInput.value.trim()) {
+      const query = encodeURIComponent(addressInput.value.trim());
+      try {
+        const res = await fetch(`/api/geocode?q=${query}`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lng = parseFloat(data[0].lon);
+          
+          // Stop GPS watch to prevent snapping back to original location
+          if (gpsWatchId !== null) {
+            navigator.geolocation.clearWatch(gpsWatchId);
+            gpsWatchId = null;
+          }
+          lastGpsPos = null;
+
+          if (leafletMap) {
+            leafletMap.setView([lat, lng], 14);
+            
+            // Draw radius circle around the searched address location
+            if (radiusCircle) leafletMap.removeLayer(radiusCircle);
+            radiusCircle = L.circle([lat, lng], {
+              radius: 3500,
+              color: '#10b981',
+              weight: 2,
+              dashArray: '6, 6',
+              fillColor: '#10b981',
+              fillOpacity: 0.06
+            }).addTo(leafletMap);
+
+            // Put a pin at searched address
+            if (userLocationMarker) leafletMap.removeLayer(userLocationMarker);
+            const searchIcon = L.divIcon({
+              className: 'user-pin-container',
+              html: `<div class="user-location-pin" style="background: #10b981;">📍 Wyszukana lokalizacja</div>`,
+              iconSize: [140, 30],
+              iconAnchor: [70, 15]
+            });
+            userLocationMarker = L.marker([lat, lng], { icon: searchIcon }).addTo(leafletMap);
+          }
+          await updateStoresForLocation(lat, lng);
+        } else {
+          alert('Adres nie został znaleziony. Spróbuj podać miasto i ulicę.');
+        }
+      } catch (err) {
+        console.error('Geocoding error:', err);
+      }
+    }
+  };
+  btnAddressSearch?.addEventListener('click', searchAddr);
+  addressInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchAddr();
+  });
+
+  const apiKeyInput = document.getElementById('google-api-key-input') as HTMLInputElement | null;
+  const btnSaveKey = document.getElementById('btn-save-api-key');
+  if (apiKeyInput) {
+    const savedKey = localStorage.getItem('google_maps_api_key') || '';
+    apiKeyInput.value = savedKey;
+    if (savedKey) {
+      initGooglePlaces(savedKey);
+    }
+  }
+  btnSaveKey?.addEventListener('click', async () => {
+    if (apiKeyInput) {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        localStorage.setItem('google_maps_api_key', key);
+        const ok = await initGooglePlaces(key);
+        if (ok) {
+          alert('Klucz Google API został pomyślnie zapisany i zainicjalizowany!');
+          if (state.userLocation) {
+            await updateStoresForLocation(state.userLocation.lat, state.userLocation.lng);
+          }
+        } else {
+          alert('Błąd podczas ładowania Google API. Sprawdź klucz.');
+        }
+      } else {
+        localStorage.removeItem('google_maps_api_key');
+        alert('Klucz API został usunięty.');
+      }
+    }
+  });
+}
+
+async function updateStoresForLocation(lat: number, lng: number) {
+  state.userLocation = { lat, lng };
+  const apiKey = localStorage.getItem('google_maps_api_key');
+  if (apiKey) {
+    const fetched = await fetchGooglePlacesSupermarkets(lat, lng);
+    if (fetched && fetched.length > 0) {
+      realOsmStores = fetched;
+      renderStores();
+      return;
+    }
+  }
+  const fetched = await fetchRealSupermarkets(lat, lng);
+  if (fetched && fetched.length > 0) {
+    realOsmStores = fetched;
+  }
+  renderStores();
 }
 
 function renderShoppingList() {
@@ -450,26 +588,194 @@ function renderStores() {
   if (!container) return;
 
   const lang = state.currentLang;
-  const stores = calculateStoreTotals(state.shoppingList, state.servingsCount, state.storeFilterMode);
+  const stores = calculateStoreTotals(state.shoppingList, state.servingsCount, state.storeFilterMode, state.userLocation, realOsmStores);
   const topId = stores[0]?.id;
 
-  container.innerHTML = stores.map(store => `
-    <div class="store-item-card ${store.id === topId ? 'highlight' : ''}">
-      <div style="display: flex; align-items: center; gap: 10px;">
+  const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
+  const mapBtnText = lang === 'pl' ? '📍 Google Maps' : (lang === 'en' ? '📍 Google Maps' : '📍 Google Карты');
+  const orderBtnText = lang === 'pl' ? '🚚 Zamów' : (lang === 'en' ? '🚚 Order' : '🚚 Заказать');
+
+  // Collapse list by default to show only top 4 stores
+  const visibleStores = state.isStoresListExpanded ? stores : stores.slice(0, 4);
+
+  let listHtml = visibleStores.map(store => `
+    <div class="store-item-card ${store.id === topId ? 'highlight' : ''}" id="store-card-${store.id}">
+      <div style="display: flex; align-items: center; gap: 12px;">
         <div class="store-logo">${store.logo}</div>
         <div class="store-info">
-          <h4>${store.name[lang]} <span style="font-size: 0.7rem; color: var(--accent-primary); font-weight: normal;">${store.badge[lang]}</span></h4>
-          <div class="store-meta">📍 ${store.walkTime[lang]} (${store.distanceMeters} m)</div>
+          <h4>${store.name} <span style="font-size: 0.72rem; color: var(--accent-primary); font-weight: 600;">[ ${store.badge[lang]} ]</span></h4>
+          <div class="store-meta">📍 ${store.address[lang]} • ${store.walkTime[lang]} (${store.distanceMeters} m)</div>
         </div>
       </div>
-      <div class="store-price">
-        <div class="total-sum">${store.totalCost} ${lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽')}</div>
-        <button class="btn btn-sm btn-outline" style="margin-top: 4px; font-size: 0.75rem;" onclick="alert('Map...')">
-          📍 Map
-        </button>
+      <div class="store-price" style="text-align: right;">
+        <div class="total-sum">${store.totalCost} ${currency}</div>
+        <div style="display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end;">
+          <a href="${store.mapUrl}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.75rem; text-decoration: none; padding: 4px 8px;">
+            ${mapBtnText}
+          </a>
+          <a href="${store.deliveryUrl}" target="_blank" class="btn btn-sm btn-primary" style="font-size: 0.75rem; text-decoration: none; padding: 4px 8px;">
+            ${orderBtnText}
+          </a>
+        </div>
       </div>
     </div>
   `).join('');
+
+  if (stores.length > 4) {
+    const buttonText = state.isStoresListExpanded 
+      ? (lang === 'pl' ? 'Pokaż mniej 🔼' : (lang === 'en' ? 'Show less 🔼' : 'Свернуть 🔼'))
+      : (lang === 'pl' ? `Pokaż więcej (${stores.length - 4}) 🔽` : (lang === 'en' ? `Show more (${stores.length - 4}) 🔽` : `Показать ещё (${stores.length - 4}) 🔽`));
+
+    listHtml += `
+      <button id="btn-toggle-stores-list" class="btn btn-sm btn-outline" style="width: 100%; margin-top: 12px; padding: 8px 12px; font-weight: 500; font-size: 0.85rem; border-radius: var(--radius-md);">
+        ${buttonText}
+      </button>
+    `;
+  }
+
+  container.innerHTML = listHtml;
+
+  document.getElementById('btn-toggle-stores-list')?.addEventListener('click', () => {
+    state.isStoresListExpanded = !state.isStoresListExpanded;
+    renderStores();
+  });
+
+  renderMap(stores);
+}
+
+
+
+function requestUserGeolocation() {
+  const lang = state.currentLang;
+  if (!navigator.geolocation || !leafletMap) return;
+
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+  }
+
+  const handlePosition = async (pos: GeolocationPosition) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const accuracy = pos.coords.accuracy;
+
+    if (!lastGpsPos) {
+      leafletMap.setView([lat, lng], 14);
+    }
+
+    if (userLocationMarker) leafletMap.removeLayer(userLocationMarker);
+    if (userAccuracyCircle) leafletMap.removeLayer(userAccuracyCircle);
+    if (radiusCircle) leafletMap.removeLayer(radiusCircle);
+
+    // 3.5 km radius visual indicator around user
+    radiusCircle = L.circle([lat, lng], {
+      radius: 3500,
+      color: '#10b981',
+      weight: 2,
+      dashArray: '6, 6',
+      fillColor: '#10b981',
+      fillOpacity: 0.06
+    }).addTo(leafletMap);
+
+    userAccuracyCircle = L.circle([lat, lng], {
+      radius: Math.min(accuracy, 500),
+      color: '#2563eb',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.15
+    }).addTo(leafletMap);
+
+    const userIcon = L.divIcon({
+      className: 'user-pin-container',
+      html: `<div class="user-location-pin">🔵 ${lang === 'ru' ? 'Вы здесь' : (lang === 'pl' ? 'Tu jesteś' : 'You are here')}</div>`,
+      iconSize: [110, 30],
+      iconAnchor: [55, 15]
+    });
+
+    userLocationMarker = L.marker([lat, lng], { icon: userIcon }).addTo(leafletMap);
+
+    // Calculate distance moved from last update
+    let movedDistance = 999;
+    if (lastGpsPos) {
+      const R = 6371000;
+      const dLat = (lat - lastGpsPos.lat) * Math.PI / 180;
+      const dLon = (lng - lastGpsPos.lng) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lastGpsPos.lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      movedDistance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    const now = Date.now();
+    const timeElapsed = now - lastFetchTime;
+
+    if (!lastGpsPos || (movedDistance > 50 && timeElapsed > 10000)) {
+      lastGpsPos = { lat, lng };
+      lastFetchTime = now;
+      await updateStoresForLocation(lat, lng);
+    }
+  };
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    handlePosition,
+    (err) => {
+      console.log('GPS Geolocation watch error:', err.message);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+  );
+}
+
+function renderMap(stores: any[]) {
+  const mapElem = document.getElementById('real-map');
+  if (!mapElem) return;
+
+  const lang = state.currentLang;
+  const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
+
+  if (!leafletMap) {
+    leafletMap = L.map('real-map').setView([52.2297, 21.0122], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(leafletMap);
+
+    const btnLocate = document.getElementById('btn-locate-me');
+    btnLocate?.addEventListener('click', () => {
+      requestUserGeolocation();
+    });
+
+    requestUserGeolocation();
+  }
+
+  // Clear previous markers
+  mapMarkers.forEach(m => leafletMap.removeLayer(m));
+  mapMarkers = [];
+
+  stores.forEach(store => {
+    const customIcon = L.divIcon({
+      className: 'custom-map-pin-container',
+      html: `<div class="custom-map-pin">${store.logo} <span>${store.totalCost} ${currency}</span></div>`,
+      iconSize: [80, 30],
+      iconAnchor: [40, 15]
+    });
+
+    const marker = L.marker([store.lat, store.lng], { icon: customIcon }).addTo(leafletMap);
+    marker.bindPopup(`
+      <div style="font-family: sans-serif; font-size: 13px; color: #111; padding: 4px;">
+        <strong>${store.logo} ${store.name}</strong><br>
+        <span style="color: #666;">${store.address[lang]}</span><br>
+        <strong style="color: #10b981; font-size: 14px;">Чек: ${store.totalCost} ${currency}</strong><br>
+        <div style="margin-top: 8px; display: flex; gap: 10px;">
+          <a href="${store.mapUrl}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: none;">📍 Google Maps</a>
+          <a href="${store.deliveryUrl}" target="_blank" style="color: #10b981; font-weight: bold; text-decoration: none;">🚚 Заказать</a>
+        </div>
+      </div>
+    `);
+
+    marker.on('click', () => {
+      const card = document.getElementById(`store-card-${store.id}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+
+    mapMarkers.push(marker);
+  });
 }
 
 // --- Scanner ---
@@ -661,19 +967,42 @@ function renderScanResult(result: VisionScanResult) {
   });
 }
 
+function applyTheme(theme: 'dark' | 'light') {
+  state.theme = theme;
+  localStorage.setItem('cookcraft_theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-theme', theme);
+
+  if (theme === 'light') {
+    document.documentElement.classList.add('light-theme');
+    document.documentElement.classList.remove('dark-theme');
+    document.body.classList.add('light-theme');
+    document.body.classList.remove('dark-theme');
+  } else {
+    document.documentElement.classList.add('dark-theme');
+    document.documentElement.classList.remove('light-theme');
+    document.body.classList.add('dark-theme');
+    document.body.classList.remove('light-theme');
+  }
+
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) {
+    const icon = btn.querySelector('.theme-icon');
+    if (icon) icon.textContent = theme === 'light' ? '☀️' : '🌙';
+  }
+}
+
 function initThemeToggle() {
   const btn = document.getElementById('btn-theme-toggle');
-  btn?.addEventListener('click', () => {
-    if (document.body.classList.contains('light-theme')) {
-      document.body.classList.remove('light-theme');
-      document.body.classList.add('dark-theme');
-      const icon = btn.querySelector('.theme-icon');
-      if (icon) icon.textContent = '🌙';
-    } else {
-      document.body.classList.remove('dark-theme');
-      document.body.classList.add('light-theme');
-      const icon = btn.querySelector('.theme-icon');
-      if (icon) icon.textContent = '☀️';
-    }
+  if (!btn) return;
+
+  const savedTheme = (localStorage.getItem('cookcraft_theme') as 'dark' | 'light') || 'dark';
+  applyTheme(savedTheme);
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const currentIsLight = document.body.classList.contains('light-theme') || document.documentElement.classList.contains('light-theme');
+    const nextTheme = currentIsLight ? 'dark' : 'light';
+    applyTheme(nextTheme);
   });
 }

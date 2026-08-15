@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="pl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CookCraft — Culinary Recipes & Photo Calorie Scanner</title>
+  <title>CookCraft — Asystent Kulinarny i Porównywarka Cen Sklepów w Polsce</title>
   <meta name="description" content="Culinary assistant: recipes with video, photo calorie scanner, and supermarket price comparison in RU, EN, PL.">
   <meta name="theme-color" content="#111827">
   
@@ -15,6 +15,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <!-- App Styling -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -207,36 +211,34 @@
 
           <div class="stores-compare-card">
             <div class="card-header">
-              <h2>🏬 Цены в супермаркетах</h2>
+              <h2>🏬 Ceny w supermarkecie</h2>
               <div class="store-filter-toggle">
-                <button id="filter-best-price" class="toggle-btn active">💡 Выгода</button>
-                <button id="filter-nearest" class="toggle-btn">📍 Ближайший</button>
+                <button id="filter-best-price" class="toggle-btn active">💡 Najlepsza cena</button>
+                <button id="filter-nearest" class="toggle-btn">📍 Najbliższy</button>
               </div>
+            </div>
+
+            <div class="map-container" style="margin-bottom: 16px;">
+              <div class="map-header">
+                <span>🗺️ Mapa sklepów w okolicy</span>
+                <button id="btn-locate-me" class="geo-badge-btn" title="Moja lokalizacja">📍 Znajdź mnie (GPS)</button>
+              </div>
+              <div id="real-map" class="real-map"></div>
+            </div>
+
+            <div class="address-search-bar" style="margin-bottom: 14px; display: flex; gap: 8px;">
+              <input type="text" id="store-address-input" placeholder="🔍 Wpisz swój adres lub miasto w Polsce (np. Warszawa, ul. Marszałkowska)..." style="flex-grow: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.85rem; outline: none;" />
+              <button id="btn-search-address" class="btn btn-sm btn-primary">Szukaj</button>
+            </div>
+
+            <div class="api-key-bar" style="margin-bottom: 14px; display: flex; gap: 8px; align-items: center; background: var(--bg-input); border: 1px dashed var(--border-color); padding: 8px 12px; border-radius: var(--radius-md);">
+              <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">🔑 Google API Key:</span>
+              <input type="password" id="google-api-key-input" placeholder="Wklej swój klucz API Google Maps..." style="flex-grow: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 8px; border-radius: var(--radius-md); font-size: 0.8rem; outline: none;" />
+              <button id="btn-save-api-key" class="btn btn-sm btn-outline" style="padding: 4px 10px; font-size: 0.8rem;">Zapisz</button>
             </div>
 
             <div id="stores-list" class="stores-list">
               <!-- Dynamically populated -->
-            </div>
-
-            <div class="map-container">
-              <div class="map-header">
-                <span>🗺️ Карта супермаркетов поблизости</span>
-                <span class="geo-badge">GPS Active</span>
-              </div>
-              <div id="mock-map" class="mock-map">
-                <div class="map-pin pin-1" data-store="s1">
-                  <div class="pin-label">Store 1</div>
-                  <div class="pin-popup">320 m</div>
-                </div>
-                <div class="map-pin pin-2" data-store="s2">
-                  <div class="pin-label">Store 2</div>
-                  <div class="pin-popup">650 m</div>
-                </div>
-                <div class="map-pin pin-3" data-store="s3">
-                  <div class="pin-label">Store 3</div>
-                  <div class="pin-popup">450 m</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -315,6 +317,5 @@
   </div>
 
   <script type="module" src="/src/app.ts"></script>
-  <script src="dist/app.js"></script>
 </body>
 </html>

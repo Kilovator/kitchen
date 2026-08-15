@@ -2,7 +2,10 @@
    CookCraft — Design System & Human-Crafted Styling
    ========================================================================== */
 
-:root {
+:root,
+html.dark-theme,
+body.dark-theme,
+[data-theme="dark"] {
   --bg-main: #111827;
   --bg-card: #1f2937;
   --bg-card-hover: #374151;
@@ -30,7 +33,9 @@
   --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
-body.light-theme {
+html.light-theme,
+body.light-theme,
+[data-theme="light"] {
   --bg-main: #f9fafb;
   --bg-card: #ffffff;
   --bg-card-hover: #f3f4f6;
@@ -800,14 +805,12 @@ h1, h2, h3, h4 {
   color: var(--accent-primary);
 }
 
-.mock-map {
-  position: relative;
+.real-map {
   width: 100%;
-  height: 160px;
-  background: #1f2937 url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=600&q=80') center/cover;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  filter: brightness(0.7);
+  height: 260px;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  z-index: 1;
 }
 
 .map-container {
@@ -822,6 +825,24 @@ h1, h2, h3, h4 {
   font-size: 0.78rem;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.geo-badge-btn {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.geo-badge-btn:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
 }
 
 .map-pin {
@@ -993,4 +1014,50 @@ h1, h2, h3, h4 {
 
 .hidden {
   display: none !important;
+}
+
+/* Custom Leaflet Pins */
+.custom-map-pin {
+  background: var(--bg-card);
+  border: 2px solid var(--accent-primary);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-map-pin:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.user-location-pin {
+  background: #2563eb;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  animation: pulseLocation 2s infinite;
+}
+
+@keyframes pulseLocation {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CookCraft — Asystent Kulinarny i Porównywarka Cen Sklepów w Polsce</title>
+  <meta name="description" content="Culinary assistant: recipes with video, photo calorie scanner, and supermarket price comparison in RU, EN, PL.">
+  <meta name="theme-color" content="#111827">
+  
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/assets/manifest-n0t3UtBO.json">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App Styling -->
+  <script type="module" crossorigin src="/assets/index-C-56nagO.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BrHOExdj.css">
+</head>
+<body class="dark-theme">
+  <div id="app">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="logo">
+          <div class="logo-icon">🍳</div>
+          <span class="logo-text">CookCraft</span>
+        </div>
+        
+        <!-- Navigation Menu in Header -->
+        <nav class="header-nav">
+          <button class="nav-item active" data-target="view-recipes">
+            <span class="nav-icon">📖</span>
+            <span class="nav-label">Рецепты</span>
+          </button>
+          <button class="nav-item" data-target="view-scanner">
+            <span class="nav-icon">📷</span>
+            <span class="nav-label">Сканер</span>
+          </button>
+          <button class="nav-item" data-target="view-shopping">
+            <span class="nav-icon">🛒</span>
+            <span class="nav-label">Покупки</span>
+          </button>
+          <button class="nav-item" data-target="view-diary">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Дневник</span>
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <!-- Language Switcher (RU | EN | PL) -->
+          <div class="lang-switcher">
+            <button class="lang-btn active" data-lang="ru">RU</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="pl">PL</button>
+          </div>
+
+          <button id="btn-theme-toggle" class="icon-btn" title="Theme">
+            <span class="theme-icon">🌙</span>
+          </button>
+          <div class="user-avatar" title="Profile">
+            <span>KM</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- VIEW 1: RECIPES -->
+      <section id="view-recipes" class="view-page active">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title">Кулинарные рецепты</h1>
+            <p class="page-subtitle">Вкусные блюда с видеоуроками и расчет ингредиентов</p>
+          </div>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="recipe-search" placeholder="Поиск рецепта или ингредиента...">
+          </div>
+          <div class="category-pills">
+            <button class="pill active" data-cat="all">Все</button>
+            <button class="pill" data-cat="breakfast">Завтраки</button>
+            <button class="pill" data-cat="lunch">Обеды & Ужины</button>
+            <button class="pill" data-cat="healthy">ПП & Фитнес</button>
+            <button class="pill" data-cat="fast">До 20 мин</button>
+          </div>
+        </div>
+
+        <!-- Recipe Grid -->
+        <div id="recipes-grid" class="recipes-grid">
+          <!-- Dynamically filled -->
+        </div>
+      </section>
+
+      <!-- VIEW 2: CAMERA & PHOTO SCANNERS -->
+      <section id="view-scanner" class="view-page">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title">Сканер калорий по фото</h1>
+            <p class="page-subtitle">Сфотографируйте блюдо для моментального определения калорий и состава через Vision AI</p>
+          </div>
+        </div>
+
+        <!-- Vision AI Config Drawer -->
+        <div class="api-key-config">
+          <details class="api-key-details">
+            <summary class="api-key-summary">🔑 Настройки Gemini Vision AI (Для работы с любым объектом)</summary>
+            <div class="api-key-input-group">
+              <input type="password" id="vision-api-key-input" placeholder="Вставьте Gemini API Key (AI-Vision)..." />
+              <button id="btn-save-api-key" class="btn btn-sm btn-primary">Сохранить</button>
+            </div>
+            <p class="api-hint">Если ключ не введен, применяется встроенный локальный Vision-биоанализатор.</p>
+          </details>
+        </div>
+
+        <div class="scanner-container">
+          <div class="viewfinder-card">
+            <div class="viewfinder-wrapper">
+              <video id="camera-feed" autoplay playsinline muted class="camera-feed hidden"></video>
+              <img id="image-preview" src="" alt="Preview" class="image-preview hidden">
+              
+              <div id="camera-placeholder" class="camera-placeholder">
+                <div class="cam-icon-pulse">📷</div>
+                <p>Нажмите «Включить Камеру» или выберите фото готового блюда</p>
+              </div>
+
+              <div id="scan-hud" class="scan-hud hidden">
+                <div class="scan-corner top-left"></div>
+                <div class="scan-corner top-right"></div>
+                <div class="scan-corner bottom-left"></div>
+                <div class="scan-corner bottom-right"></div>
+              </div>
+            </div>
+
+            <!-- Camera controls -->
+            <div class="scanner-actions">
+              <button id="btn-toggle-camera" class="btn btn-primary">
+                <span class="btn-icon">📹</span> Включить Камеру
+              </button>
+              <button id="btn-capture-scan" class="btn btn-accent hidden">
+                <span class="btn-icon">⚡</span> Определить калории
+              </button>
+              <label for="file-upload" class="btn btn-outline">
+                <span class="btn-icon">📁</span> Выбрать из Галереи
+              </label>
+              <input type="file" id="file-upload" accept="image/*" class="hidden">
+            </div>
+          </div>
+
+          <!-- Quick Test Preset Samples -->
+          <div class="preset-samples">
+            <h3>Или выберите готовый пример блюда:</h3>
+            <div class="sample-chips">
+              <button class="sample-chip" data-sample="borscht">🥣 Борщ домашний</button>
+              <button class="sample-chip" data-sample="carbonara">🍝 Паста Карбонара</button>
+              <button class="sample-chip" data-sample="ribeye">🥩 Стейк Рибай</button>
+            </div>
+          </div>
+
+          <!-- Scan Results Panel -->
+          <div id="scan-results" class="scan-results-card hidden">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: SHOPPING LIST & STORES -->
+      <section id="view-shopping" class="view-page">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title">Список покупок & Магазины</h1>
+            <p class="page-subtitle">Рассчитайте стоимость продуктов и выберите выгодный супермаркет</p>
+          </div>
+        </div>
+
+        <div class="shopping-layout">
+          <div class="shopping-list-card">
+            <div class="card-header">
+              <h2 id="shopping-recipe-title">🛒 Ингредиенты к покупке</h2>
+              <button id="btn-clear-cart" class="btn-text danger">Очистить</button>
+            </div>
+
+            <div class="servings-control">
+              <span>Количество порций:</span>
+              <div class="stepper">
+                <button id="btn-dec-servings" class="step-btn">-</button>
+                <span id="servings-count" class="step-val">2</span>
+                <button id="btn-inc-servings" class="step-btn">+</button>
+              </div>
+            </div>
+
+            <ul id="shopping-items-list" class="shopping-items-list">
+              <!-- Dynamically populated -->
+            </ul>
+
+            <div class="add-custom-item">
+              <input type="text" id="custom-item-input" placeholder="+ Добавить свой продукт (напр. Молоко)">
+              <button id="btn-add-item" class="btn btn-sm">Добавить</button>
+            </div>
+          </div>
+
+          <div class="stores-compare-card">
+            <div class="card-header">
+              <h2>🏬 Ceny w supermarkecie</h2>
+              <div class="store-filter-toggle">
+                <button id="filter-best-price" class="toggle-btn active">💡 Najlepsza cena</button>
+                <button id="filter-nearest" class="toggle-btn">📍 Najbliższy</button>
+              </div>
+            </div>
+
+            <div class="map-container" style="margin-bottom: 16px;">
+              <div class="map-header">
+                <span>🗺️ Mapa sklepów w okolicy</span>
+                <button id="btn-locate-me" class="geo-badge-btn" title="Moja lokalizacja">📍 Znajdź mnie (GPS)</button>
+              </div>
+              <div id="real-map" class="real-map"></div>
+            </div>
+
+            <div class="address-search-bar" style="margin-bottom: 14px; display: flex; gap: 8px;">
+              <input type="text" id="store-address-input" placeholder="🔍 Wpisz swój adres lub miasto w Polsce (np. Warszawa, ul. Marszałkowska)..." style="flex-grow: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.85rem; outline: none;" />
+              <button id="btn-search-address" class="btn btn-sm btn-primary">Szukaj</button>
+            </div>
+
+            <div class="api-key-bar" style="margin-bottom: 14px; display: flex; gap: 8px; align-items: center; background: var(--bg-input); border: 1px dashed var(--border-color); padding: 8px 12px; border-radius: var(--radius-md);">
+              <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">🔑 Google API Key:</span>
+              <input type="password" id="google-api-key-input" placeholder="Wklej swój klucz API Google Maps..." style="flex-grow: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 8px; border-radius: var(--radius-md); font-size: 0.8rem; outline: none;" />
+              <button id="btn-save-api-key" class="btn btn-sm btn-outline" style="padding: 4px 10px; font-size: 0.8rem;">Zapisz</button>
+            </div>
+
+            <div id="stores-list" class="stores-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: DIARY / NUTRITION -->
+      <section id="view-diary" class="view-page">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title">Дневник питания</h1>
+            <p class="page-subtitle">Ваш баланс калорий и питательных веществ на сегодня</p>
+          </div>
+        </div>
+
+        <div class="diary-dashboard">
+          <div class="calorie-summary-card">
+            <div class="gauge-container">
+              <div class="gauge-ring">
+                <svg viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" class="bg-ring"></circle>
+                  <circle cx="50" cy="50" r="42" class="progress-ring" id="calorie-progress-bar"></circle>
+                </svg>
+                <div class="gauge-text">
+                  <span id="consumed-calories" class="gauge-num">1 480</span>
+                  <span class="gauge-label">из 2 200 ккал</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="macros-grid">
+              <div class="macro-item protein">
+                <div class="macro-info">
+                  <span>Белки</span>
+                  <strong id="macro-protein">85 g / 120 g</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width: 70%;"></div></div>
+              </div>
+              <div class="macro-item fat">
+                <div class="macro-info">
+                  <span>Жиры</span>
+                  <strong id="macro-fat">48 g / 70 g</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width: 68%;"></div></div>
+              </div>
+              <div class="macro-item carbs">
+                <div class="macro-info">
+                  <span>Углеводы</span>
+                  <strong id="macro-carbs">175 g / 250 g</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width: 70%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="meals-log-card">
+            <h2>Приёмы пищи сегодня</h2>
+            <div id="meals-list" class="meals-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RECIPE MODAL -->
+    <div id="recipe-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <button id="btn-close-modal" class="modal-close">&times;</button>
+        <div id="modal-content" class="modal-content">
+          <!-- Dynamically inserted -->
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+</body>
+</html>

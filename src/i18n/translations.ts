@@ -89,7 +89,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     
     shoppingTitle: "Список покупок & Магазины",
     shoppingSubtitle: "Рассчитайте стоимость продуктов и выберите выгодный супермаркет",
-    shoppingCartHeader: "🛒 Ингредиенты к покупке",
+    shoppingCartHeader: " Ингредиенты к покупке",
     clearCartBtn: "Очистить",
     servingsLabel: "Количество порций:",
     addCustomPlaceholder: "+ Добавить свой продукт (напр. Молоко)",
@@ -141,7 +141,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     
     shoppingTitle: "Shopping List & Stores",
     shoppingSubtitle: "Calculate ingredient cost & find the best nearby supermarket",
-    shoppingCartHeader: "🛒 Shopping List",
+    shoppingCartHeader: " Shopping List",
     clearCartBtn: "Clear",
     servingsLabel: "Number of servings:",
     addCustomPlaceholder: "+ Add custom item (e.g. Milk)",
@@ -193,7 +193,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     
     shoppingTitle: "Lista Zakupów i Sklepy",
     shoppingSubtitle: "Oblicz koszt produktów i wybierz najkorzystniejszy supermarkety",
-    shoppingCartHeader: "🛒 Lista Zakupów",
+    shoppingCartHeader: " Lista Zakupów",
     clearCartBtn: "Wyczyść",
     servingsLabel: "Liczba porcji:",
     addCustomPlaceholder: "+ Dodaj własny produkt (np. Mleko)",
