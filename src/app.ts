@@ -500,48 +500,11 @@ function initShopping() {
     if (e.key === 'Enter') searchAddr();
   });
 
-  const apiKeyInput = document.getElementById('google-api-key-input') as HTMLInputElement | null;
-  const btnSaveKey = document.getElementById('btn-save-api-key');
-  if (apiKeyInput) {
-    const savedKey = localStorage.getItem('google_maps_api_key') || '';
-    apiKeyInput.value = savedKey;
-    if (savedKey) {
-      initGooglePlaces(savedKey);
-    }
-  }
-  btnSaveKey?.addEventListener('click', async () => {
-    if (apiKeyInput) {
-      const key = apiKeyInput.value.trim();
-      if (key) {
-        localStorage.setItem('google_maps_api_key', key);
-        const ok = await initGooglePlaces(key);
-        if (ok) {
-          alert('Klucz Google API został pomyślnie zapisany i zainicjalizowany!');
-          if (state.userLocation) {
-            await updateStoresForLocation(state.userLocation.lat, state.userLocation.lng);
-          }
-        } else {
-          alert('Błąd podczas ładowania Google API. Sprawdź klucz.');
-        }
-      } else {
-        localStorage.removeItem('google_maps_api_key');
-        alert('Klucz API został usunięty.');
-      }
-    }
-  });
+
 }
 
 async function updateStoresForLocation(lat: number, lng: number) {
   state.userLocation = { lat, lng };
-  const apiKey = localStorage.getItem('google_maps_api_key');
-  if (apiKey) {
-    const fetched = await fetchGooglePlacesSupermarkets(lat, lng);
-    if (fetched && fetched.length > 0) {
-      realOsmStores = fetched;
-      renderStores();
-      return;
-    }
-  }
   const fetched = await fetchRealSupermarkets(lat, lng);
   if (fetched && fetched.length > 0) {
     realOsmStores = fetched;
@@ -785,19 +748,7 @@ function initScanner() {
   const videoElem = document.getElementById('camera-feed') as HTMLVideoElement | null;
   const fileUpload = document.getElementById('file-upload') as HTMLInputElement | null;
   const sampleChips = document.querySelectorAll<HTMLButtonElement>('.sample-chip');
-  const apiKeyInput = document.getElementById('vision-api-key-input') as HTMLInputElement | null;
-  const btnSaveKey = document.getElementById('btn-save-api-key');
 
-  if (apiKeyInput) {
-    apiKeyInput.value = aiVisionScanner.getApiKey();
-  }
-
-  btnSaveKey?.addEventListener('click', () => {
-    if (apiKeyInput) {
-      aiVisionScanner.setApiKey(apiKeyInput.value);
-      alert('Gemini Vision API Key saved!');
-    }
-  });
 
   btnToggleCam?.addEventListener('click', async () => {
     if (!videoElem) return;

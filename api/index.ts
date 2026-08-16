@@ -1,20 +1,38 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import Database from 'better-sqlite3';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 const app = express();
-const port = 5000;
 
-// Setup Prisma with Better-SQLite3 Driver Adapter (Prisma 7 requirement)
-const db = new Database('prisma/dev.db');
-const adapter = new PrismaBetterSqlite3(db);
-const prisma = new PrismaClient({ adapter });
+// Setup Prisma with PostgreSQL Driver Adapter (Prisma 7 requirement for Serverless Vercel)
+// Wrap in try-catch to allow the server to run even if PostgreSQL is not yet configured or is offline.
+let prisma: PrismaClient | null = null;
+const dbUrl = process.env.DATABASE_URL || '';
+
+if (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')) {
+  try {
+    const pool = new pg.Pool({
+      connectionString: dbUrl,
+      max: 4, // limit pool size for serverless environment
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+    const adapter = new PrismaPg(pool);
+    prisma = new PrismaClient({ adapter });
+    console.log('[Prisma] Connected to PostgreSQL cache database.');
+  } catch (err: any) {
+    console.warn('[Prisma] Failed to initialize database connection. Caching is disabled:', err.message);
+  }
+} else {
+  console.log('[Prisma] No valid PostgreSQL DATABASE_URL found. Running in cacheless fallback mode.');
+}
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // 1. Geocoding Proxy and Cache
 app.get('/api/geocode', async (req, res) => {
@@ -24,10 +42,16 @@ app.get('/api/geocode', async (req, res) => {
   }
 
   try {
-    // Check SQLite cache first
-    const cached = await prisma.geocodingCache.findUnique({
-      where: { query }
-    });
+    // Check cache first (only if prisma client is successfully connected)
+    let cached = null;
+    if (prisma) {
+      cached = await prisma.geocodingCache.findUnique({
+        where: { query }
+      }).catch(err => {
+        console.warn('[Prisma Cache Read Error]:', err.message);
+        return null;
+      });
+    }
 
     if (cached) {
       console.log(`[Cache Hit] Geocode query: "${query}"`);
@@ -51,14 +75,16 @@ app.get('/api/geocode', async (req, res) => {
       const lat = parseFloat(data[0].lat);
       const lng = parseFloat(data[0].lon);
 
-      // Save to database cache
-      await prisma.geocodingCache.create({
-        data: {
-          query,
-          lat,
-          lng
-        }
-      }).catch(err => console.warn('Cache write failed (likely duplicate):', err.message));
+      // Save to database cache if active
+      if (prisma) {
+        await prisma.geocodingCache.create({
+          data: {
+            query,
+            lat,
+            lng
+          }
+        }).catch(err => console.warn('Cache write failed:', err.message));
+      }
     }
 
     return res.json(data);
@@ -126,10 +152,16 @@ app.get('/api/supermarkets', async (req, res) => {
   const key = `${latVal.toFixed(3)}_${lngVal.toFixed(3)}`;
 
   try {
-    // Check SQLite cache first
-    const cached = await prisma.supermarketCache.findUnique({
-      where: { key }
-    });
+    // Check cache first (only if prisma client is successfully connected)
+    let cached = null;
+    if (prisma) {
+      cached = await prisma.supermarketCache.findUnique({
+        where: { key }
+      }).catch(err => {
+        console.warn('[Prisma Cache Read Error]:', err.message);
+        return null;
+      });
+    }
 
     if (cached) {
       console.log(`[Cache Hit] Supermarkets near key: ${key}`);
@@ -271,13 +303,15 @@ app.get('/api/supermarkets', async (req, res) => {
       }
     }
 
-    // Save to database cache
-    await prisma.supermarketCache.create({
-      data: {
-        key,
-        data: JSON.stringify(mappedStores)
-      }
-    }).catch(err => console.warn('Cache write failed (likely duplicate):', err.message));
+    // Save to database cache if active
+    if (prisma) {
+      await prisma.supermarketCache.create({
+        data: {
+          key,
+          data: JSON.stringify(mappedStores)
+        }
+      }).catch(err => console.warn('Cache write failed:', err.message));
+    }
 
     return res.json(mappedStores);
   } catch (error: any) {
@@ -286,6 +320,138 @@ app.get('/api/supermarkets', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`[Express Backend] Running on http://localhost:${port}`);
+// 3. AI Calorie Vision Scanner Proxy
+app.post('/api/scan-image', async (req, res) => {
+  const { image } = req.body;
+  if (!image) {
+    return res.status(400).json({ error: 'Missing image data' });
+  }
+
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  if (geminiApiKey && geminiApiKey !== 'your_api_key_here') {
+    try {
+      console.log('[Gemini Vision] Analyzing image via Gemini API...');
+      const base64Data = image.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+
+      const prompt = `Analyze this dish/food image. Return ONLY a JSON object with:
+      {
+        "title_ru": "Название блюда на русском",
+        "title_en": "Dish name in English",
+        "title_pl": "Nazwa dania po polsku",
+        "weightGrams": 250,
+        "calories": 420,
+        "protein": 24,
+        "fat": 16,
+        "carbs": 45,
+        "healthScore_ru": "92% (Отличный баланс)",
+        "healthScore_en": "92% (Great Balance)",
+        "healthScore_pl": "92% (Świetny bilans)",
+        "summary_ru": "Краткое описание полезности на русском",
+        "summary_en": "Brief nutrition summary in English",
+        "summary_pl": "Krótkie podsumowanie po polsku"
+      }`;
+
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+      const response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+            ]
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini Vision API returned status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const jsonMatch = textOutput.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return res.json({
+          title: { ru: parsed.title_ru, en: parsed.title_en, pl: parsed.title_pl },
+          weightGrams: parsed.weightGrams || 250,
+          calories: parsed.calories || 350,
+          protein: parsed.protein || 20,
+          fat: parsed.fat || 12,
+          carbs: parsed.carbs || 40,
+          healthScore: { ru: parsed.healthScore_ru, en: parsed.healthScore_en, pl: parsed.healthScore_pl },
+          summary: { ru: parsed.summary_ru, en: parsed.summary_en, pl: parsed.summary_pl },
+          image
+        });
+      }
+      throw new Error("Could not parse AI response JSON");
+    } catch (err: any) {
+      console.warn('[Gemini Vision] API call failed, falling back to simulated vision:', err.message);
+    }
+  }
+
+  // Fallback simulator if no Gemini API Key is specified
+  console.log('[Vision Simulator] Simulating calorie scan...');
+  const samples = [
+    {
+      title: { ru: "Свежий зеленый са salad с авокадо", en: "Fresh Green Avocado Salad", pl: "Świeża sałatka z awokado" },
+      weightGrams: 220,
+      calories: 280,
+      protein: 8,
+      fat: 18,
+      carbs: 16,
+      healthScore: { ru: "98% (Максимум витаминов)", en: "98% (Max Vitamins)", pl: "98% (Maksimum witamin)" },
+      summary: {
+        ru: "Низкокалорийное блюдо, богатое полезными жирами Омега-3 и клетчаткой.",
+        en: "Low calorie dish rich in healthy Omega-3 fats and digestive fiber.",
+        pl: "Niskokaloryczne danie bogate w zdrowe tłuszcze Omega-3 i błonnik."
+      },
+      image
+    },
+    {
+      title: { ru: "Запеченное куриное филе с овощами", en: "Baked Chicken Breast & Veggies", pl: "Pieczona pierś z kurczaka" },
+      weightGrams: 300,
+      calories: 410,
+      protein: 42,
+      fat: 12,
+      carbs: 22,
+      healthScore: { ru: "95% (Высокобелковый)", en: "95% (High Protein)", pl: "95% (Wysokobiałkowy)" },
+      summary: {
+        ru: "Идеально подходит для спортсменов и набора мышечной массы.",
+        en: "Perfect for fitness enthusiasts and muscle recovery.",
+        pl: "Idealne dla sportowców i regeneracji mięśni."
+      },
+      image
+    },
+    {
+      title: { ru: "Паста с томатным соусом и базиликом", en: "Tomato Basil Pasta", pl: "Makaron z sosie pomidorowym" },
+      weightGrams: 280,
+      calories: 390,
+      protein: 14,
+      fat: 10,
+      carbs: 62,
+      healthScore: { ru: "88% (Энергетическое блюдо)", en: "88% (Energy Boost)", pl: "88% (Danie energetyczne)" },
+      summary: {
+        ru: "Источник медленных углеводов для долговременной энергии.",
+        en: "Great source of complex carbs for long-lasting energy.",
+        pl: "Wspaniałe źródło węglowodanów złożonych на весь день."
+      },
+      image
+    }
+  ];
+
+  const idx = image.length % samples.length;
+  return res.json(samples[idx]);
 });
+
+// For local running
+if (process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`[Express Backend] Running on http://localhost:${port}`);
+  });
+}
+
+export default app;
