@@ -7,6 +7,8 @@ import { calculateStoreTotals, fetchRealSupermarkets, initGooglePlaces, fetchGoo
 import { scannerService } from './services/scanner';
 import { aiVisionScanner, VisionScanResult } from './services/aiVisionScanner';
 import { TRANSLATIONS, Language } from './i18n/translations';
+import { createFullUserProfile } from './services/nutritionCalculator';
+import { MealEntry, UserProfile } from './types';
 
 // Leaflet Map Global Variables (Declared at top to prevent TDZ ReferenceError)
 let leafletMap: any = null;
@@ -25,6 +27,21 @@ if (!savedLang || savedLang === 'ru') {
   localStorage.setItem('cookcraft_lang', 'pl');
 }
 
+// Load persisted user profile or create default
+const savedProfileRaw = localStorage.getItem('cookcraft_user_profile');
+const defaultProfile: UserProfile = savedProfileRaw 
+  ? JSON.parse(savedProfileRaw)
+  : createFullUserProfile('male', 25, 75, 178, 'moderate', 'maintain');
+
+// Load persisted logged meals or create default sample meals
+const savedMealsRaw = localStorage.getItem('cookcraft_logged_meals');
+const defaultMeals: MealEntry[] = savedMealsRaw
+  ? JSON.parse(savedMealsRaw)
+  : [
+      { id: 'meal_1', name: 'Owsianka z bananem', calories: 320, protein: 10, fat: 8, carbs: 54, mealType: 'breakfast', time: '08:30' },
+      { id: 'meal_2', name: 'Cheeseburger Black Angus', calories: 720, protein: 42, fat: 38, carbs: 52, mealType: 'lunch', time: '13:15' }
+    ];
+
 // App State
 const state: AppState = {
   currentLang: savedLang,
@@ -36,11 +53,13 @@ const state: AppState = {
   servingsCount: 2,
   shoppingList: RECIPES_DATA[0].ingredients.map(ing => ({ ...ing, checked: false })),
   storeFilterMode: 'best-price',
-  diaryConsumed: 1480,
+  diaryConsumed: 1040,
   cameraStream: null,
   theme: 'dark',
   userLocation: null,
-  isStoresListExpanded: false
+  isStoresListExpanded: false,
+  userProfile: defaultProfile,
+  loggedMeals: defaultMeals
 };
 
 function startApp() {
@@ -49,6 +68,7 @@ function startApp() {
   initRecipes();
   initShopping();
   initScanner();
+  initDiary();
   initThemeToggle();
   renderAll();
 }
@@ -132,10 +152,20 @@ function updateStaticTexts() {
   const presetH3 = document.querySelector('.preset-samples h3');
   if (presetH3) presetH3.textContent = tr.presetHeader;
 
+  document.querySelectorAll<HTMLButtonElement>('.sample-chip').forEach(chip => {
+    const s = chip.dataset.sample;
+    if (s === 'borscht') chip.textContent = tr.presetBorscht;
+    if (s === 'carbonara') chip.textContent = tr.presetCarbonara;
+    if (s === 'ribeye') chip.textContent = tr.presetRibeye;
+  });
+
   const shopTitle = document.querySelector('#view-shopping .page-title');
   const shopSub = document.querySelector('#view-shopping .page-subtitle');
   if (shopTitle) shopTitle.textContent = tr.shoppingTitle;
   if (shopSub) shopSub.textContent = tr.shoppingSubtitle;
+
+  const shopCartH2 = document.getElementById('shopping-recipe-title');
+  if (shopCartH2) shopCartH2.textContent = `🛒 ${tr.shoppingCartHeader}`;
 
   const clearBtn = document.getElementById('btn-clear-cart');
   if (clearBtn) clearBtn.textContent = tr.clearCartBtn;
@@ -149,28 +179,72 @@ function updateStaticTexts() {
   const addBtn = document.getElementById('btn-add-item');
   if (addBtn) addBtn.textContent = tr.addBtn;
 
+  const addrInput = document.getElementById('store-address-input') as HTMLInputElement | null;
+  if (addrInput) addrInput.placeholder = tr.addressPlaceholder;
+
+  const addrBtn = document.getElementById('btn-search-address');
+  if (addrBtn) addrBtn.textContent = tr.addressSearchBtn;
+
+  const tabComparison = document.getElementById('tab-btn-comparison');
+  const tabDeals = document.getElementById('tab-btn-deals');
+  if (tabComparison) tabComparison.textContent = tr.tabComparison;
+  if (tabDeals) tabDeals.textContent = tr.tabDeals;
+
+  const storesH2 = document.querySelector('#view-shopping .stores-card .card-header h2');
+  if (storesH2) storesH2.textContent = tr.storesHeader;
+
+  const mapH3 = document.querySelector('#view-shopping .stores-card .map-header h3');
+  if (mapH3) mapH3.textContent = tr.mapHeader;
+
   const filterBest = document.getElementById('filter-best-price');
   const filterNear = document.getElementById('filter-nearest');
   if (filterBest) filterBest.textContent = tr.bestPriceToggle;
-  if (filterNear) filterNear.textContent = tr.nearestToggle;
-
-  const diaryTitle = document.querySelector('#view-diary .page-title');
-  const diarySub = document.querySelector('#view-diary .page-subtitle');
+  if (filterNear) filterNear.textContent = tr.nearestToggle;  const diaryTitle = document.getElementById('diary-title');
+  const diarySub = document.getElementById('diary-subtitle');
   if (diaryTitle) diaryTitle.textContent = tr.diaryTitle;
   if (diarySub) diarySub.textContent = tr.diarySubtitle;
 
-  const consumedLbl = document.querySelector('.gauge-label');
-  if (consumedLbl) consumedLbl.textContent = tr.consumedLabel;
+  const calcH2 = document.getElementById('calc-header-title');
+  if (calcH2) calcH2.textContent = tr.calcHeader;
 
-  const pLbl = document.querySelector('.macro-item.protein .macro-info span');
-  const fLbl = document.querySelector('.macro-item.fat .macro-info span');
-  const cLbl = document.querySelector('.macro-item.carbs .macro-info span');
-  if (pLbl) pLbl.textContent = tr.proteinLabel;
-  if (fLbl) fLbl.textContent = tr.fatLabel;
-  if (cLbl) cLbl.textContent = tr.carbsLabel;
+  const maleBtn = document.getElementById('btn-gender-male');
+  const femaleBtn = document.getElementById('btn-gender-female');
+  if (maleBtn) maleBtn.textContent = tr.calcGenderMale;
+  if (femaleBtn) femaleBtn.textContent = tr.calcGenderFemale;
 
-  const mealsH2 = document.querySelector('.meals-log-card h2');
+  const lblAge = document.getElementById('lbl-calc-age');
+  const lblWeight = document.getElementById('lbl-calc-weight');
+  const lblHeight = document.getElementById('lbl-calc-height');
+  const lblActivity = document.getElementById('lbl-calc-activity');
+  const lblGoal = document.getElementById('lbl-calc-goal');
+  if (lblAge) lblAge.textContent = tr.calcAgeLabel;
+  if (lblWeight) lblWeight.textContent = tr.calcWeightLabel;
+  if (lblHeight) lblHeight.textContent = tr.calcHeightLabel;
+  if (lblActivity) lblActivity.textContent = tr.calcActivityLabel;
+  if (lblGoal) lblGoal.textContent = tr.calcGoalLabel;
+
+  const lblBmr = document.getElementById('lbl-bmr');
+  const lblTdee = document.getElementById('lbl-tdee');
+  const lblTarget = document.getElementById('lbl-target');
+  if (lblBmr) lblBmr.textContent = tr.calcBmrLabel;
+  if (lblTdee) lblTdee.textContent = tr.calcTdeeLabel;
+  if (lblTarget) lblTarget.textContent = tr.calcTargetLabel;
+
+  const applyBtn = document.getElementById('btn-apply-profile');
+  if (applyBtn) applyBtn.textContent = tr.calcApplyBtn;
+
+  const pTitle = document.getElementById('lbl-macro-p-title');
+  const fTitle = document.getElementById('lbl-macro-f-title');
+  const cTitle = document.getElementById('lbl-macro-c-title');
+  if (pTitle) pTitle.textContent = tr.proteinLabel;
+  if (fTitle) fTitle.textContent = tr.fatLabel;
+  if (cTitle) cTitle.textContent = tr.carbsLabel;
+
+  const mealsH2 = document.getElementById('lbl-meals-header');
   if (mealsH2) mealsH2.textContent = tr.mealsHeader;
+
+  const addMealBtn = document.getElementById('btn-add-quick-meal');
+  if (addMealBtn) addMealBtn.textContent = tr.addMealBtn;
 
   document.querySelectorAll<HTMLElement>('.nav-item').forEach(nav => {
     const target = nav.dataset.target;
@@ -181,12 +255,18 @@ function updateStaticTexts() {
     if (target === 'view-shopping') label.textContent = tr.navShopping;
     if (target === 'view-diary') label.textContent = tr.navDiary;
   });
+
+  renderDiary();
 }
 
 function renderAll() {
   renderRecipes();
   renderShoppingList();
   renderStores();
+  renderDiary();
+  if (state.lastScanResult) {
+    renderScanResult(state.lastScanResult);
+  }
 }
 
 // --- Navigation ---
@@ -428,6 +508,39 @@ function initShopping() {
     }
   });
 
+  const tabComparison = document.getElementById('tab-btn-comparison');
+  const tabDeals = document.getElementById('tab-btn-deals');
+  const contentComparison = document.getElementById('subtab-comparison-content');
+  const contentDeals = document.getElementById('subtab-deals-content');
+
+  tabComparison?.addEventListener('click', () => {
+    tabComparison.classList.add('btn-primary', 'active-tab');
+    tabComparison.classList.remove('btn-outline');
+    tabDeals?.classList.add('btn-outline');
+    tabDeals?.classList.remove('btn-primary', 'active-tab');
+
+    contentComparison?.classList.remove('hidden');
+    contentDeals?.classList.add('hidden');
+
+    if (leafletMap) {
+      setTimeout(() => {
+        leafletMap.invalidateSize(true);
+      }, 50);
+    }
+  });
+
+  tabDeals?.addEventListener('click', async () => {
+    tabDeals.classList.add('btn-primary', 'active-tab');
+    tabDeals.classList.remove('btn-outline');
+    tabComparison?.classList.add('btn-outline');
+    tabComparison?.classList.remove('btn-primary', 'active-tab');
+
+    contentDeals?.classList.remove('hidden');
+    contentComparison?.classList.add('hidden');
+
+    await renderPromotions();
+  });
+
   const best = document.getElementById('filter-best-price');
   const near = document.getElementById('filter-nearest');
   best?.addEventListener('click', () => {
@@ -530,9 +643,12 @@ function renderShoppingList() {
     <li class="shopping-item ${item.checked ? 'checked' : ''}">
       <div class="item-left">
         <input type="checkbox" class="chk-box" data-idx="${idx}" ${item.checked ? 'checked' : ''}>
-        <span>${item.name[lang]}</span>
+        <span class="item-name">${item.name[lang]}</span>
       </div>
-      <strong>${Math.round(item.qty * mult * 10) / 10} ${item.unit[lang]}</strong>
+      <div style="display: flex; align-items: center;">
+        <span class="qty-badge">${Math.round(item.qty * mult * 10) / 10} ${item.unit[lang]}</span>
+        <button class="btn-delete-item" data-idx="${idx}" title="${lang === 'pl' ? 'Usuń' : (lang === 'en' ? 'Delete' : 'Удалить')}">🗑️</button>
+      </div>
     </li>
   `).join('');
 
@@ -540,6 +656,15 @@ function renderShoppingList() {
     chk.addEventListener('change', (e) => {
       const idx = parseInt((e.target as HTMLInputElement).dataset.idx || '0');
       state.shoppingList[idx].checked = (e.target as HTMLInputElement).checked;
+      renderShoppingList();
+      renderStores();
+    });
+  });
+
+  list.querySelectorAll<HTMLButtonElement>('.btn-delete-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt((e.currentTarget as HTMLButtonElement).dataset.idx || '0');
+      state.shoppingList.splice(idx, 1);
       renderShoppingList();
       renderStores();
     });
@@ -614,7 +739,9 @@ function requestUserGeolocation() {
 
   if (gpsWatchId !== null) {
     navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
   }
+  lastGpsPos = null;
 
   const handlePosition = async (pos: GeolocationPosition) => {
     const lat = pos.coords.latitude;
@@ -705,6 +832,11 @@ function renderMap(stores: any[]) {
     requestUserGeolocation();
   }
 
+  // Force map container recalculation to fix marker offset bugs
+  requestAnimationFrame(() => {
+    if (leafletMap) leafletMap.invalidateSize(true);
+  });
+
   // Clear previous markers
   mapMarkers.forEach(m => leafletMap.removeLayer(m));
   mapMarkers = [];
@@ -739,6 +871,90 @@ function renderMap(stores: any[]) {
 
     mapMarkers.push(marker);
   });
+}
+
+async function renderPromotions() {
+  const container = document.getElementById('promos-grid');
+  if (!container) return;
+
+  const lang = state.currentLang;
+  const tr = t();
+  const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
+
+  try {
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">⏳ ${lang === 'pl' ? 'Ładowanie promocji...' : (lang === 'en' ? 'Loading promotions...' : 'Загрузка акционных товаров...')}</div>`;
+    const res = await fetch('/api/promotions');
+    const promos = await res.json();
+
+    if (!promos || promos.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">Brak aktywnych promocji</div>`;
+      return;
+    }
+
+    container.innerHTML = promos.map((item: any) => `
+      <div class="promo-card" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+        <div style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 2px 8px; border-radius: var(--radius-sm);">
+          ${item.discountBadge}
+        </div>
+        
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent-primary); margin-bottom: 6px;">
+            ${item.storeLogo} ${item.storeName}
+          </div>
+
+          <div style="height: 120px; overflow: hidden; border-radius: var(--radius-sm); margin-bottom: 10px;">
+            <img src="${item.image}" alt="${item.productName[lang]}" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+
+          <h4 style="font-size: 0.92rem; font-weight: 600; margin: 0 0 4px 0; line-height: 1.3;">
+            ${item.productName[lang]}
+          </h4>
+
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">
+            ${item.recommendation[lang]}
+          </div>
+
+          <div style="font-size: 0.7rem; color: #10b981; font-weight: 500; margin-bottom: 10px;">
+            ${tr.validUntilPrefix} ${item.validUntil}
+          </div>
+        </div>
+
+        <div>
+          <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
+            <span style="font-size: 1.15rem; font-weight: 700; color: var(--accent-primary);">${item.promoPrice} ${currency}</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-decoration: line-through;">${item.originalPrice} ${currency}</span>
+          </div>
+
+          <button class="btn btn-sm btn-primary btn-add-promo" data-title="${item.productName[lang]}" data-price="${item.promoPrice}" style="width: 100%; font-size: 0.8rem; padding: 8px 10px; font-weight: 600;">
+            ${tr.addToCartBtn}
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    container.querySelectorAll<HTMLButtonElement>('.btn-add-promo').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const title = target.dataset.title;
+        const price = parseFloat(target.dataset.price || '0');
+        if (title) {
+          state.shoppingList.push({
+            name: { ru: title, en: title, pl: title },
+            qty: 1,
+            unit: { ru: 'шт', en: 'pcs', pl: 'szt' },
+            basePrice: price,
+            checked: false
+          });
+          renderShoppingList();
+          renderStores();
+          alert(`✅ ${title} ${lang === 'pl' ? 'dodano do listy!' : (lang === 'en' ? 'added to shopping list!' : 'добавлено в список!')}`);
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Failed to load promotions:', err);
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--accent-danger);">Błąd ładowania promocji</div>`;
+  }
 }
 
 // --- Scanner ---
@@ -776,17 +992,38 @@ function initScanner() {
     }
   });
 
-  // Capture real snapshot from active video camera
+  // Capture real snapshot from active video camera or preview image
   btnCapture?.addEventListener('click', async () => {
+    const imgPreview = document.getElementById('image-preview') as HTMLImageElement | null;
+    let targetImage = '';
+
+    // 1. If live camera stream is active
     if (videoElem && !videoElem.classList.contains('hidden')) {
-      const frameDataUrl = aiVisionScanner.captureFrame(videoElem);
-      if (frameDataUrl) {
-        const result = await aiVisionScanner.analyzeImage(frameDataUrl);
-        renderScanResult(result);
-        return;
-      }
+      targetImage = aiVisionScanner.captureFrame(videoElem);
+    } 
+    // 2. If uploaded or preview image is visible
+    else if (imgPreview && !imgPreview.classList.contains('hidden') && imgPreview.src && imgPreview.src.startsWith('data:image')) {
+      targetImage = imgPreview.src;
     }
-    processPreset('carbonara');
+
+    if (!targetImage) {
+      const lang = state.currentLang;
+      const msg = lang === 'pl' 
+        ? 'Włącz kamerę lub wybierz zdjęcie z galerii!' 
+        : (lang === 'en' ? 'Please turn on the camera or select a photo from gallery!' : 'Пожалуйста, включите камеру или выберите фото из галереи!');
+      alert(msg);
+      return;
+    }
+
+    showScanLoading(true);
+    try {
+      const result = await aiVisionScanner.analyzeImage(targetImage);
+      renderScanResult(result);
+    } catch (err) {
+      console.error('AI Scan Error:', err);
+    } finally {
+      showScanLoading(false);
+    }
   });
 
   sampleChips.forEach(chip => {
@@ -809,13 +1046,35 @@ function initScanner() {
           videoElem?.classList.add('hidden');
           document.getElementById('scan-hud')?.classList.remove('hidden');
           
-          const result = await aiVisionScanner.analyzeImage(dataUrl);
-          renderScanResult(result);
+          showScanLoading(true);
+          try {
+            const result = await aiVisionScanner.analyzeImage(dataUrl);
+            renderScanResult(result);
+          } catch (err) {
+            console.error('File Upload Scan Error:', err);
+          } finally {
+            showScanLoading(false);
+          }
         }
       };
       reader.readAsDataURL(files[0]);
     }
   });
+}
+
+function showScanLoading(isLoading: boolean) {
+  const btnCapture = document.getElementById('btn-capture-scan');
+  if (!btnCapture) return;
+
+  if (isLoading) {
+    btnCapture.setAttribute('disabled', 'true');
+    btnCapture.style.opacity = '0.7';
+    btnCapture.innerHTML = `⚡ <span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> ${state.currentLang === 'pl' ? 'Skanowanie...' : (state.currentLang === 'en' ? 'Scanning...' : 'Сканирование ИИ...')}`;
+  } else {
+    btnCapture.removeAttribute('disabled');
+    btnCapture.style.opacity = '1';
+    btnCapture.innerHTML = `⚡ ${state.currentLang === 'pl' ? 'Oblicz kalorie' : (state.currentLang === 'en' ? 'Calculate calories' : 'Определить калории')}`;
+  }
 }
 
 function processPreset(presetKey: string) {
@@ -835,6 +1094,7 @@ function processPreset(presetKey: string) {
 }
 
 function renderScanResult(result: VisionScanResult) {
+  state.lastScanResult = result;
   const lang = state.currentLang;
   const tr = t();
 
@@ -863,7 +1123,7 @@ function renderScanResult(result: VisionScanResult) {
     <!-- Portion Weight Slider -->
     <div style="background: var(--bg-input); padding: 12px; border-radius: var(--radius-md); margin-bottom: 14px;">
       <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
-        <span>⚖️ Масса порции:</span>
+        <span>⚖️ ${tr.portionWeightLabel}</span>
         <strong id="portion-weight-label">${result.weightGrams} g</strong>
       </div>
       <input type="range" id="portion-slider" min="100" max="600" step="10" value="${result.weightGrams}" style="width: 100%; accent-color: var(--accent-primary);">
@@ -910,12 +1170,213 @@ function renderScanResult(result: VisionScanResult) {
 
   document.getElementById('btn-add-to-diary')?.addEventListener('click', () => {
     const finalKcal = parseInt(document.getElementById('dyn-calories')?.innerText || result.calories.toString());
-    state.diaryConsumed += finalKcal;
-    const consumed = document.getElementById('consumed-calories');
-    if (consumed) consumed.innerText = state.diaryConsumed.toLocaleString();
+    const finalP = Math.round(parseFloat(document.getElementById('dyn-protein')?.innerText || result.protein.toString()));
+    const finalF = Math.round(parseFloat(document.getElementById('dyn-fat')?.innerText || result.fat.toString()));
+    const finalC = Math.round(parseFloat(document.getElementById('dyn-carbs')?.innerText || result.carbs.toString()));
+
+    const newMeal: MealEntry = {
+      id: 'scan_' + Date.now(),
+      name: result.title[lang],
+      calories: finalKcal,
+      protein: finalP,
+      fat: finalF,
+      carbs: finalC,
+      mealType: 'lunch',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    if (!state.loggedMeals) state.loggedMeals = [];
+    state.loggedMeals.push(newMeal);
+    localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
     alert(`+ ${result.title[lang]} (${finalKcal} kcal)`);
     switchView('view-diary');
   });
+}
+
+function initDiary() {
+  const genderBtns = document.querySelectorAll<HTMLButtonElement>('.gender-btn');
+  genderBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      genderBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (state.userProfile) {
+        state.userProfile.gender = (btn.dataset.gender as any) || 'male';
+      }
+      updateLiveCalculatorOutput();
+    });
+  });
+
+  const inputs = ['calc-age', 'calc-weight', 'calc-height', 'calc-activity', 'calc-goal'];
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    el?.addEventListener('input', updateLiveCalculatorOutput);
+    el?.addEventListener('change', updateLiveCalculatorOutput);
+  });
+
+  document.getElementById('btn-apply-profile')?.addEventListener('click', () => {
+    const profile = getProfileFromInputs();
+    state.userProfile = profile;
+    localStorage.setItem('cookcraft_user_profile', JSON.stringify(profile));
+    renderDiary();
+    alert(state.currentLang === 'pl' ? 'Zapisano cel w dzienniku!' : (state.currentLang === 'en' ? 'Calorie target saved!' : 'Цель сохранена в дневнике!'));
+  });
+
+  document.getElementById('btn-add-quick-meal')?.addEventListener('click', () => {
+    const titlePrompt = state.currentLang === 'pl' ? 'Nazwa dania:' : (state.currentLang === 'en' ? 'Meal name:' : 'Название блюда:');
+    const kcalPrompt = state.currentLang === 'pl' ? 'Kalorie (kcal):' : (state.currentLang === 'en' ? 'Calories (kcal):' : 'Калории (ккал):');
+    
+    const name = prompt(titlePrompt, state.currentLang === 'pl' ? 'Przekąska' : 'Перекус');
+    if (!name) return;
+    const kcalStr = prompt(kcalPrompt, '250');
+    if (!kcalStr) return;
+    const calories = parseInt(kcalStr) || 0;
+    
+    const newMeal: MealEntry = {
+      id: 'meal_' + Date.now(),
+      name,
+      calories,
+      protein: Math.round(calories * 0.15 / 4),
+      fat: Math.round(calories * 0.3 / 9),
+      carbs: Math.round(calories * 0.55 / 4),
+      mealType: 'snack',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    if (!state.loggedMeals) state.loggedMeals = [];
+    state.loggedMeals.push(newMeal);
+    localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
+    renderDiary();
+  });
+}
+
+function getProfileFromInputs(): UserProfile {
+  const genderBtn = document.querySelector<HTMLButtonElement>('.gender-btn.active');
+  const gender = (genderBtn?.dataset.gender as any) || 'male';
+  const age = parseInt((document.getElementById('calc-age') as HTMLInputElement)?.value) || 25;
+  const weight = parseFloat((document.getElementById('calc-weight') as HTMLInputElement)?.value) || 75;
+  const height = parseFloat((document.getElementById('calc-height') as HTMLInputElement)?.value) || 178;
+  const activity = ((document.getElementById('calc-activity') as HTMLSelectElement)?.value as any) || 'moderate';
+  const goal = ((document.getElementById('calc-goal') as HTMLSelectElement)?.value as any) || 'maintain';
+
+  return createFullUserProfile(gender, age, weight, height, activity, goal);
+}
+
+function updateLiveCalculatorOutput() {
+  const profile = getProfileFromInputs();
+  
+  const bmrEl = document.getElementById('res-bmr');
+  const tdeeEl = document.getElementById('res-tdee');
+  const targetEl = document.getElementById('res-target');
+  const pEl = document.getElementById('res-macro-protein');
+  const fEl = document.getElementById('res-macro-fat');
+  const cEl = document.getElementById('res-macro-carbs');
+
+  const kcalUnit = state.currentLang === 'pl' ? 'kcal' : (state.currentLang === 'en' ? 'kcal' : 'ккал');
+
+  if (bmrEl) bmrEl.innerText = `${profile.bmr.toLocaleString()} ${kcalUnit}`;
+  if (tdeeEl) tdeeEl.innerText = `${profile.tdee.toLocaleString()} ${kcalUnit}`;
+  if (targetEl) targetEl.innerText = `${profile.targetCalories.toLocaleString()} ${kcalUnit}`;
+  
+  const pLabel = state.currentLang === 'pl' ? 'Białka' : (state.currentLang === 'en' ? 'Protein' : 'Белки');
+  const fLabel = state.currentLang === 'pl' ? 'Tłuszcze' : (state.currentLang === 'en' ? 'Fats' : 'Жиры');
+  const cLabel = state.currentLang === 'pl' ? 'Węglowodany' : (state.currentLang === 'en' ? 'Carbs' : 'Углеводы');
+
+  if (pEl) pEl.innerText = `${pLabel}: ${profile.targetProtein}g`;
+  if (fEl) fEl.innerText = `${fLabel}: ${profile.targetFat}g`;
+  if (cEl) cEl.innerText = `${cLabel}: ${profile.targetCarbs}g`;
+}
+
+function renderDiary() {
+  const tr = t();
+  const profile = state.userProfile || createFullUserProfile('male', 25, 75, 178, 'moderate', 'maintain');
+  const meals = state.loggedMeals || [];
+
+  // Update calculator inputs if form is loaded
+  const ageInput = document.getElementById('calc-age') as HTMLInputElement | null;
+  if (ageInput && ageInput.value !== profile.age.toString()) ageInput.value = profile.age.toString();
+  
+  const weightInput = document.getElementById('calc-weight') as HTMLInputElement | null;
+  if (weightInput && weightInput.value !== profile.weight.toString()) weightInput.value = profile.weight.toString();
+  
+  const heightInput = document.getElementById('calc-height') as HTMLInputElement | null;
+  if (heightInput && heightInput.value !== profile.height.toString()) heightInput.value = profile.height.toString();
+
+  updateLiveCalculatorOutput();
+
+  // Sum today's meals
+  const totalCalories = meals.reduce((sum, m) => sum + m.calories, 0);
+  const totalProtein = Math.round(meals.reduce((sum, m) => sum + m.protein, 0));
+  const totalFat = Math.round(meals.reduce((sum, m) => sum + m.fat, 0));
+  const totalCarbs = Math.round(meals.reduce((sum, m) => sum + m.carbs, 0));
+
+  state.diaryConsumed = totalCalories;
+
+  // Update Ring Gauge
+  const consumedEl = document.getElementById('consumed-calories');
+  if (consumedEl) consumedEl.innerText = totalCalories.toLocaleString();
+
+  const labelEl = document.getElementById('consumed-label-text');
+  if (labelEl) {
+    labelEl.innerText = tr.consumedLabel.replace('{target}', profile.targetCalories.toLocaleString());
+  }
+
+  const progressBar = document.getElementById('calorie-progress-bar') as SVGCircleElement | null;
+  if (progressBar) {
+    const radius = 42;
+    const circumference = 2 * Math.PI * radius; // ~263.89
+    const ratio = Math.min(totalCalories / profile.targetCalories, 1.2);
+    const offset = Math.max(0, circumference - (circumference * ratio));
+    progressBar.style.strokeDasharray = `${circumference}`;
+    progressBar.style.strokeDashoffset = `${offset}`;
+  }
+
+  // Update Macro Bars
+  const pText = document.getElementById('macro-protein');
+  if (pText) pText.innerText = `${totalProtein} g / ${profile.targetProtein} g`;
+  const fillP = document.getElementById('fill-protein');
+  if (fillP) fillP.style.width = `${Math.min(100, Math.round((totalProtein / profile.targetProtein) * 100))}%`;
+
+  const fText = document.getElementById('macro-fat');
+  if (fText) fText.innerText = `${totalFat} g / ${profile.targetFat} g`;
+  const fillF = document.getElementById('fill-fat');
+  if (fillF) fillF.style.width = `${Math.min(100, Math.round((totalFat / profile.targetFat) * 100))}%`;
+
+  const cText = document.getElementById('macro-carbs');
+  if (cText) cText.innerText = `${totalCarbs} g / ${profile.targetCarbs} g`;
+  const fillC = document.getElementById('fill-carbs');
+  if (fillC) fillC.style.width = `${Math.min(100, Math.round((totalCarbs / profile.targetCarbs) * 100))}%`;
+
+  // Render Meals List
+  const mealsList = document.getElementById('meals-list');
+  if (mealsList) {
+    if (meals.length === 0) {
+      mealsList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem;">
+        ${state.currentLang === 'pl' ? 'Brak wpisanych posiłków na dziś' : (state.currentLang === 'en' ? 'No logged meals for today' : 'Сегодня еще нет записей в дневнике')}
+      </div>`;
+    } else {
+      mealsList.innerHTML = meals.map(m => `
+        <div class="meal-item">
+          <div class="meal-info-left">
+            <span class="meal-title-name">${m.name}</span>
+            <span class="meal-time-tag">⏱️ ${m.time} • P: ${m.protein}g, F: ${m.fat}g, C: ${m.carbs}g</span>
+          </div>
+          <div class="meal-info-right">
+            <span class="meal-kcal-badge">${m.calories} kcal</span>
+            <button type="button" class="btn-remove-meal" data-id="${m.id}" title="Remove">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+
+      mealsList.querySelectorAll<HTMLButtonElement>('.btn-remove-meal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          state.loggedMeals = (state.loggedMeals || []).filter(m => m.id !== id);
+          localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
+          renderDiary();
+        });
+      });
+    }
+  }
 }
 
 function applyTheme(theme: 'dark' | 'light') {

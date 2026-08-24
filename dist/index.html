@@ -20,8 +20,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- App Styling -->
-  <script type="module" crossorigin src="/assets/index-BPH0WBEF.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BrHOExdj.css">
+  <script type="module" crossorigin src="/assets/index-BLm14BdZ.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CTPBsCzX.css">
 </head>
 <body class="dark-theme">
   <div id="app">
@@ -176,9 +176,13 @@
 
         <div class="shopping-layout">
           <div class="shopping-list-card">
-            <div class="card-header">
-              <h2 id="shopping-recipe-title">🛒 Ингредиенты к покупке</h2>
-              <button id="btn-clear-cart" class="btn-text danger">Очистить</button>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+              <div style="flex: 1;">
+                <h2 id="shopping-recipe-title" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin: 0; line-height: 1.4;">🛒 Ингредиенты к покупке</h2>
+              </div>
+              <button id="btn-clear-cart" class="btn btn-sm btn-outline danger" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 20px; white-space: nowrap; border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; background: rgba(239, 68, 68, 0.1); cursor: pointer; transition: all 0.2s ease;">
+                🗑️ Очистить
+              </button>
             </div>
 
             <div class="servings-control">
@@ -200,31 +204,47 @@
             </div>
           </div>
 
-          <div class="stores-compare-card">
-            <div class="card-header">
-              <h2>🏬 Ceny w supermarkecie</h2>
-              <div class="store-filter-toggle">
-                <button id="filter-best-price" class="toggle-btn active">💡 Najlepsza cena</button>
-                <button id="filter-nearest" class="toggle-btn">📍 Najbliższy</button>
+          <div class="stores-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 18px;">
+            <div class="shopping-subtabs" style="display: flex; gap: 10px; margin-bottom: 16px;">
+              <button id="tab-btn-comparison" class="btn btn-sm btn-primary active-tab" style="flex: 1; padding: 10px 14px; font-size: 0.9rem; font-weight: 600;">
+                🛒 Сравнение цен
+              </button>
+              <button id="tab-btn-deals" class="btn btn-sm btn-outline" style="flex: 1; padding: 10px 14px; font-size: 0.9rem; font-weight: 600;">
+                🔥 Выгодно сейчас
+              </button>
+            </div>
+
+            <div id="subtab-comparison-content">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h2 style="font-size: 1.1rem; margin: 0;">🏬 Цены в супермаркетах</h2>
+                <div class="store-filter-toggles" style="display: flex; gap: 6px;">
+                  <button id="filter-best-price" class="pill active" data-mode="best-price">💡 Выгода</button>
+                  <button id="filter-nearest" class="pill" data-mode="nearest">📍 Ближайший</button>
+                </div>
+              </div>
+
+              <div class="map-container" style="margin-bottom: 16px;">
+                <div class="map-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span>🗺️ Mapa sklepów w okolicy</span>
+                  <button id="btn-locate-me" class="geo-badge-btn" title="Moja lokalizacja">📍 Znajdź mnie (GPS)</button>
+                </div>
+                <div id="real-map" class="real-map" style="height: 280px; width: 100%; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);"></div>
+              </div>
+
+              <div class="address-search-bar" style="margin-bottom: 14px; display: flex; gap: 8px;">
+                <input type="text" id="store-address-input" placeholder="🔍 Wpisz swój adres lub miasto w Polsce (np. Warszawa, ul. Marszałkowska)..." style="flex-grow: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.85rem; outline: none;" />
+                <button id="btn-search-address" class="btn btn-sm btn-primary">Szukaj</button>
+              </div>
+
+              <div id="stores-list" class="stores-list">
+                <!-- Dynamically populated -->
               </div>
             </div>
 
-            <div class="map-container" style="margin-bottom: 16px;">
-              <div class="map-header">
-                <span>🗺️ Mapa sklepów w okolicy</span>
-                <button id="btn-locate-me" class="geo-badge-btn" title="Moja lokalizacja">📍 Znajdź mnie (GPS)</button>
+            <div id="subtab-deals-content" class="hidden">
+              <div id="promos-grid" class="promos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;">
+                <!-- Dynamically populated -->
               </div>
-              <div id="real-map" class="real-map"></div>
-            </div>
-
-            <div class="address-search-bar" style="margin-bottom: 14px; display: flex; gap: 8px;">
-              <input type="text" id="store-address-input" placeholder="🔍 Wpisz swój adres lub miasto w Polsce (np. Warszawa, ul. Marszałkowska)..." style="flex-grow: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.85rem; outline: none;" />
-              <button id="btn-search-address" class="btn btn-sm btn-primary">Szukaj</button>
-            </div>
-
-
-            <div id="stores-list" class="stores-list">
-              <!-- Dynamically populated -->
             </div>
           </div>
         </div>
@@ -234,55 +254,141 @@
       <section id="view-diary" class="view-page">
         <div class="section-header">
           <div>
-            <h1 class="page-title">Дневник питания</h1>
-            <p class="page-subtitle">Ваш баланс калорий и питательных веществ на сегодня</p>
+            <h1 class="page-title" id="diary-title">Дневник питания & Калькулятор</h1>
+            <p class="page-subtitle" id="diary-subtitle">Ваш научный баланс калорий и макронутриентов на сегодня</p>
           </div>
         </div>
 
         <div class="diary-dashboard">
-          <div class="calorie-summary-card">
-            <div class="gauge-container">
-              <div class="gauge-ring">
-                <svg viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="42" class="bg-ring"></circle>
-                  <circle cx="50" cy="50" r="42" class="progress-ring" id="calorie-progress-bar"></circle>
-                </svg>
-                <div class="gauge-text">
-                  <span id="consumed-calories" class="gauge-num">1 480</span>
-                  <span class="gauge-label">из 2 200 ккал</span>
+          <!-- BMR & TDEE Scientific Calculator Card -->
+          <div class="calculator-card glass-panel">
+            <h2 id="calc-header-title">🧮 Научный Калькулятор BMR & TDEE</h2>
+            <p class="calc-desc">Формула Миффлина-Сан Жеора для точного расчета суточной нормы</p>
+            
+            <form id="bmr-calculator-form" onsubmit="return false;">
+              <!-- Gender selector -->
+              <div class="form-group">
+                <label>Пол</label>
+                <div class="gender-toggle">
+                  <button type="button" class="gender-btn active" data-gender="male" id="btn-gender-male">👨 Мужчина</button>
+                  <button type="button" class="gender-btn" data-gender="female" id="btn-gender-female">👩 Женщина</button>
                 </div>
               </div>
-            </div>
 
-            <div class="macros-grid">
-              <div class="macro-item protein">
-                <div class="macro-info">
-                  <span>Белки</span>
-                  <strong id="macro-protein">85 g / 120 g</strong>
+              <!-- Body parameters grid -->
+              <div class="params-grid">
+                <div class="form-group">
+                  <label for="calc-age" id="lbl-calc-age">Возраст (лет)</label>
+                  <input type="number" id="calc-age" min="12" max="100" value="25" class="calc-input">
                 </div>
-                <div class="progress-track"><div class="progress-fill" style="width: 70%;"></div></div>
-              </div>
-              <div class="macro-item fat">
-                <div class="macro-info">
-                  <span>Жиры</span>
-                  <strong id="macro-fat">48 g / 70 g</strong>
+                <div class="form-group">
+                  <label for="calc-weight" id="lbl-calc-weight">Вес (кг)</label>
+                  <input type="number" id="calc-weight" min="30" max="250" value="75" step="0.5" class="calc-input">
                 </div>
-                <div class="progress-track"><div class="progress-fill" style="width: 68%;"></div></div>
-              </div>
-              <div class="macro-item carbs">
-                <div class="macro-info">
-                  <span>Углеводы</span>
-                  <strong id="macro-carbs">175 g / 250 g</strong>
+                <div class="form-group">
+                  <label for="calc-height" id="lbl-calc-height">Рост (см)</label>
+                  <input type="number" id="calc-height" min="100" max="230" value="178" class="calc-input">
                 </div>
-                <div class="progress-track"><div class="progress-fill" style="width: 70%;"></div></div>
               </div>
-            </div>
+
+              <!-- Activity Level Select -->
+              <div class="form-group">
+                <label for="calc-activity" id="lbl-calc-activity">Уровень активности</label>
+                <select id="calc-activity" class="calc-select">
+                  <option value="sedentary">💤 Сидячий образ жизни (x1.2)</option>
+                  <option value="light" selected>🚶 Легкие тренировки 1-3 р/нед (x1.375)</option>
+                  <option value="moderate">🏃 Умеренная активность 3-5 р/нед (x1.55)</option>
+                  <option value="very">🔥 Высокая активность 6-7 р/нед (x1.725)</option>
+                  <option value="extra">⚡ Экстремальный / Физический труд (x1.9)</option>
+                </select>
+              </div>
+
+              <!-- Goal Select -->
+              <div class="form-group">
+                <label for="calc-goal" id="lbl-calc-goal">Ваша цель</label>
+                <select id="calc-goal" class="calc-select">
+                  <option value="lose">📉 Похудение (-15% дефицит)</option>
+                  <option value="maintain" selected>⚖️ Поддержание веса (баланс)</option>
+                  <option value="gain">📈 Набор массы (+15% профицит)</option>
+                </select>
+              </div>
+
+              <!-- Live Calculated Output Box -->
+              <div class="calc-results-box">
+                <div class="result-row">
+                  <span id="lbl-bmr">BMR (Базовый метаболизм):</span>
+                  <strong id="res-bmr">1 755 ккал</strong>
+                </div>
+                <div class="result-row">
+                  <span id="lbl-tdee">TDEE (Суточный расход):</span>
+                  <strong id="res-tdee">2 413 ккал</strong>
+                </div>
+                <div class="result-row highlight">
+                  <span id="lbl-target">Суточная норма:</span>
+                  <strong id="res-target">2 413 ккал/день</strong>
+                </div>
+                <div class="macros-breakdown-row">
+                  <span id="res-macro-protein">Белки: 150г</span>
+                  <span id="res-macro-fat">Жиры: 75г</span>
+                  <span id="res-macro-carbs">Углеводы: 284г</span>
+                </div>
+              </div>
+
+              <button type="button" id="btn-apply-profile" class="btn-primary apply-calc-btn">
+                🎯 Применить норму в дневнике
+              </button>
+            </form>
           </div>
 
-          <div class="meals-log-card">
-            <h2>Приёмы пищи сегодня</h2>
-            <div id="meals-list" class="meals-list">
-              <!-- Dynamically populated -->
+          <!-- Right Column: Today's Summary & Logged Meals -->
+          <div class="tracker-column">
+            <div class="calorie-summary-card glass-panel">
+              <div class="gauge-container">
+                <div class="gauge-ring">
+                  <svg viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" class="bg-ring"></circle>
+                    <circle cx="50" cy="50" r="42" class="progress-ring" id="calorie-progress-bar"></circle>
+                  </svg>
+                  <div class="gauge-text">
+                    <span id="consumed-calories" class="gauge-num">0</span>
+                    <span class="gauge-label" id="consumed-label-text">из 2 413 ккал</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="macros-grid">
+                <div class="macro-item protein">
+                  <div class="macro-info">
+                    <span id="lbl-macro-p-title">Белки</span>
+                    <strong id="macro-protein">0 g / 150 g</strong>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill" id="fill-protein" style="width: 0%;"></div></div>
+                </div>
+                <div class="macro-item fat">
+                  <div class="macro-info">
+                    <span id="lbl-macro-f-title">Жиры</span>
+                    <strong id="macro-fat">0 g / 75 g</strong>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill" id="fill-fat" style="width: 0%;"></div></div>
+                </div>
+                <div class="macro-item carbs">
+                  <div class="macro-info">
+                    <span id="lbl-macro-c-title">Углеводы</span>
+                    <strong id="macro-carbs">0 g / 284 g</strong>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill" id="fill-carbs" style="width: 0%;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="meals-log-card glass-panel">
+              <div class="meals-log-header">
+                <h2 id="lbl-meals-header">Приёмы пищи сегодня</h2>
+                <button type="button" id="btn-add-quick-meal" class="btn-secondary btn-sm">+ Добавить блюдо</button>
+              </div>
+              <div id="meals-list" class="meals-list">
+                <!-- Dynamically populated -->
+              </div>
             </div>
           </div>
         </div>

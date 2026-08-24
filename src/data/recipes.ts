@@ -438,59 +438,6 @@ export const RECIPES_DATA: Recipe[] = [
     ]
   },
   {
-    id: "syrniki",
-    title: { ru: "Нежные сырники с ягодами", en: "Cottage Cheese Pancakes", pl: "Ser Nicze z owocami" },
-    category: "breakfast",
-    prepTime: { ru: "15 мин", en: "15 min", pl: "15 min" },
-    calories: 340,
-    rating: 4.9,
-    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=600&q=80",
-    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
-    description: {
-      ru: "Пышные сырники из фермерского творога со свежими ягодами.",
-      en: "Fluffy cottage cheese pancakes with fresh raspberries.",
-      pl: "Puszyste serniczki z twarogu ze świeżymi malinami."
-    },
-    ingredients: [
-      { name: { ru: "Творог 9%", en: "Cottage cheese 9%", pl: "Twaróg 9%" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 140 }
-    ],
-    steps: [
-      {
-        ru: "Жарка: сформируйте 6 шайб толщиной 2 см, обжаривайте на среднем огне по 3.5 минуты с каждой стороны.",
-        en: "Frying: shape into 6 discs (2cm thick), fry on medium heat for 3.5 minutes per side.",
-        pl: "Smażenie: uformuj 6 krążków o grubości 2 cm, smaż na średnim ogniu po 3.5 minuty z każdej strony."
-      }
-    ]
-  },
-  {
-    id: "greek_salad",
-    title: { ru: "Греческий салат с фетой", en: "Greek Salad with Feta", pl: "Sałatka grecka z fetą" },
-    category: "healthy",
-    prepTime: { ru: "10 мин", en: "10 min", pl: "10 min" },
-    calories: 260,
-    rating: 4.85,
-    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
-    description: {
-      ru: "Классический греческий салат с огурцами, томатами и фетой.",
-      en: "Classic Greek salad with cucumber, tomatoes, and feta.",
-      pl: "Klasyczna sałatka grecka z ogórkami, pomidorami i fetą."
-    },
-    ingredients: [
-      { name: { ru: "Огурцы и томаты", en: "Cucumbers & tomatoes", pl: "Ogórki i pomidory" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 90 },
-      { name: { ru: "Сыр Фета", en: "Feta cheese", pl: "Ser Feta" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 110 }
-    ],
-    steps: [
-      {
-        ru: "Нарезка: нарежьте томаты и огурцы крупными кубиками 2×2 см, фету кубиками 1.5×1.5 см.",
-        en: "Chopping: cut tomatoes and cucumbers into 2x2 cm chunks, feta into 1.5x1.5 cm cubes.",
-        pl: "Krojenie: pokrój pomidory i ogórki w dużą kostkę 2x2 cm, fetę w kostkę 1.5x1.5 cm."
-      }
-    ]
-  },
-  {
     id: "oatmeal",
     title: { ru: "Овсянка с бананом и орехами", en: "Oatmeal with Caramelized Banana", pl: "Owsianka z bananem i orzechami" },
     category: "breakfast",
@@ -501,19 +448,284 @@ export const RECIPES_DATA: Recipe[] = [
     image: "https://images.unsplash.com/photo-1517673400267-0251440c45dc?auto=format&fit=crop&w=600&q=80",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
-      ru: "Кремовая овсяная каша на миндальном молоке с бананом и орехами пекан.",
+      ru: "Кремовая овсяная каша на миндальном молоке с карамелизованным бананом и пеканом.",
       en: "Creamy almond milk oatmeal topped with caramelized banana and pecans.",
       pl: "Kremowa owsianka na mleku migdałowym z bananem i orzechami."
     },
     ingredients: [
       { name: { ru: "Овсяные хлопья", en: "Oat flakes", pl: "Płatki owsiane" }, qty: 80, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 35 },
-      { name: { ru: "Банан", en: "Banana", pl: "Banan" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 25 }
+      { name: { ru: "Миндальное молоко", en: "Almond milk", pl: "Mleko migdałowe" }, qty: 250, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 50 },
+      { name: { ru: "Банан спелый", en: "Ripe banana", pl: "Dojrzały banan" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 25 },
+      { name: { ru: "Мед натуральный", en: "Natural honey", pl: "Miód naturalny" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 30 }
     ],
     steps: [
       {
-        ru: "Варите 80г хлопьев в 200мл миндального молока ровно 5 минут на слабом огне.",
-        en: "Simmer 80g oat flakes in 200ml almond milk for exactly 5 minutes on low heat.",
-        pl: "Gotuj 80g płatków owsianych w 200ml mleka migdałowego dokładnie 5 minut."
+        ru: "Варка каши: засыпьте 80г овсяных хлопьев в сотейник с 250мл миндального молока и щепоткой соли. Варите 5 минут на слабом огне.",
+        en: "Cooking oatmeal: combine 80g oat flakes with 250ml almond milk and pinch of salt. Simmer 5 minutes on low heat.",
+        pl: "Gotowanie: wsyp 80g płatków owsianych do 250ml mleka migdałowego z szczyptą soli. Gotuj 5 minut na małym ogniu."
+      },
+      {
+        ru: "Карамелизация: нарежьте банан кружочками 1 см. Обжарьте на 10г сливочного масла с 1 ч.л. меда по 1.5 минуты с каждой стороны.",
+        en: "Caramelization: slice banana into 1cm coins. Fry in 10g butter with 1 tsp honey for 1.5 minutes per side until golden.",
+        pl: "Karmelizacja: pokrój banan w plastry 1 cm. Smaż na 10g masła z miodem po 1.5 minuty z każdej strony."
+      }
+    ]
+  },
+  {
+    id: "beef_burger",
+    title: { ru: "Чизбургер Блэк Ангус", en: "Black Angus Bacon Cheeseburger", pl: "Cheeseburger Black Angus z bekonem" },
+    category: "fast",
+    prepTime: { ru: "22 мин", en: "22 min", pl: "22 min" },
+    calories: 720,
+    rating: 4.96,
+    difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
+    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
+    description: {
+      ru: "Сочный бургер из мраморной говядины Блэк Ангус с расплавленным чеддером и беконом на бриошь.",
+      en: "Juicy Black Angus beef patty topped with melted cheddar, crispy bacon, and truffle sauce on brioche bun.",
+      pl: "Soczysty burger z wołowiny Black Angus z roztopionym cheddarem, bekonem i sosem na bułce brioche."
+    },
+    ingredients: [
+      { name: { ru: "Говяжий фарш Блэк Ангус", en: "Black Angus ground beef", pl: "Wołowina mielona Black Angus" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 240 },
+      { name: { ru: "Булочки Бриошь", en: "Brioche burger buns", pl: "Bułki Brioche" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 65 },
+      { name: { ru: "Сыр Чеддер", en: "Cheddar cheese", pl: "Ser Cheddar" }, qty: 2, unit: { ru: "ломтика", en: "slices", pl: "plastry" }, basePrice: 50 },
+      { name: { ru: "Бекон хрустящий", en: "Crispy bacon", pl: "Boczek chrupiący" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 70 }
+    ],
+    steps: [
+      {
+        ru: "Котлета: сформируйте из 180г фарша плоскую котлету диаметром 11 см, посолите и поперчите перед жаркой.",
+        en: "Patty prep: shape 180g beef into flat patty (11 cm wide), season with sea salt and black pepper just before searing.",
+        pl: "Kotlecie: uformuj z 180g wołowiny płaski kotlet (średnica 11 cm), dopraw solą i pieprzem tuż przed smażeniem."
+      },
+      {
+        ru: "Жарка: обжаривайте котлету на раскаленной сковороде по 2.5 минуты с каждой стороны. За 1 минуту до готовности выложите 2 ломтика чеддера.",
+        en: "Searing: cook patty on smoking hot skillet for 2.5 minutes per side. Top with 2 cheddar slices 1 minute before finishing to melt.",
+        pl: "Smażenie: smaż kotlet na mocno rozgrzanej patelni po 2.5 minuty z każdej strony. Połóż 2 plastry cheddara na 1 minutę przed końcem."
+      },
+      {
+        ru: "Сборка: обжарьте разрезанную булочку бриошь 1 минуту на сливочном масле. Смажьте соусом, выложите котлету с сыром, бекон и свежий огурец.",
+        en: "Assembly: toast sliced brioche bun in butter for 1 minute. Spread sauce, lay cheeseburger patty, crispy bacon, and pickles.",
+        pl: "Składanie: podsmaż bułkę brioche na masłe przez 1 minutę. Posmaruj sosem, ułóż kotlet z serem, bekon i ogórek konserwowy."
+      }
+    ]
+  },
+  {
+    id: "lasagna",
+    title: { ru: "Итальянская Лазанья Болоньезе", en: "Classic Lasagna Bolognese", pl: "Włoska Lazania Bolognese" },
+    category: "lunch",
+    prepTime: { ru: "50 мин", en: "50 min", pl: "50 min" },
+    calories: 610,
+    rating: 4.97,
+    difficulty: { ru: "Сложно", en: "Hard", pl: "Trudny" },
+    image: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
+    description: {
+      ru: "Традиционная итальянская лазанья с густым соусом Болоньезе, Бешамель и пармезаном.",
+      en: "Traditional Italian lasagna layered with rich Bolognese ragu, silky Béchamel, and parmesan.",
+      pl: "Tradycyjna włoska lazania z gęstym sosem Bolognese, sosem beszamelowym i parmezanem."
+    },
+    ingredients: [
+      { name: { ru: "Листы для лазаньи", en: "Lasagna sheets", pl: "Płaty do lazanii" }, qty: 12, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 95 },
+      { name: { ru: "Фарш говядина/свинина", en: "Beef & pork mince", pl: "Mięso mielone wołowo-wieprzowe" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 220 },
+      { name: { ru: "Сыр Моцарелла", en: "Mozzarella cheese", pl: "Ser Mozzarella" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 130 },
+      { name: { ru: "Томатная пассата", en: "Tomato passata", pl: "Passata pomidorowa" }, qty: 350, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 75 }
+    ],
+    steps: [
+      {
+        ru: "Соус Болоньезе: обжарьте лук, чеснок и 400г фарша 8 минут. Добавьте 350мл пассаты, базилик и томите 20 минут на слабом огне.",
+        en: "Bolognese sauce: saute onion, garlic and 400g mince for 8 minutes. Add 350ml passata, basil, and simmer 20 minutes on low heat.",
+        pl: "Sos Bolognese: podsmaż cebulę, czosnek i 400g mięsa przez 8 minut. Dodaj passatę pomidorową i dusić 20 minut."
+      },
+      {
+        ru: "Соус Бешамель: растопите 40г сливочного масла, всыпьте 40г муки, влейте 500мл молока и варите до загустения 5 минут со щепоткой мускатного ореха.",
+        en: "Béchamel sauce: melt 40g butter, whisk in 40g flour, pour 500ml milk and cook 5 minutes until thickened with pinch of nutmeg.",
+        pl: "Sos beszamelowy: roztop 40g masła, dodaj 40g mąki, wlej 500ml mleka i gotuj 5 minut do zgęstnienia."
+      },
+      {
+        ru: "Запекание: выложите слоями в форму: Бешамель, листы лазаньи, Болоньезе, моцареллу. Выпекайте при 190°C ровно 30 минут до золотистой корочки.",
+        en: "Baking: layer in baking dish: Béchamel, pasta sheets, Bolognese, mozzarella. Bake at 190°C for exactly 30 minutes until golden.",
+        pl: "Pieczenie: układaj warstwami: beszamel, płaty, Bolognese, mozzarellę. Piecz w 190°C przez dokładnie 30 minut."
+      }
+    ]
+  },
+  {
+    id: "pad_thai",
+    title: { ru: "Пад Тай с креветками", en: "Shrimp Pad Thai Noodles", pl: "Pad Thai z krewetkami" },
+    category: "lunch",
+    prepTime: { ru: "25 мин", en: "25 min", pl: "25 min" },
+    calories: 490,
+    rating: 4.92,
+    difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
+    image: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
+    description: {
+      ru: "Знаменитая тайская рисовая лапша вок с тигровыми креветками, арахисом и соусом тамаринд.",
+      en: "Famous Thai wok rice noodles stir-fried with tiger prawns, crushed peanuts, bean sprouts, and tamarind sauce.",
+      pl: "Słynny tajski makaron ryżowy z wok z krewetkami, orzeszkami ziemnymi i sosem tamaryndowym."
+    },
+    ingredients: [
+      { name: { ru: "Рисовая лапша", en: "Rice noodles", pl: "Makaron ryżowy" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 80 },
+      { name: { ru: "Тигровые креветки", en: "Tiger prawns", pl: "Krewetki tygrysie" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 320 },
+      { name: { ru: "Арахис дробленый", en: "Crushed peanuts", pl: "Orzeszki ziemne" }, qty: 30, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 35 },
+      { name: { ru: "Соус Пад Тай", en: "Pad Thai tamarind sauce", pl: "Sos Pad Thai" }, qty: 50, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 65 }
+    ],
+    steps: [
+      {
+        ru: "Замачивание: замочите 150г рисовой лапши в теплой воде на 15 минут. Обжарьте 180г креветок в воке 2 минуты на сильном огне.",
+        en: "Soaking: soak 150g rice noodles in warm water for 15 minutes. Stir-fry 180g prawns in hot wok for 2 minutes on high heat.",
+        pl: "Namaczanie: namocz 150g makaronu ryżowego w ciepłej wodzie przez 15 minut. Smaż 180g krewetek w woku przez 2 minuty."
+      },
+      {
+        ru: "Вок: отодвиньте креветки, вбей яйцо и быстро перемешайте. Добавьте лапшу, 50мл соуса Пад Тай и обжаривайте 3 минуты.",
+        en: "Wok stir-fry: push prawns aside, scramble 1 egg. Add drained noodles, 50ml Pad Thai sauce and toss vigorously for 3 minutes.",
+        pl: "Smażenie: przesuń krewetki, wbij jajko i wymieszaj. Dodaj makaron, sos Pad Thai i smaż przez 3 minuty."
+      },
+      {
+        ru: "Подача: посыпьте 30г дробленого арахиса, ростками сои и полейте соком 1/2 лайма.",
+        en: "Serving: top with 30g crushed peanuts, fresh bean sprouts, cilantro, and fresh lime wedge.",
+        pl: "Podanie: posyp 30g orzeszków ziemnych, kiełkami soi i skrop sokiem z limonki."
+      }
+    ]
+  },
+  {
+    id: "tiramisu",
+    title: { ru: "Итальянский десерт Тирамису", en: "Classic Italian Tiramisu", pl: "Włoski Deser Tiramisu" },
+    category: "dessert",
+    prepTime: { ru: "20 мин", en: "20 min", pl: "20 min" },
+    calories: 410,
+    rating: 4.99,
+    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
+    image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
+    description: {
+      ru: "Нежнейший итальянский десерт с сыром маскарпоне, печеньем савоярди и эспрессо.",
+      en: "Classic Italian dessert with creamy mascarpone, espresso-soaked ladyfingers, and cocoa powder.",
+      pl: "Klasyczny włoski deser z serem mascarpone, biszkoptami nasączonymi espresso i kakao."
+    },
+    ingredients: [
+      { name: { ru: "Сыр Маскарпоне", en: "Mascarpone cheese", pl: "Ser Mascarpone" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 160 },
+      { name: { ru: "Печенье Савоярди", en: "Ladyfingers (Savoiardi)", pl: "Biszkopty Savoiardi" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 90 },
+      { name: { ru: "Эспрессо свежесваренный", en: "Freshly brewed espresso", pl: "Świeże espresso" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 40 },
+      { name: { ru: "Какао-порошок", en: "Cocoa powder", pl: "Kakao" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 25 }
+    ],
+    steps: [
+      {
+        ru: "Крем: взбейте 3 желтка с 60г сахарной пудры до белой пены. Добавьте 250г маскарпоне и аккуратно перемешайте лопаткой.",
+        en: "Cream: beat 3 egg yolks with 60g powdered sugar until pale foam forms. Fold in 250g mascarpone gently with spatula.",
+        pl: "Krem: ubij 3 żółtka z 60g cukru pudru na puszystą masę. Dodaj 250g mascarpone i delikatnie wymieszaj."
+      },
+      {
+        ru: "Сборка: быстрыми движениями окунайте печенье савоярди в остывший эспрессо на 1 секунду и выкладывайте слоями с кремом.",
+        en: "Assembly: dip ladyfingers quickly into cold espresso (1 sec per side) and layer with mascarpone cream.",
+        pl: "Składanie: zanurzaj biszkopty w zimnym espresso na 1 sekundę i układaj warstwami z kremem."
+      },
+      {
+        ru: "Охлаждение: посыпьте сверху какао-порошком через ситечко и поставьте в холодильник минимум на 2 часа.",
+        en: "Chilling: dust top generously with cocoa powder and chill in refrigerator for at least 2 hours.",
+        pl: "Chłodzenie: posyp z wierzchu kakao i wstaw do lodówki na co najmniej 2 godziny."
+      }
+    ]
+  },
+  {
+    id: "salmon_cream_pasta",
+    title: { ru: "Паста с лососем и шпинатом", en: "Creamy Salmon & Spinach Pasta", pl: "Makaron z łososiem i szpinakiem" },
+    category: "lunch",
+    prepTime: { ru: "20 мин", en: "20 min", pl: "20 min" },
+    calories: 540,
+    rating: 4.94,
+    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
+    image: "https://images.unsplash.com/photo-1621996346565-e3d5d6288339?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
+    description: {
+      ru: "Фетучини с обжаренным филе лосося, свежим шпинатом и сливочно-чесночным соусом.",
+      en: "Fettuccine pasta with seared salmon chunks, fresh baby spinach, and garlic cream sauce.",
+      pl: "Fettuccine z podsmażonym filet z łososia, świeżym szpinakiem i sosem śmietankowym."
+    },
+    ingredients: [
+      { name: { ru: "Фетучини / Пенне", en: "Fettuccine pasta", pl: "Makaron Fettuccine" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 85 },
+      { name: { ru: "Филе лосося свежее", en: "Fresh salmon fillet", pl: "Filet z łososia" }, qty: 220, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 360 },
+      { name: { ru: "Сливки 20%", en: "Cooking cream 20%", pl: "Śmietanka 20%" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 65 },
+      { name: { ru: "Шпинат свежий", en: "Fresh baby spinach", pl: "Szpinak świeży" }, qty: 80, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 50 }
+    ],
+    steps: [
+      {
+        ru: "Лосось: нарежьте 220г лосося кубиками 2×2 см. Обжарьте на оливковом масле 3 минуты до золотистой корочки, переложите на тарелку.",
+        en: "Salmon: dice 220g salmon fillet into 2x2 cm cubes. Sear in olive oil for 3 minutes until golden, remove to plate.",
+        pl: "Łosoś: pokrój 220g łososia w kostkę 2x2 cm. Smaż na oliwie przez 3 minuty na złoty kolor, przełóż na talerz."
+      }
+    ]
+  },
+  {
+    id: "french_onion_soup",
+    title: { ru: "Французский Луковый Суп", en: "French Onion Soup with Gruyere", pl: "Francuska Zupa Cebulowa z serem" },
+    category: "lunch",
+    prepTime: { ru: "45 мин", en: "45 min", pl: "45 min" },
+    calories: 390,
+    rating: 4.89,
+    difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
+    image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
+    description: {
+      ru: "Классический суп из карамелизованного репчатого лука на говяжьем бульоне с запеченным сырным багетом.",
+      en: "Rich caramelized onion soup in beef broth topped with toasted baguette slice and melted Gruyere cheese.",
+      pl: "Klasyczna zupa z karmelizowanej cebuli na wywarze wołowym z pieczoną bagietką i serem."
+    },
+    ingredients: [
+      { name: { ru: "Лук репчатый", en: "Yellow onions", pl: "Cebula żółta" }, qty: 600, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 40 },
+      { name: { ru: "Говяжий бульон", en: "Beef broth", pl: "Wywar wołowy" }, qty: 700, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 60 },
+      { name: { ru: "Сыр Грюйер / Эмменталь", en: "Gruyere cheese", pl: "Ser Gruyere" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 120 },
+      { name: { ru: "Багет французский", en: "French baguette", pl: "Bagietka francuska" }, qty: 4, unit: { ru: "ломтика", en: "slices", pl: "plastry" }, basePrice: 35 }
+    ],
+    steps: [
+      {
+        ru: "Карамелизация: тонко нашинкуйте 600г лука. Томите на 40г сливочного масла на слабом огне 30 минут до глубокого янтарного цвета.",
+        en: "Caramelization: slice 600g onions thinly. Cook slowly in 40g butter on low heat for 30 minutes until deep golden brown.",
+        pl: "Karmelizacja: pokrój 600g cebuli w cienkie piórka. Smaż na 40g masła na małym ogieniu przez 30 minut na złoty kolor."
+      },
+      {
+        ru: "Бульон: влейте 700мл говяжьего бульона, 100мл белого сухого вина, добавьте тимьян и варите 15 минут.",
+        en: "Simmering: pour in 700ml beef broth, 100ml dry white wine, add fresh thyme and simmer 15 minutes.",
+        pl: "Gotowanie: wlej 700ml wywaru, 100ml białego wina, dodaj tymianek i gotuj 15 minut."
+      },
+      {
+        ru: "Запекание: разлейте суп в порционные горшочки, сверху выложите гренку багета и щедро посыпьте 100г сыра. Запекайте при 220°C ровно 6 минут до пузырящейся корочки.",
+        en: "Gratin: ladle soup into ovenproof bowls, top with toasted baguette and 100g cheese. Broil at 220°C for 6 mins until bubbly.",
+        pl: "Zapiekanie: rozlej zupę do miseczek, ułóż bagietkę i posyp serem. Zapiekaj w 220°C przez 6 minut."
+      }
+    ]
+  },
+  {
+    id: "pancakes",
+    title: { ru: "Американские панкейки с сиропом", en: "Fluffy American Pancakes", pl: "Puszyste Amerykańskie Pancakes" },
+    category: "breakfast",
+    prepTime: { ru: "15 мин", en: "15 min", pl: "15 min" },
+    calories: 380,
+    rating: 4.91,
+    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
+    image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
+    description: {
+      ru: "Пышные мягкие панкейки со сливочным маслом и натуральным кленовым сиропом.",
+      en: "Stack of fluffy, tender American pancakes served with butter and maple syrup.",
+      pl: "Puszyste amerykańskie pancakes podawane z masłem i syropem klonowym."
+    },
+    ingredients: [
+      { name: { ru: "Мука пшеничная", en: "Wheat flour", pl: "Mąka pszenna" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 40 },
+      { name: { ru: "Молоко 3.2%", en: "Milk 3.2%", pl: "Mleko 3.2%" }, qty: 220, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 35 },
+      { name: { ru: "Яйцо куриное", en: "Egg", pl: "Jajko" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 15 },
+      { name: { ru: "Кленовый сироп", en: "Maple syrup", pl: "Syrop klonowy" }, qty: 50, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 120 }
+    ],
+    steps: [
+      {
+        ru: "Тесто: смешайте 200г муки, 1 ч.л. разрыхлителя, 2 ст.л. сахара, 220мл молока, 1 яйцо и 30г растопленного масла до однородности.",
+        en: "Batter: whisk 200g flour, 1 tsp baking powder, 2 tbsp sugar, 220ml milk, 1 egg, and 30g melted butter until smooth.",
+        pl: "Ciasto: wymieszaj 200g mąki, proszek do pieczenia, cukier, 220ml mleka, 1 jajko i 30g roztopionego masła."
+      },
+      {
+        ru: "Жарка: выливайте по 2 ст.л. теста на сухую антипригарную сковороду. Жарьте 2 минуты до появления пузырьков, переверните и жарьте еще 1 минуту.",
+        en: "Cooking: pour 2 tbsp batter onto dry non-stick skillet. Cook 2 mins until bubbles form, flip and cook 1 min more until golden.",
+        pl: "Smażenie: nakładaj po 2 łyżki ciasta na suchą patelnię. Smaż 2 minuty do pojawienia się pęcherzyków, przewróć na 1 minutę."
       }
     ]
   }

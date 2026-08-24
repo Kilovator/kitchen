@@ -58,7 +58,9 @@ export function calculateStoreTotals(
     let dist = store.distanceMeters;
     let storeAddress = store.address;
 
-    if (userLoc && !store.id.startsWith('osm_') && !store.id.startsWith('google_')) {
+    const isRealCoordsStore = store.id.startsWith('osm_') || store.id.startsWith('google_') || store.id.startsWith('curated_') || (store.lat && store.lng && store.lat > 20);
+
+    if (userLoc && !isRealCoordsStore) {
       const off = offsets[store.id] || { lat: 0, lng: 0 };
       storeLat = userLoc.lat + off.lat;
       storeLng = userLoc.lng + off.lng;
@@ -68,14 +70,12 @@ export function calculateStoreTotals(
         en: `Store in your area (~${dist}m)`,
         ru: `Магазин поблизости (~${dist}м)`
       };
-    } else if (userLoc && (store.id.startsWith('osm_') || store.id.startsWith('google_'))) {
+    } else if (userLoc && isRealCoordsStore) {
       dist = getHaversineDistance(userLoc.lat, userLoc.lng, store.lat, store.lng);
     }
 
     const walkMinutes = Math.max(1, Math.round(dist / 80));
-    const walkTimeObj = store.id === 's3' ? {
-      ru: '15 мин доставка', en: '15 min delivery', pl: '15 min dostawa'
-    } : {
+    const walkTimeObj = {
       ru: `${walkMinutes} мин пешком`,
       en: `${walkMinutes} min walk`,
       pl: `${walkMinutes} min pieszo`
@@ -92,13 +92,13 @@ export function calculateStoreTotals(
     };
   });
 
-  // Filter to strictly max 4km radius if location is available
-  if (userLoc) {
-    const nearbyOnly = stores.filter(s => s.distanceMeters <= 4000);
-    if (nearbyOnly.length > 0) {
-      stores = nearbyOnly;
-    }
-  }
+  // Filter Żabka stores: keep ONLY the 5 closest Żabkas to avoid map cluttering
+  const zabkaStores = stores.filter(s => s.name.toLowerCase().includes('żabka') || s.name.toLowerCase().includes('zabka'));
+  const nonZabkaStores = stores.filter(s => !s.name.toLowerCase().includes('żabka') && !s.name.toLowerCase().includes('zabka'));
+
+  const closestZabkas = zabkaStores.sort((a, b) => a.distanceMeters - b.distanceMeters).slice(0, 5);
+
+  stores = [...closestZabkas, ...nonZabkaStores];
 
   if (mode === 'best-price') {
     stores.sort((a, b) => (a.totalCost || 0) - (b.totalCost || 0));

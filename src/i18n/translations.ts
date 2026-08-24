@@ -27,23 +27,33 @@ export interface Translations {
   camBtnScan: string;
   camBtnUpload: string;
   presetHeader: string;
+  presetBorscht: string;
+  presetCarbonara: string;
+  presetRibeye: string;
   scanValueHeader: string;
+  portionWeightLabel: string;
   addDiaryBtn: string;
   
   // Shopping
   shoppingTitle: string;
   shoppingSubtitle: string;
   shoppingCartHeader: string;
+  tabComparison: string;
+  tabDeals: string;
+  addToCartBtn: string;
+  validUntilPrefix: string;
   clearCartBtn: string;
   servingsLabel: string;
   addCustomPlaceholder: string;
   addBtn: string;
+  addressPlaceholder: string;
+  addressSearchBtn: string;
   storesHeader: string;
   bestPriceToggle: string;
   nearestToggle: string;
   mapHeader: string;
   
-  // Diary
+  // Diary & Calculator
   diaryTitle: string;
   diarySubtitle: string;
   consumedLabel: string;
@@ -51,6 +61,23 @@ export interface Translations {
   fatLabel: string;
   carbsLabel: string;
   mealsHeader: string;
+  calcHeader: string;
+  calcGenderMale: string;
+  calcGenderFemale: string;
+  calcAgeLabel: string;
+  calcWeightLabel: string;
+  calcHeightLabel: string;
+  calcActivityLabel: string;
+  calcGoalLabel: string;
+  calcBmrLabel: string;
+  calcTdeeLabel: string;
+  calcTargetLabel: string;
+  calcApplyBtn: string;
+  mealBreakfast: string;
+  mealLunch: string;
+  mealDinner: string;
+  mealSnack: string;
+  addMealBtn: string;
 
   // Nav
   navRecipes: string;
@@ -84,28 +111,55 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     camBtnScan: "⚡ Определить калории",
     camBtnUpload: "📁 Выбрать из Галереи",
     presetHeader: "Или выберите готовый пример блюда:",
+    presetBorscht: "🥣 Борщ домашний",
+    presetCarbonara: "🍝 Паста Карбонара",
+    presetRibeye: "🥩 Стейк Рибай",
     scanValueHeader: "Состав и пищевая ценность:",
+    portionWeightLabel: "Масса порции:",
     addDiaryBtn: "➕ Внести калории в Дневник Питания",
     
     shoppingTitle: "Список покупок & Магазины",
     shoppingSubtitle: "Рассчитайте стоимость продуктов и выберите выгодный супермаркет",
     shoppingCartHeader: " Ингредиенты к покупке",
+    tabComparison: "🛒 Сравнение цен",
+    tabDeals: "🔥 Выгодно сейчас",
+    addToCartBtn: "➕ В список покупок",
+    validUntilPrefix: "⏰ Акция до:",
     clearCartBtn: "Очистить",
     servingsLabel: "Количество порций:",
     addCustomPlaceholder: "+ Добавить свой продукт (напр. Молоко)",
     addBtn: "Добавить",
+    addressPlaceholder: "🔍 Введите ваш адрес или город в Польше (напр. Варшава)...",
+    addressSearchBtn: "Поиск",
     storesHeader: "🏬 Цены в супермаркетах",
     bestPriceToggle: "💡 Выгода",
     nearestToggle: "📍 Ближайший",
     mapHeader: "🗺️ Карта супермаркетов поблизости",
     
     diaryTitle: "Дневник питания",
-    diarySubtitle: "Ваш баланс калорий и питательных веществ на сегодня",
-    consumedLabel: "из 2 200 ккал",
+    diarySubtitle: "Ваш научный баланс калорий и макронутриентов на сегодня",
+    consumedLabel: "из {target} ккал",
     proteinLabel: "Белки",
     fatLabel: "Жиры",
     carbsLabel: "Углеводы",
     mealsHeader: "Приёмы пищи сегодня",
+    calcHeader: "🧮 Научный Калькулятор BMR & TDEE (Миффлин-Сан Жеор)",
+    calcGenderMale: "👨 Мужчина",
+    calcGenderFemale: "👩 Женщина",
+    calcAgeLabel: "Возраст (лет)",
+    calcWeightLabel: "Вес (кг)",
+    calcHeightLabel: "Рост (см)",
+    calcActivityLabel: "Уровень активности",
+    calcGoalLabel: "Ваша цель",
+    calcBmrLabel: "Базовый метаболизм (BMR):",
+    calcTdeeLabel: "Суточный расход (TDEE):",
+    calcTargetLabel: "Норма калорий в день:",
+    calcApplyBtn: "🎯 Применить норму в дневнике",
+    mealBreakfast: "🌅 Завтрак",
+    mealLunch: "☀️ Обед",
+    mealDinner: "🌙 Ужин",
+    mealSnack: "🍎 Перекус",
+    addMealBtn: "➕ Добавить блюдо",
 
     navRecipes: "Рецепты",
     navScanner: "Сканер",
@@ -136,28 +190,55 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     camBtnScan: "⚡ Scan Calories",
     camBtnUpload: "📁 Choose from Gallery",
     presetHeader: "Or choose a preset sample dish:",
+    presetBorscht: "🥣 Homemade Borscht",
+    presetCarbonara: "🍝 Pasta Carbonara",
+    presetRibeye: "🥩 Ribeye Steak",
     scanValueHeader: "Nutrition & Composition:",
+    portionWeightLabel: "Portion weight:",
     addDiaryBtn: "➕ Add Calories to Food Diary",
     
     shoppingTitle: "Shopping List & Stores",
     shoppingSubtitle: "Calculate ingredient cost & find the best nearby supermarket",
     shoppingCartHeader: " Shopping List",
+    tabComparison: "🛒 Price Comparison",
+    tabDeals: "🔥 Hot Deals",
+    addToCartBtn: "➕ Add to Shopping List",
+    validUntilPrefix: "⏰ Valid until:",
     clearCartBtn: "Clear",
     servingsLabel: "Number of servings:",
     addCustomPlaceholder: "+ Add custom item (e.g. Milk)",
     addBtn: "Add",
+    addressPlaceholder: "🔍 Enter your address or city in Poland (e.g. Warsaw)...",
+    addressSearchBtn: "Search",
     storesHeader: "🏬 Supermarket Prices",
     bestPriceToggle: "💡 Best Value",
     nearestToggle: "📍 Nearest",
     mapHeader: "🗺️ Nearby Supermarkets Map",
     
-    diaryTitle: "Food Diary",
-    diarySubtitle: "Your calorie and nutrient balance today",
-    consumedLabel: "of 2,200 kcal",
+    diaryTitle: "Food & Nutrition Diary",
+    diarySubtitle: "Your scientific calorie and macro balance for today",
+    consumedLabel: "of {target} kcal",
     proteinLabel: "Protein",
     fatLabel: "Fats",
     carbsLabel: "Carbs",
     mealsHeader: "Today's Meals",
+    calcHeader: "🧮 Scientific BMR & TDEE Calculator (Mifflin-St Jeor)",
+    calcGenderMale: "👨 Male",
+    calcGenderFemale: "👩 Female",
+    calcAgeLabel: "Age (years)",
+    calcWeightLabel: "Weight (kg)",
+    calcHeightLabel: "Height (cm)",
+    calcActivityLabel: "Activity Level",
+    calcGoalLabel: "Your Goal",
+    calcBmrLabel: "Basal Metabolic Rate (BMR):",
+    calcTdeeLabel: "Total Expenditure (TDEE):",
+    calcTargetLabel: "Daily Calorie Target:",
+    calcApplyBtn: "🎯 Apply Target to Diary",
+    mealBreakfast: "🌅 Breakfast",
+    mealLunch: "☀️ Lunch",
+    mealDinner: "🌙 Dinner",
+    mealSnack: "🍎 Snack",
+    addMealBtn: "➕ Add Meal",
 
     navRecipes: "Recipes",
     navScanner: "Scanner",
@@ -188,28 +269,55 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     camBtnScan: "⚡ Oblicz Kalorie",
     camBtnUpload: "📁 Wybierz z Galerii",
     presetHeader: "Lub wybierz gotowy przykład dania:",
+    presetBorscht: "🥣 Barszcz domowy",
+    presetCarbonara: "🍝 Makaron Carbonara",
+    presetRibeye: "🥩 Stek Ribeye",
     scanValueHeader: "Wartość odżywcza i skład:",
+    portionWeightLabel: "Masa porcji:",
     addDiaryBtn: "➕ Dodaj Kalorie do Dziennika",
     
     shoppingTitle: "Lista Zakupów i Sklepy",
     shoppingSubtitle: "Oblicz koszt produktów i wybierz najkorzystniejszy supermarkety",
     shoppingCartHeader: " Lista Zakupów",
+    tabComparison: "🛒 Porównanie cen",
+    tabDeals: "🔥 Wyjątkowe Promocje",
+    addToCartBtn: "➕ Dodaj do listy zakupów",
+    validUntilPrefix: "⏰ Okazja do:",
     clearCartBtn: "Wyczyść",
     servingsLabel: "Liczba porcji:",
     addCustomPlaceholder: "+ Dodaj własny produkt (np. Mleko)",
     addBtn: "Dodaj",
+    addressPlaceholder: "🔍 Wpisz swój adres lub miasto w Polsce (np. Warszawa)...",
+    addressSearchBtn: "Szukaj",
     storesHeader: "🏬 Ceny w Supermarketach",
     bestPriceToggle: "💡 Najtaniej",
     nearestToggle: "📍 Najbliżej",
     mapHeader: "🗺️ Mapa pobliskich sklepów",
     
     diaryTitle: "Dziennik Odżywiania",
-    diarySubtitle: "Twój bilans kalorii i składników odżywczych na dziś",
-    consumedLabel: "z 2 200 kcal",
+    diarySubtitle: "Twój naukowy bilans kalorii i składników odżywczych na dziś",
+    consumedLabel: "z {target} kcal",
     proteinLabel: "Białka",
     fatLabel: "Tłuszcze",
     carbsLabel: "Węglowodany",
     mealsHeader: "Dzisiejsze posiłki",
+    calcHeader: "🧮 Naukowy Kalkulator BMR & TDEE (Mifflin-St Jeor)",
+    calcGenderMale: "👨 Mężczyzna",
+    calcGenderFemale: "👩 Kobieta",
+    calcAgeLabel: "Wiek (lat)",
+    calcWeightLabel: "Waga (kg)",
+    calcHeightLabel: "Wzrost (cm)",
+    calcActivityLabel: "Poziom aktywności",
+    calcGoalLabel: "Twój cel",
+    calcBmrLabel: "Metabolizm bazowy (BMR):",
+    calcTdeeLabel: "Całkowity wydatek (TDEE):",
+    calcTargetLabel: "Zalecany cel kaloryczny:",
+    calcApplyBtn: "🎯 Zastosuj cel w dzienniku",
+    mealBreakfast: "🌅 Śniadanie",
+    mealLunch: "☀️ Obiad",
+    mealDinner: "🌙 Kolacja",
+    mealSnack: "🍎 Przekąska",
+    addMealBtn: "➕ Dodaj posiłek",
 
     navRecipes: "Przepisy",
     navScanner: "Skaner",

@@ -685,38 +685,92 @@ h1, h2, h3, h4 {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 14px;
-  max-height: 320px;
+  gap: 10px;
+  margin-bottom: 16px;
+  max-height: 380px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .shopping-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-input);
-  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  padding: 12px 16px;
   border-radius: var(--radius-md);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.shopping-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
 }
 
 .shopping-item.checked {
-  opacity: 0.45;
+  opacity: 0.55;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.shopping-item.checked .item-name {
   text-decoration: line-through;
+  color: var(--text-muted);
 }
 
 .item-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.item-name {
+  font-weight: 500;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.qty-badge {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.btn-delete-item {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.btn-delete-item:hover {
+  opacity: 1;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .chk-box {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
   accent-color: var(--accent-primary);
   cursor: pointer;
+  border-radius: 4px;
 }
 
 .add-custom-item {
@@ -1060,4 +1114,276 @@ h1, h2, h3, h4 {
   0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
   70% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
   100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+/* ==========================================================================
+   Scientific BMR & TDEE Nutrition Calculator Styles
+   ========================================================================== */
+/* Gauge & Ring Styles */
+.gauge-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.gauge-ring {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.gauge-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.bg-ring {
+  fill: none;
+  stroke: var(--bg-input);
+  stroke-width: 8;
+}
+
+.progress-ring {
+  fill: none;
+  stroke: var(--accent-primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.gauge-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.gauge-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  line-height: 1;
+}
+
+.gauge-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.diary-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .diary-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+.calculator-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.calculator-card h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-main);
+}
+
+.calc-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.gender-toggle {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.gender-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gender-btn.active {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.params-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.calc-input, .calc-select {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.calc-input:focus, .calc-select:focus {
+  border-color: var(--accent-primary);
+}
+
+.calc-results-box {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.result-row.highlight {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  border-top: 1px dashed rgba(16, 185, 129, 0.3);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.result-row.highlight strong {
+  font-size: 1.25rem;
+  color: var(--accent-amber);
+}
+
+.macros-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: 4px;
+}
+
+.apply-calc-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  font-size: 0.95rem;
+  border-radius: var(--radius-full);
+}
+
+.tracker-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.meals-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.meals-log-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.meal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+}
+
+.meal-info-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meal-title-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.meal-time-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.meal-info-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meal-kcal-badge {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent-amber);
+}
+
+.btn-remove-meal {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btn-remove-meal:hover {
+  background: rgba(239, 68, 68, 0.1);
 }

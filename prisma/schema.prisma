@@ -24,3 +24,23 @@ model SupermarketCache {
   data      String
   createdAt DateTime @default(now())
 }
+
+model Promotion {
+  id               String   @id @default(uuid())
+  storeName        String
+  storeLogo        String
+  productNameRu    String
+  productNamePl    String
+  productNameEn    String
+  originalPrice    Float
+  promoPrice       Float
+  discountBadge    String
+  validUntil       String
+  category         String
+  image            String
+  recommendationRu String
+  recommendationPl String
+  recommendationEn String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

@@ -1,6 +1,6 @@
 import { Language } from '../i18n/translations';
 
-export type CategoryType = 'all' | 'breakfast' | 'lunch' | 'healthy' | 'fast';
+export type CategoryType = 'all' | 'breakfast' | 'lunch' | 'dinner' | 'healthy' | 'fast' | 'dessert';
 
 export interface LocalizedString {
   ru: string;
@@ -60,6 +60,36 @@ export interface ScanPreset {
   image: string;
 }
 
+export type GenderType = 'male' | 'female';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very' | 'extra';
+export type GoalType = 'lose' | 'maintain' | 'gain';
+
+export interface UserProfile {
+  gender: GenderType;
+  age: number;
+  weight: number; // kg
+  height: number; // cm
+  activity: ActivityLevel;
+  goal: GoalType;
+  bmr: number;
+  tdee: number;
+  targetCalories: number;
+  targetProtein: number; // grams
+  targetFat: number; // grams
+  targetCarbs: number; // grams
+}
+
+export interface MealEntry {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  time: string;
+}
+
 export interface AppState {
   currentLang: Language;
   currentView: string;
@@ -75,4 +105,7 @@ export interface AppState {
   theme: 'dark' | 'light';
   userLocation: { lat: number; lng: number } | null;
   isStoresListExpanded?: boolean;
+  lastScanResult?: any;
+  userProfile?: UserProfile;
+  loggedMeals?: MealEntry[];
 }
