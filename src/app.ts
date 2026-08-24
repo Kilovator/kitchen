@@ -1,6 +1,14 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+// Fix Leaflet default marker icon path in production builds
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
 import { AppState, Recipe, CategoryType } from './types';
 import { RECIPES_DATA, SCAN_PRESETS } from './data/recipes';
 import { calculateStoreTotals, fetchRealSupermarkets, initGooglePlaces, fetchGooglePlacesSupermarkets } from './services/storeCalculator';
@@ -362,7 +370,7 @@ function renderRecipes() {
   grid.innerHTML = filtered.map(recipe => `
     <div class="recipe-card" data-id="${recipe.id}">
       <div class="recipe-thumb-container">
-        <img src="${recipe.image}" alt="${recipe.title[lang]}" class="recipe-thumb" loading="lazy">
+        <img src="${recipe.image}" alt="${recipe.title[lang]}" class="recipe-thumb" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';">
         <span class="badge-video">▶ Video</span>
       </div>
       <div class="recipe-info">

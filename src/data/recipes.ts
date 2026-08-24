@@ -53,7 +53,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 520,
     rating: 4.95,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/pasta_carbonara_1786617618459.jpg",
+    image: "/images/pasta_carbonara_1786617618459.jpg",
     videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
     description: {
       ru: "Классическая спагетти карбонара с хрустящей гуанчиале, яичными желтками и сыром Пекорино.",
@@ -96,7 +96,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 640,
     rating: 4.98,
     difficulty: { ru: "Сложно", en: "Hard", pl: "Trudny" },
-    image: "images/ribeye_steak_1786617848688.jpg",
+    image: "/images/ribeye_steak_1786617848688.jpg",
     videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
     description: {
       ru: "Сочный стейк Medium Rare с чесноком, розмарином и овощами-гриль.",
@@ -138,7 +138,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 450,
     rating: 4.88,
     difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "images/beef_tacos_1786619969488.jpg",
+    image: "/images/beef_tacos_1786619969488.jpg",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
       ru: "Кукурузные лепешки с тушеной говядиной, свежим гуакамоле и сальсой Пико-де-гальо.",
@@ -176,7 +176,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 560,
     rating: 4.93,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/butter_chicken_1786619986389.jpg",
+    image: "/images/butter_chicken_1786619986389.jpg",
     videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
     description: {
       ru: "Нежные кусочки куриного филе в соусе из томатов, сливок и пряных индийских специй.",
@@ -209,7 +209,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 360,
     rating: 4.9,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/tom_yum_soup_1786617631167.jpg",
+    image: "/images/tom_yum_soup_1786617631167.jpg",
     videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
     description: {
       ru: "Остро-кислый тайский суп с креветками и кокосовым молоком.",
@@ -241,7 +241,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 580,
     rating: 4.92,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/japanese_ramen_1786617864557.jpg",
+    image: "/images/japanese_ramen_1786617864557.jpg",
     videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
     description: {
       ru: "Японский суп рамен с нежной свининой Тясю, яйцом аджитама и нори.",
@@ -273,7 +273,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 310,
     rating: 4.85,
     difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "images/shakshuka_breakfast_1786617643118.jpg",
+    image: "/images/shakshuka_breakfast_1786617643118.jpg",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
       ru: "Восточный завтрак из яиц в сочном томатном соусе.",
@@ -305,7 +305,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 420,
     rating: 4.9,
     difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "images/belgian_waffles_1786617880120.jpg",
+    image: "/images/belgian_waffles_1786617880120.jpg",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
       ru: "Хрустящие вафли с мороженым и свежими ягодами.",

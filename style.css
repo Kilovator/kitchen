@@ -1071,6 +1071,13 @@ h1, h2, h3, h4 {
 }
 
 /* Custom Leaflet Pins */
+.leaflet-div-icon,
+.custom-map-pin-container,
+.user-pin-container {
+  background: transparent !important;
+  border: none !important;
+}
+
 .custom-map-pin {
   background: var(--bg-card);
   border: 2px solid var(--accent-primary);
