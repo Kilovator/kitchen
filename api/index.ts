@@ -337,7 +337,49 @@ app.get('/api/supermarkets', async (req, res) => {
         });
       }
     } catch (err) {
-      console.warn('Live Overpass fetch timed out or failed, using curated stores.');
+      console.warn('Live Overpass fetch timed out or failed, using curated or fallback stores.');
+    }
+
+    // Dynamic centered fallback stores if no curated/Overpass stores match location
+    if (mappedStores.length === 0) {
+      const fallbackChains = [
+        { id: 'gen_b1', name: 'Biedronka', brand: 'biedronka', offLat: 0.0022, offLng: -0.0019, addr: 'ul. Główna 14' },
+        { id: 'gen_l1', name: 'Lidl', brand: 'lidl', offLat: -0.0042, offLng: -0.0048, addr: 'ul. Handlowa 8' },
+        { id: 'gen_z1', name: 'Żabka', brand: 'żabka', offLat: 0.0011, offLng: 0.0008, addr: 'ul. Krótka 2' },
+        { id: 'gen_c1', name: 'Carrefour', brand: 'carrefour', offLat: -0.0028, offLng: 0.0031, addr: 'ul. Polna 5' },
+        { id: 'gen_a1', name: 'Auchan', brand: 'auchan', offLat: 0.0085, offLng: -0.0078, addr: 'ul. Słoneczna 1' },
+        { id: 'gen_d1', name: 'Dino', brand: 'dino', offLat: 0.0035, offLng: 0.0028, addr: 'ul. Ogrodowa 12' },
+        { id: 'gen_k1', name: 'Kaufland', brand: 'kaufland', offLat: 0.0090, offLng: 0.0082, addr: 'ul. Długa 45' },
+        { id: 'gen_s1', name: 'Stokrotka', brand: 'stokrotka', offLat: 0.0025, offLng: 0.0035, addr: 'ul. Kwiatowa 3' }
+      ];
+
+      fallbackChains.forEach(s => {
+        const storeLat = latVal + s.offLat;
+        const storeLng = lngVal + s.offLng;
+        const dist = getHaversineDistance(latVal, lngVal, storeLat, storeLng);
+        const walkMinutes = Math.max(1, Math.round(dist / 80));
+        const details = mapStoreDetails(s.name, { brand: s.brand });
+
+        mappedStores.push({
+          id: s.id,
+          name: s.name,
+          logo: details.logo,
+          priceMultiplier: details.priceMultiplier,
+          distanceMeters: dist,
+          walkTime: {
+            ru: `${walkMinutes} мин пешком`,
+            en: `${walkMinutes} min walk`,
+            pl: `${walkMinutes} min pieszo`
+          },
+          badge: { ru: details.badgeText, en: details.badgeText, pl: details.badgeText },
+          deliveryAvailable: true,
+          deliveryUrl: details.deliveryUrl,
+          mapUrl: `https://www.google.com/maps/search/?api=1&query=${storeLat},${storeLng}`,
+          lat: storeLat,
+          lng: storeLng,
+          address: { ru: `${s.addr} (~${dist}м)`, en: `${s.addr} (~${dist}m)`, pl: `${s.addr} (~${dist}m)` }
+        });
+      });
     }
 
     // Sort all mapped stores by distance

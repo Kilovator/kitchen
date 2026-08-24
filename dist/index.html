@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- App Styling -->
-  <script type="module" crossorigin src="/assets/index-DxBQ8kSV.js"></script>
+  <script type="module" crossorigin src="/assets/index-BxTRyDlv.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-DP1pkGrQ.css">
 </head>
 <body class="dark-theme">
@@ -263,12 +263,12 @@
           <!-- BMR & TDEE Scientific Calculator Card -->
           <div class="calculator-card glass-panel">
             <h2 id="calc-header-title">🧮 Научный Калькулятор BMR & TDEE</h2>
-            <p class="calc-desc">Формула Миффлина-Сан Жеора для точного расчета суточной нормы</p>
+            <p class="calc-desc" id="calc-desc-text">Формула Миффлина-Сан Жеора для точного расчета суточной нормы</p>
             
             <form id="bmr-calculator-form" onsubmit="return false;">
               <!-- Gender selector -->
               <div class="form-group">
-                <label>Пол</label>
+                <label id="lbl-calc-gender">Пол</label>
                 <div class="gender-toggle">
                   <button type="button" class="gender-btn active" data-gender="male" id="btn-gender-male">👨 Мужчина</button>
                   <button type="button" class="gender-btn" data-gender="female" id="btn-gender-female">👩 Женщина</button>

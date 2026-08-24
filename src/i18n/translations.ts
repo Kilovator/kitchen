@@ -62,13 +62,23 @@ export interface Translations {
   carbsLabel: string;
   mealsHeader: string;
   calcHeader: string;
+  calcDesc: string;
+  calcGenderLabel: string;
   calcGenderMale: string;
   calcGenderFemale: string;
   calcAgeLabel: string;
   calcWeightLabel: string;
   calcHeightLabel: string;
   calcActivityLabel: string;
+  calcActivitySedentary: string;
+  calcActivityLight: string;
+  calcActivityModerate: string;
+  calcActivityVery: string;
+  calcActivityExtra: string;
   calcGoalLabel: string;
+  calcGoalLose: string;
+  calcGoalMaintain: string;
+  calcGoalGain: string;
   calcBmrLabel: string;
   calcTdeeLabel: string;
   calcTargetLabel: string;
@@ -144,13 +154,23 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     carbsLabel: "Углеводы",
     mealsHeader: "Приёмы пищи сегодня",
     calcHeader: "🧮 Научный Калькулятор BMR & TDEE (Миффлин-Сан Жеор)",
+    calcDesc: "Формула Миффлина-Сан Жеора для точного расчета суточной нормы",
+    calcGenderLabel: "Пол",
     calcGenderMale: "👨 Мужчина",
     calcGenderFemale: "👩 Женщина",
     calcAgeLabel: "Возраст (лет)",
     calcWeightLabel: "Вес (кг)",
     calcHeightLabel: "Рост (см)",
     calcActivityLabel: "Уровень активности",
+    calcActivitySedentary: "💤 Сидячий образ жизни (x1.2)",
+    calcActivityLight: "🚶 Легкие тренировки 1-3 р/нед (x1.375)",
+    calcActivityModerate: "🏃 Умеренная активность 3-5 р/нед (x1.55)",
+    calcActivityVery: "🔥 Высокая активность 6-7 р/нед (x1.725)",
+    calcActivityExtra: "⚡ Экстремальный / Физический труд (x1.9)",
     calcGoalLabel: "Ваша цель",
+    calcGoalLose: "📉 Похудение (-15% дефицит)",
+    calcGoalMaintain: "⚖️ Поддержание веса (баланс)",
+    calcGoalGain: "📈 Набор массы (+15% профицит)",
     calcBmrLabel: "Базовый метаболизм (BMR):",
     calcTdeeLabel: "Суточный расход (TDEE):",
     calcTargetLabel: "Норма калорий в день:",
@@ -223,13 +243,23 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     carbsLabel: "Carbs",
     mealsHeader: "Today's Meals",
     calcHeader: "🧮 Scientific BMR & TDEE Calculator (Mifflin-St Jeor)",
+    calcDesc: "Mifflin-St Jeor formula for accurate daily calorie target",
+    calcGenderLabel: "Gender",
     calcGenderMale: "👨 Male",
     calcGenderFemale: "👩 Female",
     calcAgeLabel: "Age (years)",
     calcWeightLabel: "Weight (kg)",
     calcHeightLabel: "Height (cm)",
     calcActivityLabel: "Activity Level",
+    calcActivitySedentary: "💤 Sedentary lifestyle (x1.2)",
+    calcActivityLight: "🚶 Light exercise 1-3 days/wk (x1.375)",
+    calcActivityModerate: "🏃 Moderate exercise 3-5 days/wk (x1.55)",
+    calcActivityVery: "🔥 Heavy exercise 6-7 days/wk (x1.725)",
+    calcActivityExtra: "⚡ Extreme activity / Physical job (x1.9)",
     calcGoalLabel: "Your Goal",
+    calcGoalLose: "📉 Fat Loss (-15% deficit)",
+    calcGoalMaintain: "⚖️ Weight Maintenance (balance)",
+    calcGoalGain: "📈 Muscle Gain (+15% surplus)",
     calcBmrLabel: "Basal Metabolic Rate (BMR):",
     calcTdeeLabel: "Total Expenditure (TDEE):",
     calcTargetLabel: "Daily Calorie Target:",
@@ -302,13 +332,23 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     carbsLabel: "Węglowodany",
     mealsHeader: "Dzisiejsze posiłki",
     calcHeader: "🧮 Naukowy Kalkulator BMR & TDEE (Mifflin-St Jeor)",
+    calcDesc: "Wzór Mifflina-St Jeora do dokładnego obliczenia dziennego zapotrzebowania",
+    calcGenderLabel: "Płeć",
     calcGenderMale: "👨 Mężczyzna",
     calcGenderFemale: "👩 Kobieta",
     calcAgeLabel: "Wiek (lat)",
     calcWeightLabel: "Waga (kg)",
     calcHeightLabel: "Wzrost (cm)",
     calcActivityLabel: "Poziom aktywności",
+    calcActivitySedentary: "💤 Siedzący tryb życia (x1.2)",
+    calcActivityLight: "🚶 Lekki trening 1-3 razy/tydz (x1.375)",
+    calcActivityModerate: "🏃 Umiarkowany trening 3-5 razy/tydz (x1.55)",
+    calcActivityVery: "🔥 Duża aktywność 6-7 razy/tydz (x1.725)",
+    calcActivityExtra: "⚡ Ekstremalny / Praca fizyczna (x1.9)",
     calcGoalLabel: "Twój cel",
+    calcGoalLose: "📉 Odchudzanie (-15% deficyt)",
+    calcGoalMaintain: "⚖️ Utrzymanie wagi (bilans)",
+    calcGoalGain: "📈 Masa mięśniowa (+15% nadwyżka)",
     calcBmrLabel: "Metabolizm bazowy (BMR):",
     calcTdeeLabel: "Całkowity wydatek (TDEE):",
     calcTargetLabel: "Zalecany cel kaloryczny:",

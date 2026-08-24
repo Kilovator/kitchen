@@ -207,13 +207,19 @@ function updateStaticTexts() {
   const filterBest = document.getElementById('filter-best-price');
   const filterNear = document.getElementById('filter-nearest');
   if (filterBest) filterBest.textContent = tr.bestPriceToggle;
-  if (filterNear) filterNear.textContent = tr.nearestToggle;  const diaryTitle = document.getElementById('diary-title');
+  if (filterNear) filterNear.textContent = tr.nearestToggle;
+  
+  const diaryTitle = document.getElementById('diary-title');
   const diarySub = document.getElementById('diary-subtitle');
   if (diaryTitle) diaryTitle.textContent = tr.diaryTitle;
   if (diarySub) diarySub.textContent = tr.diarySubtitle;
 
   const calcH2 = document.getElementById('calc-header-title');
+  const calcDesc = document.getElementById('calc-desc-text');
+  const lblGender = document.getElementById('lbl-calc-gender');
   if (calcH2) calcH2.textContent = tr.calcHeader;
+  if (calcDesc) calcDesc.textContent = tr.calcDesc;
+  if (lblGender) lblGender.textContent = tr.calcGenderLabel;
 
   const maleBtn = document.getElementById('btn-gender-male');
   const femaleBtn = document.getElementById('btn-gender-female');
@@ -230,6 +236,32 @@ function updateStaticTexts() {
   if (lblHeight) lblHeight.textContent = tr.calcHeightLabel;
   if (lblActivity) lblActivity.textContent = tr.calcActivityLabel;
   if (lblGoal) lblGoal.textContent = tr.calcGoalLabel;
+
+  // Translate Activity Select Options
+  const actSelect = document.getElementById('calc-activity') as HTMLSelectElement | null;
+  if (actSelect) {
+    const optSedentary = actSelect.querySelector('option[value="sedentary"]');
+    const optLight = actSelect.querySelector('option[value="light"]');
+    const optModerate = actSelect.querySelector('option[value="moderate"]');
+    const optVery = actSelect.querySelector('option[value="very"]');
+    const optExtra = actSelect.querySelector('option[value="extra"]');
+    if (optSedentary) optSedentary.textContent = tr.calcActivitySedentary;
+    if (optLight) optLight.textContent = tr.calcActivityLight;
+    if (optModerate) optModerate.textContent = tr.calcActivityModerate;
+    if (optVery) optVery.textContent = tr.calcActivityVery;
+    if (optExtra) optExtra.textContent = tr.calcActivityExtra;
+  }
+
+  // Translate Goal Select Options
+  const goalSelect = document.getElementById('calc-goal') as HTMLSelectElement | null;
+  if (goalSelect) {
+    const optLose = goalSelect.querySelector('option[value="lose"]');
+    const optMaintain = goalSelect.querySelector('option[value="maintain"]');
+    const optGain = goalSelect.querySelector('option[value="gain"]');
+    if (optLose) optLose.textContent = tr.calcGoalLose;
+    if (optMaintain) optMaintain.textContent = tr.calcGoalMaintain;
+    if (optGain) optGain.textContent = tr.calcGoalGain;
+  }
 
   const lblBmr = document.getElementById('lbl-bmr');
   const lblTdee = document.getElementById('lbl-tdee');

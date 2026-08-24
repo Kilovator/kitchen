@@ -58,7 +58,7 @@ export function calculateStoreTotals(
     let dist = store.distanceMeters;
     let storeAddress = store.address;
 
-    const isRealCoordsStore = store.id.startsWith('osm_') || store.id.startsWith('google_') || store.id.startsWith('curated_') || (store.lat && store.lng && store.lat > 20);
+    const isRealCoordsStore = store.id.startsWith('osm_') || store.id.startsWith('google_') || store.id.startsWith('curated_');
 
     if (userLoc && !isRealCoordsStore) {
       const off = offsets[store.id] || { lat: 0, lng: 0 };
