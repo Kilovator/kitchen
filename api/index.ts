@@ -491,7 +491,7 @@ app.post('/api/scan-image', async (req, res) => {
   console.log('[Vision Simulator] Simulating calorie scan...');
   const samples = [
     {
-      title: { ru: "Свежий зеленый са salad с авокадо", en: "Fresh Green Avocado Salad", pl: "Świeża sałatka z awokado" },
+      title: { ru: "Свежий зеленый салат с авокадо", en: "Fresh Green Avocado Salad", pl: "Świeża sałatka z awokado" },
       weightGrams: 220,
       calories: 280,
       protein: 8,
@@ -541,97 +541,18 @@ app.post('/api/scan-image', async (req, res) => {
   return res.json(samples[idx]);
 });
 
-// 4. Supermarket Promotions & Vercel Cron Job Endpoints
-const DEFAULT_PROMOTIONS = [
-  {
-    id: 'promo_1',
-    storeName: 'Biedronka',
-    storeLogo: '🐞',
-    productName: { ru: 'Оливковое масло Extra Virgin 750ml', pl: 'Oliwa z oliwek Extra Virgin 750ml', en: 'Extra Virgin Olive Oil 750ml' },
-    originalPrice: 34.99,
-    promoPrice: 19.99,
-    discountBadge: '-42%',
-    validUntil: '2026-08-28',
-    category: 'healthy',
-    image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300&auto=format&fit=crop&q=80',
-    recommendation: { ru: '🔥 Лучшая цена на масло для салатов', pl: '🔥 Najlepsza cena na oliwę do sałatek', en: '🔥 Best price on salad oil' }
-  },
-  {
-    id: 'promo_2',
-    storeName: 'Lidl',
-    storeLogo: '🟡',
-    productName: { ru: 'Свежее филе лосося (100g)', pl: 'Świeży filet z łososia (100g)', en: 'Fresh Salmon Fillet (100g)' },
-    originalPrice: 8.99,
-    promoPrice: 5.49,
-    discountBadge: '-38%',
-    validUntil: '2026-08-27',
-    category: 'healthy',
-    image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&auto=format&fit=crop&q=80',
-    recommendation: { ru: '🐟 Супер цена на Омега-3', pl: '🐟 Super cena na Omega-3', en: '🐟 Super deal on Omega-3' }
-  },
-  {
-    id: 'promo_3',
-    storeName: 'Żabka',
-    storeLogo: '🐸',
-    productName: { ru: 'Протеиновый батончик Go On 50g', pl: 'Baton proteinowy Go On 50g', en: 'Go On Protein Bar 50g' },
-    originalPrice: 6.50,
-    promoPrice: 3.99,
-    discountBadge: '2 w cenie 1',
-    validUntil: '2026-08-30',
-    category: 'fast',
-    image: 'https://images.unsplash.com/photo-1622484210800-885100085897?w=300&auto=format&fit=crop&q=80',
-    recommendation: { ru: '⚡ Быстрый перекус для тренировок', pl: '⚡ Szybka przekąska po treningu', en: '⚡ Quick post-workout snack' }
-  },
-  {
-    id: 'promo_4',
-    storeName: 'Carrefour',
-    storeLogo: '🔵',
-    productName: { ru: 'Авокадо Hass (пачка 2 шт)', pl: 'Awokado Hass (paczka 2 szt)', en: 'Hass Avocado (2 pcs pack)' },
-    originalPrice: 12.99,
-    promoPrice: 7.99,
-    discountBadge: '-38%',
-    validUntil: '2026-08-29',
-    category: 'healthy',
-    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80',
-    recommendation: { ru: '🥑 Отлично к завтракам и салатам', pl: '🥑 Świetne do śniadań i sałatek', en: '🥑 Great for breakfasts & salads' }
-  },
-  {
-    id: 'promo_5',
-    storeName: 'Auchan',
-    storeLogo: '🔴',
-    productName: { ru: 'Итальянские спагетти Barilla 500g', pl: 'Włoski makaron Barilla 500g', en: 'Italian Spaghetti Barilla 500g' },
-    originalPrice: 7.49,
-    promoPrice: 4.49,
-    discountBadge: '-40%',
-    validUntil: '2026-08-31',
-    category: 'lunch',
-    image: 'https://images.unsplash.com/photo-1621996346565-e3d5d628876b?w=300&auto=format&fit=crop&q=80',
-    recommendation: { ru: '🍝 Идеально для пасты Карбонара', pl: '🍝 Idealny do makaronu Carbonara', en: '🍝 Perfect for Pasta Carbonara' }
-  },
-  {
-    id: 'promo_6',
-    storeName: 'Dino',
-    storeLogo: '🟢',
-    productName: { ru: 'Свежие черри томаты 500g', pl: 'Świeże pomidorki koktajlowe 500g', en: 'Fresh Cherry Tomatoes 500g' },
-    originalPrice: 9.99,
-    promoPrice: 5.99,
-    discountBadge: '-40%',
-    validUntil: '2026-08-28',
-    category: 'healthy',
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80',
-    recommendation: { ru: '🍅 Сочные и сладкие томаты', pl: '🍅 Słodkie i soczyste pomidorki', en: '🍅 Juicy sweet cherry tomatoes' }
-  }
-];
+import { getDynamicPromotions } from '../src/data/promotions';
 
 // Automated Vercel Cron Job Route (runs every night at 03:00 UTC)
 app.get('/api/cron/update-promotions', async (_req, res) => {
   try {
     const timestamp = new Date().toISOString();
+    const currentPromos = getDynamicPromotions();
     console.log(`[Vercel Cron Job] Automated promotion sync triggered at ${timestamp}`);
 
     // Sync with PostgreSQL database if connected
     if (prisma) {
-      for (const p of DEFAULT_PROMOTIONS) {
+      for (const p of currentPromos) {
         await (prisma as any).promotion.upsert({
           where: { id: p.id },
           update: {
@@ -673,7 +594,7 @@ app.get('/api/cron/update-promotions', async (_req, res) => {
 
     return res.json({
       success: true,
-      count: DEFAULT_PROMOTIONS.length,
+      count: currentPromos.length,
       timestamp,
       message: 'Promotions successfully updated via Cron Job'
     });
@@ -687,7 +608,7 @@ app.get('/api/cron/update-promotions', async (_req, res) => {
 app.get('/api/promotions', async (_req, res) => {
   try {
     if (prisma) {
-      const dbPromos = await (prisma as any).promotion.findMany();
+      const dbPromos = await (prisma as any).promotion.findMany().catch(() => null);
       if (dbPromos && dbPromos.length > 0) {
         const formatted = dbPromos.map((p: any) => ({
           id: p.id,
@@ -709,7 +630,7 @@ app.get('/api/promotions', async (_req, res) => {
     console.log('[Prisma Promos Fallback]: Serving default promotions.');
   }
 
-  return res.json(DEFAULT_PROMOTIONS);
+  return res.json(getDynamicPromotions());
 });
 
 // For local running (when not running inside Vercel serverless runtime)

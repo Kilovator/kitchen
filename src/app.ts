@@ -11,6 +11,7 @@ L.Icon.Default.mergeOptions({
 
 import { AppState, Recipe, CategoryType } from './types';
 import { RECIPES_DATA, SCAN_PRESETS } from './data/recipes';
+import { getDynamicPromotions, PromotionItem } from './data/promotions';
 import { calculateStoreTotals, fetchRealSupermarkets, initGooglePlaces, fetchGooglePlacesSupermarkets } from './services/storeCalculator';
 import { scannerService } from './services/scanner';
 import { aiVisionScanner, VisionScanResult } from './services/aiVisionScanner';
@@ -121,6 +122,7 @@ function initLangSwitcher() {
 }
 
 function updateStaticTexts() {
+  const lang = state.currentLang;
   const tr = t();
   
   const recipeTitle = document.querySelector('#view-recipes .page-title');
@@ -208,6 +210,12 @@ function updateStaticTexts() {
   const filterNear = document.getElementById('filter-nearest');
   if (filterBest) filterBest.textContent = tr.bestPriceToggle;
   if (filterNear) filterNear.textContent = tr.nearestToggle;
+
+  const btnLocate = document.getElementById('btn-locate-me');
+  if (btnLocate && !btnLocate.classList.contains('locating-pulse')) {
+    const curLang = state.currentLang;
+    btnLocate.textContent = curLang === 'ru' ? '📍 Найти меня (GPS)' : (curLang === 'pl' ? '📍 Znajdź mnie (GPS)' : '📍 Find me (GPS)');
+  }
   
   const diaryTitle = document.getElementById('diary-title');
   const diarySub = document.getElementById('diary-subtitle');
@@ -596,6 +604,16 @@ function initShopping() {
     renderStores();
   });
 
+  const btnLocateMe = document.getElementById('btn-locate-me');
+  btnLocateMe?.addEventListener('click', () => {
+    btnLocateMe.classList.add('locating-pulse');
+    const lang = state.currentLang;
+    btnLocateMe.textContent = lang === 'ru' ? '⏳ Поиск...' : (lang === 'pl' ? '⏳ Szukanie...' : '⏳ Locating...');
+    
+    lastGpsPos = null;
+    requestUserGeolocation();
+  });
+
   const btnAddressSearch = document.getElementById('btn-search-address');
   const addressInput = document.getElementById('store-address-input') as HTMLInputElement | null;
   const searchAddr = async () => {
@@ -773,56 +791,76 @@ function renderStores() {
 
 
 
+async function fetchIpLocation(callback: (lat: number, lng: number) => void) {
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        callback(data.latitude, data.longitude);
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('IP location fetch failed:', e);
+  }
+  // Fallback to Wroclaw center if IP lookup fails
+  callback(51.1079, 17.0385);
+}
+
 function requestUserGeolocation() {
   const lang = state.currentLang;
-  if (!navigator.geolocation || !leafletMap) return;
+  if (!leafletMap) return;
 
-  if (gpsWatchId !== null) {
+  if (gpsWatchId !== null && navigator.geolocation) {
     navigator.geolocation.clearWatch(gpsWatchId);
     gpsWatchId = null;
   }
-  lastGpsPos = null;
 
-  const handlePosition = async (pos: GeolocationPosition) => {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    const accuracy = pos.coords.accuracy;
+  const applyPosition = async (lat: number, lng: number, accuracy: number = 100) => {
+    state.userLocation = { lat, lng };
 
-    if (!lastGpsPos) {
+    if (leafletMap) {
       leafletMap.setView([lat, lng], 14);
+
+      if (userLocationMarker) leafletMap.removeLayer(userLocationMarker);
+      if (userAccuracyCircle) leafletMap.removeLayer(userAccuracyCircle);
+      if (radiusCircle) leafletMap.removeLayer(radiusCircle);
+
+      // 3.5 km radius visual indicator around user
+      radiusCircle = L.circle([lat, lng], {
+        radius: 3500,
+        color: '#10b981',
+        weight: 2,
+        dashArray: '6, 6',
+        fillColor: '#10b981',
+        fillOpacity: 0.06
+      }).addTo(leafletMap);
+
+      userAccuracyCircle = L.circle([lat, lng], {
+        radius: Math.min(accuracy, 500),
+        color: '#2563eb',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.15
+      }).addTo(leafletMap);
+
+      const userIcon = L.divIcon({
+        className: 'user-pin-container',
+        html: `<div class="user-location-pin">🔵 ${lang === 'ru' ? 'Вы здесь' : (lang === 'pl' ? 'Tu jesteś' : 'You are here')}</div>`,
+        iconSize: [110, 30],
+        iconAnchor: [55, 15]
+      });
+
+      userLocationMarker = L.marker([lat, lng], { icon: userIcon }).addTo(leafletMap);
     }
 
-    if (userLocationMarker) leafletMap.removeLayer(userLocationMarker);
-    if (userAccuracyCircle) leafletMap.removeLayer(userAccuracyCircle);
-    if (radiusCircle) leafletMap.removeLayer(radiusCircle);
+    const btnLocate = document.getElementById('btn-locate-me');
+    if (btnLocate) {
+      btnLocate.classList.remove('locating-pulse');
+      btnLocate.textContent = lang === 'ru' ? '📍 Найти меня (GPS)' : (lang === 'pl' ? '📍 Znajdź mnie (GPS)' : '📍 Find me (GPS)');
+    }
 
-    // 3.5 km radius visual indicator around user
-    radiusCircle = L.circle([lat, lng], {
-      radius: 3500,
-      color: '#10b981',
-      weight: 2,
-      dashArray: '6, 6',
-      fillColor: '#10b981',
-      fillOpacity: 0.06
-    }).addTo(leafletMap);
-
-    userAccuracyCircle = L.circle([lat, lng], {
-      radius: Math.min(accuracy, 500),
-      color: '#2563eb',
-      fillColor: '#3b82f6',
-      fillOpacity: 0.15
-    }).addTo(leafletMap);
-
-    const userIcon = L.divIcon({
-      className: 'user-pin-container',
-      html: `<div class="user-location-pin">🔵 ${lang === 'ru' ? 'Вы здесь' : (lang === 'pl' ? 'Tu jesteś' : 'You are here')}</div>`,
-      iconSize: [110, 30],
-      iconAnchor: [55, 15]
-    });
-
-    userLocationMarker = L.marker([lat, lng], { icon: userIcon }).addTo(leafletMap);
-
-    // Calculate distance moved from last update
+    const now = Date.now();
     let movedDistance = 999;
     if (lastGpsPos) {
       const R = 6371000;
@@ -832,23 +870,32 @@ function requestUserGeolocation() {
       movedDistance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    const now = Date.now();
-    const timeElapsed = now - lastFetchTime;
-
-    if (!lastGpsPos || (movedDistance > 50 && timeElapsed > 10000)) {
+    if (!lastGpsPos || (movedDistance > 50 && now - lastFetchTime > 8000)) {
       lastGpsPos = { lat, lng };
       lastFetchTime = now;
       await updateStoresForLocation(lat, lng);
     }
   };
 
-  gpsWatchId = navigator.geolocation.watchPosition(
-    handlePosition,
-    (err) => {
-      console.log('GPS Geolocation watch error:', err.message);
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
-  );
+  // 1. Try HTML5 Geolocation with enableHighAccuracy: false (fast & zero-timeout on desktop Wi-Fi)
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => applyPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+      (err) => {
+        console.warn('Geolocation fast fix failed, trying IP fallback:', err.message);
+        fetchIpLocation(applyPosition);
+      },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+    );
+
+    gpsWatchId = navigator.geolocation.watchPosition(
+      (pos) => applyPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+      (err) => console.warn('GPS watch error:', err.message),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 }
+    );
+  } else {
+    fetchIpLocation(applyPosition);
+  }
 }
 
 function renderMap(stores: any[]) {
@@ -858,8 +905,12 @@ function renderMap(stores: any[]) {
   const lang = state.currentLang;
   const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
 
+  const initialCenter = state.userLocation
+    ? [state.userLocation.lat, state.userLocation.lng]
+    : [51.1079, 17.0385];
+
   if (!leafletMap) {
-    leafletMap = L.map('real-map').setView([52.2297, 21.0122], 13);
+    leafletMap = L.map('real-map').setView(initialCenter as any, 13);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(leafletMap);
@@ -913,88 +964,141 @@ function renderMap(stores: any[]) {
   });
 }
 
+let activePromoStore = 'all';
+
 async function renderPromotions() {
   const container = document.getElementById('promos-grid');
+  const filterContainer = document.getElementById('promo-filter-container');
   if (!container) return;
 
   const lang = state.currentLang;
   const tr = t();
   const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
 
+  let rawPromos: PromotionItem[] = [];
+
   try {
-    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">⏳ ${lang === 'pl' ? 'Ładowanie promocji...' : (lang === 'en' ? 'Loading promotions...' : 'Загрузка акционных товаров...')}</div>`;
     const res = await fetch('/api/promotions');
-    const promos = await res.json();
-
-    if (!promos || promos.length === 0) {
-      container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">Brak aktywnych promocji</div>`;
-      return;
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        rawPromos = data;
+      }
     }
+  } catch (err) {
+    console.warn('API fetch failed for promotions, using local dynamic catalog:', err);
+  }
 
-    container.innerHTML = promos.map((item: any) => `
-      <div class="promo-card" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
-        <div style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 2px 8px; border-radius: var(--radius-sm);">
-          ${item.discountBadge}
-        </div>
-        
-        <div>
-          <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent-primary); margin-bottom: 6px;">
-            ${item.storeLogo} ${item.storeName}
-          </div>
+  // Fallback to rich local catalog if API failed or returned empty
+  if (!rawPromos || rawPromos.length === 0) {
+    rawPromos = getDynamicPromotions();
+  }
 
-          <div style="height: 120px; overflow: hidden; border-radius: var(--radius-sm); margin-bottom: 10px;">
-            <img src="${item.image}" alt="${item.productName[lang]}" style="width: 100%; height: 100%; object-fit: cover;">
-          </div>
+  // Render Supermarket Filter Chips
+  if (filterContainer) {
+    const storesMap = new Map<string, { logo: string; count: number }>();
+    rawPromos.forEach(p => {
+      const existing = storesMap.get(p.storeName) || { logo: p.storeLogo, count: 0 };
+      existing.count++;
+      storesMap.set(p.storeName, existing);
+    });
 
-          <h4 style="font-size: 0.92rem; font-weight: 600; margin: 0 0 4px 0; line-height: 1.3;">
-            ${item.productName[lang]}
-          </h4>
+    const storeEntries = Array.from(storesMap.entries());
 
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">
-            ${item.recommendation[lang]}
-          </div>
+    let chipsHtml = `
+      <button class="pill ${activePromoStore === 'all' ? 'active' : ''}" data-store="all">
+        🌐 ${lang === 'pl' ? 'Wszystkie' : (lang === 'en' ? 'All' : 'Все')} (${rawPromos.length})
+      </button>
+    `;
 
-          <div style="font-size: 0.7rem; color: #10b981; font-weight: 500; margin-bottom: 10px;">
-            ${tr.validUntilPrefix} ${item.validUntil}
-          </div>
-        </div>
+    storeEntries.forEach(([name, data]) => {
+      chipsHtml += `
+        <button class="pill ${activePromoStore === name ? 'active' : ''}" data-store="${name}">
+          ${data.logo} ${name} (${data.count})
+        </button>
+      `;
+    });
 
-        <div>
-          <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
-            <span style="font-size: 1.15rem; font-weight: 700; color: var(--accent-primary);">${item.promoPrice} ${currency}</span>
-            <span style="font-size: 0.8rem; color: var(--text-muted); text-decoration: line-through;">${item.originalPrice} ${currency}</span>
-          </div>
+    filterContainer.innerHTML = chipsHtml;
 
-          <button class="btn btn-sm btn-primary btn-add-promo" data-title="${item.productName[lang]}" data-price="${item.promoPrice}" style="width: 100%; font-size: 0.8rem; padding: 8px 10px; font-weight: 600;">
-            ${tr.addToCartBtn}
-          </button>
-        </div>
-      </div>
-    `).join('');
-
-    container.querySelectorAll<HTMLButtonElement>('.btn-add-promo').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLButtonElement;
-        const title = target.dataset.title;
-        const price = parseFloat(target.dataset.price || '0');
-        if (title) {
-          state.shoppingList.push({
-            name: { ru: title, en: title, pl: title },
-            qty: 1,
-            unit: { ru: 'шт', en: 'pcs', pl: 'szt' },
-            basePrice: price,
-            checked: false
-          });
-          renderShoppingList();
-          renderStores();
-          alert(`✅ ${title} ${lang === 'pl' ? 'dodano do listy!' : (lang === 'en' ? 'added to shopping list!' : 'добавлено в список!')}`);
-        }
+    filterContainer.querySelectorAll<HTMLButtonElement>('.pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activePromoStore = btn.dataset.store || 'all';
+        renderPromotions();
       });
     });
-  } catch (err) {
-    console.error('Failed to load promotions:', err);
-    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--accent-danger);">Błąd ładowania promocji</div>`;
   }
+
+  // Filter promos by selected store
+  const filteredPromos = activePromoStore === 'all'
+    ? rawPromos
+    : rawPromos.filter(p => p.storeName.toLowerCase() === activePromoStore.toLowerCase());
+
+  if (filteredPromos.length === 0) {
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">Brak promocji dla wybranego sklepu</div>`;
+    return;
+  }
+
+  container.innerHTML = filteredPromos.map((item: any) => `
+    <div class="promo-card" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+      <div style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 2px 8px; border-radius: var(--radius-sm);">
+        ${item.discountBadge}
+      </div>
+      
+      <div>
+        <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent-primary); margin-bottom: 6px;">
+          ${item.storeLogo} ${item.storeName}
+        </div>
+
+        <div style="height: 120px; overflow: hidden; border-radius: var(--radius-sm); margin-bottom: 10px;">
+          <img src="${item.image}" alt="${item.productName[lang]}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&auto=format&fit=crop&q=80';">
+        </div>
+
+        <h4 style="font-size: 0.92rem; font-weight: 600; margin: 0 0 4px 0; line-height: 1.3;">
+          ${item.productName[lang]}
+        </h4>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">
+          ${item.recommendation[lang]}
+        </div>
+
+        <div style="font-size: 0.7rem; color: #10b981; font-weight: 500; margin-bottom: 10px;">
+          ${tr.validUntilPrefix} ${item.validUntil}
+        </div>
+      </div>
+
+      <div>
+        <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
+          <span style="font-size: 1.15rem; font-weight: 700; color: var(--accent-primary);">${item.promoPrice} ${currency}</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-decoration: line-through;">${item.originalPrice} ${currency}</span>
+        </div>
+
+        <button class="btn btn-sm btn-primary btn-add-promo" data-title="${item.productName[lang]}" data-price="${item.promoPrice}" style="width: 100%; font-size: 0.8rem; padding: 8px 10px; font-weight: 600;">
+          ${tr.addToCartBtn}
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll<HTMLButtonElement>('.btn-add-promo').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const title = target.dataset.title;
+      const price = parseFloat(target.dataset.price || '0');
+      if (title) {
+        state.shoppingList.push({
+          name: { ru: title, en: title, pl: title },
+          qty: 1,
+          unit: { ru: 'шт', en: 'pcs', pl: 'szt' },
+          basePrice: price,
+          checked: false
+        });
+        renderShoppingList();
+        renderStores();
+        alert(`✅ ${title} ${lang === 'pl' ? 'dodano do listy!' : (lang === 'en' ? 'added to shopping list!' : 'добавлено в список!')}`);
+      }
+    });
+  });
 }
 
 // --- Scanner ---
