@@ -12,12 +12,14 @@ L.Icon.Default.mergeOptions({
 import { AppState, Recipe, CategoryType } from './types';
 import { RECIPES_DATA, SCAN_PRESETS } from './data/recipes';
 import { getDynamicPromotions, PromotionItem } from './data/promotions';
+import { searchCatalogProducts } from './data/groceryCatalog';
 import { calculateStoreTotals, fetchRealSupermarkets, initGooglePlaces, fetchGooglePlacesSupermarkets } from './services/storeCalculator';
+import { getItemDynamicPrice, getCartActiveTotal, fetchLiveSupermarketPricing } from './services/supermarketPriceService';
 import { scannerService } from './services/scanner';
 import { aiVisionScanner, VisionScanResult } from './services/aiVisionScanner';
 import { TRANSLATIONS, Language } from './i18n/translations';
 import { createFullUserProfile } from './services/nutritionCalculator';
-import { MealEntry, UserProfile } from './types';
+import { MealEntry, UserProfile, Ingredient } from './types';
 
 // Leaflet Map Global Variables (Declared at top to prevent TDZ ReferenceError)
 let leafletMap: any = null;
@@ -29,6 +31,46 @@ let gpsWatchId: number | null = null;
 let radiusCircle: any = null;
 let lastGpsPos: { lat: number; lng: number } | null = null;
 let lastFetchTime = 0;
+let activeMealCategoryFilter: 'all' | 'breakfast' | 'lunch' | 'dinner' | 'snack' = 'all';
+
+const SMART_MEAL_PRESETS = [
+  {
+    name: { pl: '🥣 Owsianka z borówkami i orzechami', en: '🥣 Oatmeal with Blueberries & Walnuts', ru: '🥣 Овсянка с черникой и орехами' },
+    calories: 340, protein: 12, fat: 9, carbs: 52, mealType: 'breakfast' as const
+  },
+  {
+    name: { pl: '🥪 Tost z awokado i jajkiem sadzonym', en: '🥪 Avocado Toast with Poached Egg', ru: '🥪 Тост с авокадо и яйцом пашот' },
+    calories: 390, protein: 18, fat: 22, carbs: 30, mealType: 'breakfast' as const
+  },
+  {
+    name: { pl: '🥗 Sałatka z grillowanym kurczakiem', en: '🥗 Grilled Chicken Salad Bowl', ru: '🥗 Салат с курицей гриль' },
+    calories: 460, protein: 42, fat: 16, carbs: 28, mealType: 'lunch' as const
+  },
+  {
+    name: { pl: '🍝 Makaron pełnoziarnisty Bolognese', en: '🍝 Whole-Wheat Pasta Bolognese', ru: '🍝 Паста Болоньезе цельнозерновая' },
+    calories: 580, protein: 36, fat: 18, carbs: 68, mealType: 'lunch' as const
+  },
+  {
+    name: { pl: '🥩 Łosoś pieczony z batatami i brokułem', en: '🥩 Baked Salmon with Sweet Potato & Broccoli', ru: '🥩 Запеченный лосось с бататом и брокколи' },
+    calories: 520, protein: 44, fat: 20, carbs: 42, mealType: 'dinner' as const
+  },
+  {
+    name: { pl: '🧀 Twaróg z rzodkiewką i szczypiorkiem', en: '🧀 Cottage Cheese with Radish & Chives', ru: '🧀 Творог с редисом и зеленью' },
+    calories: 260, protein: 32, fat: 6, carbs: 14, mealType: 'dinner' as const
+  },
+  {
+    name: { pl: '🥤 Shake białkowy z bananem i masłem orzechowym', en: '🥤 Protein Shake with Banana & Peanut Butter', ru: '🥤 Протеиновый коктейль с бананом' },
+    calories: 310, protein: 32, fat: 8, carbs: 32, mealType: 'snack' as const
+  },
+  {
+    name: { pl: '🍎 Jabłko z garścią migdałów', en: '🍎 Apple with Handful of Almonds', ru: '🍎 Яблоко с горстью миндаля' },
+    calories: 210, protein: 5, fat: 12, carbs: 22, mealType: 'snack' as const
+  },
+  {
+    name: { pl: '☕ Kawa Flat White (mleko owsiane)', en: '☕ Flat White (Oat Milk)', ru: '☕ Флэт уайт на овсяном молоке' },
+    calories: 130, protein: 3, fat: 4, carbs: 18, mealType: 'snack' as const
+  }
+];
 
 let savedLang = localStorage.getItem('cookcraft_lang') as Language;
 if (!savedLang || savedLang === 'ru') {
@@ -51,6 +93,28 @@ const defaultMeals: MealEntry[] = savedMealsRaw
       { id: 'meal_2', name: 'Cheeseburger Black Angus', calories: 720, protein: 42, fat: 38, carbs: 52, mealType: 'lunch', time: '13:15' }
     ];
 
+// Load persisted water consumption
+const savedWaterRaw = localStorage.getItem('cookcraft_water_consumed');
+const defaultWater = savedWaterRaw ? parseInt(savedWaterRaw) || 0 : 750;
+
+// Load persisted shopping list
+const savedShoppingListRaw = localStorage.getItem('cookcraft_shopping_list');
+const defaultShoppingList: Ingredient[] = savedShoppingListRaw 
+  ? JSON.parse(savedShoppingListRaw)
+  : RECIPES_DATA[0].ingredients.map(ing => ({ ...ing, checked: false }));
+
+// Load persisted servings count
+const savedServingsRaw = localStorage.getItem('cookcraft_servings_count');
+const defaultServings = savedServingsRaw ? parseInt(savedServingsRaw) || 2 : 2;
+
+// Load persisted active recipe
+const savedRecipeRaw = localStorage.getItem('cookcraft_shopping_recipe');
+const defaultRecipe = savedRecipeRaw ? JSON.parse(savedRecipeRaw) : RECIPES_DATA[0];
+
+let activePromoCategory = 'all';
+let promoSearchQuery = '';
+let promoSortBy = 'discount';
+
 // App State
 const state: AppState = {
   currentLang: savedLang,
@@ -58,11 +122,12 @@ const state: AppState = {
   recipes: RECIPES_DATA,
   activeFilter: 'all',
   searchQuery: '',
-  activeRecipeForShopping: RECIPES_DATA[0],
-  servingsCount: 2,
-  shoppingList: RECIPES_DATA[0].ingredients.map(ing => ({ ...ing, checked: false })),
+  activeRecipeForShopping: defaultRecipe,
+  servingsCount: defaultServings,
+  shoppingList: defaultShoppingList,
   storeFilterMode: 'best-price',
   diaryConsumed: 1040,
+  waterConsumedMl: defaultWater,
   cameraStream: null,
   theme: 'dark',
   userLocation: null,
@@ -70,6 +135,12 @@ const state: AppState = {
   userProfile: defaultProfile,
   loggedMeals: defaultMeals
 };
+
+function saveShoppingState() {
+  localStorage.setItem('cookcraft_shopping_list', JSON.stringify(state.shoppingList));
+  localStorage.setItem('cookcraft_servings_count', state.servingsCount.toString());
+  localStorage.setItem('cookcraft_shopping_recipe', JSON.stringify(state.activeRecipeForShopping));
+}
 
 function startApp() {
   initLangSwitcher();
@@ -80,6 +151,8 @@ function startApp() {
   initDiary();
   initThemeToggle();
   renderAll();
+  renderPromotions();
+  updateStaticTexts();
 }
 
 if (document.readyState === 'loading') {
@@ -95,8 +168,9 @@ function t() {
 function setLanguage(lang: Language) {
   state.currentLang = lang;
   localStorage.setItem('cookcraft_lang', lang);
-  updateStaticTexts();
   renderAll();
+  renderPromotions();
+  updateStaticTexts();
 }
 
 function initLangSwitcher() {
@@ -117,8 +191,6 @@ function initLangSwitcher() {
       btn.classList.remove('active');
     }
   });
-
-  updateStaticTexts();
 }
 
 function updateStaticTexts() {
@@ -183,11 +255,38 @@ function updateStaticTexts() {
   const servingsLbl = document.querySelector('.servings-control span');
   if (servingsLbl) servingsLbl.textContent = tr.servingsLabel;
 
+  const lblCustomTitle = document.getElementById('lbl-add-custom-title');
+  const lblCustomHint = document.getElementById('lbl-add-custom-hint');
+  const lblCustomQty = document.getElementById('lbl-custom-qty');
+  const lblCustomUnit = document.getElementById('lbl-custom-unit');
+  const lblCustomPrice = document.getElementById('lbl-custom-price');
+  const addBtn = document.getElementById('btn-add-item');
+  if (lblCustomTitle) lblCustomTitle.textContent = tr.addCustomTitle;
+  if (lblCustomHint) lblCustomHint.textContent = tr.addCustomHint;
+  if (lblCustomQty) lblCustomQty.textContent = tr.customQtyLabel;
+  if (lblCustomUnit) lblCustomUnit.textContent = tr.customUnitLabel;
+  if (lblCustomPrice) lblCustomPrice.textContent = tr.customPriceLabel;
+  if (addBtn) addBtn.textContent = tr.customAddBtn;
+
+  // Custom unit select options localization
+  const customUnitSelect = document.getElementById('custom-item-unit') as HTMLSelectElement | null;
+  if (customUnitSelect) {
+    const optSzt = customUnitSelect.querySelector('option[value="szt"]');
+    const optKg = customUnitSelect.querySelector('option[value="kg"]');
+    const optG = customUnitSelect.querySelector('option[value="g"]');
+    const optL = customUnitSelect.querySelector('option[value="l"]');
+    const optMl = customUnitSelect.querySelector('option[value="ml"]');
+    const optOpak = customUnitSelect.querySelector('option[value="opak."]');
+    if (optSzt) optSzt.textContent = lang === 'pl' ? 'szt (sztuka)' : (lang === 'en' ? 'pcs (piece)' : 'шт (штука)');
+    if (optKg) optKg.textContent = lang === 'pl' ? 'kg (kilogram)' : (lang === 'en' ? 'kg (kilogram)' : 'кг (килограмм)');
+    if (optG) optG.textContent = lang === 'pl' ? 'g (gram)' : (lang === 'en' ? 'g (gram)' : 'г (грамм)');
+    if (optL) optL.textContent = lang === 'pl' ? 'l (litr)' : (lang === 'en' ? 'l (liter)' : 'л (литр)');
+    if (optMl) optMl.textContent = lang === 'pl' ? 'ml (mililitr)' : (lang === 'en' ? 'ml (milliliter)' : 'мл (миллилитр)');
+    if (optOpak) optOpak.textContent = lang === 'pl' ? 'opak. (opakowanie)' : (lang === 'en' ? 'pack (package)' : 'упак. (упаковка)');
+  }
+
   const customInput = document.getElementById('custom-item-input') as HTMLInputElement | null;
   if (customInput) customInput.placeholder = tr.addCustomPlaceholder;
-
-  const addBtn = document.getElementById('btn-add-item');
-  if (addBtn) addBtn.textContent = tr.addBtn;
 
   const addrInput = document.getElementById('store-address-input') as HTMLInputElement | null;
   if (addrInput) addrInput.placeholder = tr.addressPlaceholder;
@@ -199,6 +298,34 @@ function updateStaticTexts() {
   const tabDeals = document.getElementById('tab-btn-deals');
   if (tabComparison) tabComparison.textContent = tr.tabComparison;
   if (tabDeals) tabDeals.textContent = tr.tabDeals;
+
+  const promoSearch = document.getElementById('promo-search-input') as HTMLInputElement | null;
+  if (promoSearch) promoSearch.placeholder = tr.promoSearchPlaceholder;
+
+  const promoSortSelect = document.getElementById('promo-sort-select') as HTMLSelectElement | null;
+  if (promoSortSelect) {
+    const optDisc = promoSortSelect.querySelector('option[value="discount"]');
+    const optPrice = promoSortSelect.querySelector('option[value="price-asc"]');
+    const optExp = promoSortSelect.querySelector('option[value="expiring"]');
+    if (optDisc) optDisc.textContent = tr.promoSortDiscount;
+    if (optPrice) optPrice.textContent = tr.promoSortPrice;
+    if (optExp) optExp.textContent = tr.promoSortExpiring;
+  }
+
+  const lblPromoCatHeader = document.getElementById('lbl-promo-cat-header');
+  const lblPromoStoreHeader = document.getElementById('lbl-promo-store-header');
+  if (lblPromoCatHeader) lblPromoCatHeader.textContent = tr.promoCatHeader;
+  if (lblPromoStoreHeader) lblPromoStoreHeader.textContent = tr.promoStoreHeader;
+
+  document.querySelectorAll<HTMLButtonElement>('#promo-cat-container .pill').forEach(pill => {
+    const cat = pill.dataset.promoCat;
+    if (cat === 'all') pill.textContent = `🌐 ${tr.catAll}`;
+    if (cat === 'healthy') pill.textContent = tr.promoCatHealthy;
+    if (cat === 'breakfast') pill.textContent = tr.promoCatBreakfast;
+    if (cat === 'lunch') pill.textContent = tr.promoCatLunch;
+    if (cat === 'fast') pill.textContent = tr.promoCatFast;
+    if (cat === 'dessert') pill.textContent = tr.promoCatDessert;
+  });
 
   const storesH2 = document.querySelector('#view-shopping .stores-card .card-header h2');
   if (storesH2) storesH2.textContent = tr.storesHeader;
@@ -239,11 +366,24 @@ function updateStaticTexts() {
   const lblHeight = document.getElementById('lbl-calc-height');
   const lblActivity = document.getElementById('lbl-calc-activity');
   const lblGoal = document.getElementById('lbl-calc-goal');
+  const lblFormula = document.getElementById('lbl-calc-formula');
   if (lblAge) lblAge.textContent = tr.calcAgeLabel;
   if (lblWeight) lblWeight.textContent = tr.calcWeightLabel;
   if (lblHeight) lblHeight.textContent = tr.calcHeightLabel;
   if (lblActivity) lblActivity.textContent = tr.calcActivityLabel;
   if (lblGoal) lblGoal.textContent = tr.calcGoalLabel;
+  if (lblFormula) lblFormula.textContent = tr.formulaLabel;
+
+  // Translate Formula Select Options
+  const formSelect = document.getElementById('calc-formula') as HTMLSelectElement | null;
+  if (formSelect) {
+    const optMifflin = formSelect.querySelector('option[value="mifflin"]');
+    const optHarris = formSelect.querySelector('option[value="harris"]');
+    const optWho = formSelect.querySelector('option[value="who"]');
+    if (optMifflin) optMifflin.textContent = `⭐ ${tr.formulaMifflin}`;
+    if (optHarris) optHarris.textContent = `🧬 ${tr.formulaHarris}`;
+    if (optWho) optWho.textContent = `🌍 ${tr.formulaWho}`;
+  }
 
   // Translate Activity Select Options
   const actSelect = document.getElementById('calc-activity') as HTMLSelectElement | null;
@@ -274,25 +414,75 @@ function updateStaticTexts() {
   const lblBmr = document.getElementById('lbl-bmr');
   const lblTdee = document.getElementById('lbl-tdee');
   const lblTarget = document.getElementById('lbl-target');
+  const lblBmi = document.getElementById('lbl-bmi');
+  const lblIdeal = document.getElementById('lbl-ideal-weight');
   if (lblBmr) lblBmr.textContent = tr.calcBmrLabel;
   if (lblTdee) lblTdee.textContent = tr.calcTdeeLabel;
   if (lblTarget) lblTarget.textContent = tr.calcTargetLabel;
+  if (lblBmi) lblBmi.textContent = tr.bmiLabel;
+  if (lblIdeal) lblIdeal.textContent = tr.idealWeightLabel;
 
   const applyBtn = document.getElementById('btn-apply-profile');
   if (applyBtn) applyBtn.textContent = tr.calcApplyBtn;
 
+  // Balance panel labels
+  const lblCalTarget = document.getElementById('lbl-cal-target-title');
+  const lblCalFood = document.getElementById('lbl-cal-food-title');
+  const lblCalRem = document.getElementById('lbl-cal-rem-title');
+  if (lblCalTarget) lblCalTarget.textContent = state.currentLang === 'pl' ? 'Cel' : (state.currentLang === 'en' ? 'Target' : 'Цель');
+  if (lblCalFood) lblCalFood.textContent = state.currentLang === 'pl' ? 'Zjedzone' : (state.currentLang === 'en' ? 'Food' : 'Еда');
+  if (lblCalRem) lblCalRem.textContent = tr.calorieRemainingLabel;
+
+  // Macro progress labels
   const pTitle = document.getElementById('lbl-macro-p-title');
   const fTitle = document.getElementById('lbl-macro-f-title');
   const cTitle = document.getElementById('lbl-macro-c-title');
-  if (pTitle) pTitle.textContent = tr.proteinLabel;
-  if (fTitle) fTitle.textContent = tr.fatLabel;
-  if (cTitle) cTitle.textContent = tr.carbsLabel;
+  const fibTitle = document.getElementById('lbl-macro-fib-title');
+  if (pTitle) pTitle.textContent = `🥩 ${tr.proteinLabel}`;
+  if (fTitle) fTitle.textContent = `🥑 ${tr.fatLabel}`;
+  if (cTitle) cTitle.textContent = `🌾 ${tr.carbsLabel}`;
+  if (fibTitle) fibTitle.textContent = `🥦 ${tr.fiberLabel}`;
 
+  // Water Tracker
+  const waterTitle = document.getElementById('lbl-water-title');
+  const waterAddBtn = document.getElementById('btn-water-add');
+  if (waterTitle) waterTitle.textContent = tr.waterTrackerTitle;
+  if (waterAddBtn) waterAddBtn.textContent = tr.waterAddGlass;
+
+  // Meals Header & Actions
   const mealsH2 = document.getElementById('lbl-meals-header');
+  const openMealModalBtn = document.getElementById('btn-open-meal-modal');
+  const clearDayBtn = document.getElementById('btn-clear-diary-day');
   if (mealsH2) mealsH2.textContent = tr.mealsHeader;
+  if (openMealModalBtn) openMealModalBtn.textContent = tr.addMealBtn;
+  if (clearDayBtn) clearDayBtn.textContent = tr.clearDayBtn;
 
-  const addMealBtn = document.getElementById('btn-add-quick-meal');
-  if (addMealBtn) addMealBtn.textContent = tr.addMealBtn;
+  // Meal Modal translations
+  const modalMealTitle = document.getElementById('lbl-modal-meal-title');
+  const lblQuickPreset = document.getElementById('lbl-quick-preset');
+  const lblModalName = document.getElementById('lbl-modal-name');
+  const lblModalType = document.getElementById('lbl-modal-type');
+  const lblModalKcal = document.getElementById('lbl-modal-kcal');
+  const btnCancelMeal = document.getElementById('btn-cancel-meal-modal');
+  const btnSaveMeal = document.getElementById('btn-save-meal-entry');
+  if (modalMealTitle) modalMealTitle.textContent = tr.mealModalTitle;
+  if (lblQuickPreset) lblQuickPreset.textContent = tr.mealQuickSelect;
+  if (lblModalName) lblModalName.textContent = tr.mealNameLabel;
+  if (lblModalType) lblModalType.textContent = tr.mealTypeLabel;
+  if (lblModalKcal) lblModalKcal.textContent = tr.mealCaloriesLabel;
+  if (btnCancelMeal) btnCancelMeal.textContent = state.currentLang === 'pl' ? 'Anuluj' : (state.currentLang === 'en' ? 'Cancel' : 'Отмена');
+  if (btnSaveMeal) btnSaveMeal.textContent = tr.saveMealBtn;
+
+  // Category filter tabs in meals card
+  const filterTabs = document.querySelectorAll<HTMLButtonElement>('#meal-filter-tabs .pill');
+  filterTabs.forEach(pill => {
+    const f = pill.dataset.mealFilter;
+    if (f === 'all') pill.textContent = tr.catAll;
+    if (f === 'breakfast') pill.textContent = tr.mealBreakfast;
+    if (f === 'lunch') pill.textContent = tr.mealLunch;
+    if (f === 'dinner') pill.textContent = tr.mealDinner;
+    if (f === 'snack') pill.textContent = tr.mealSnack;
+  });
 
   document.querySelectorAll<HTMLElement>('.nav-item').forEach(nav => {
     const target = nav.dataset.target;
@@ -304,7 +494,6 @@ function updateStaticTexts() {
     if (target === 'view-diary') label.textContent = tr.navDiary;
   });
 
-  renderDiary();
 }
 
 function renderAll() {
@@ -339,6 +528,16 @@ function switchView(targetId: string) {
     if (btn.dataset.target === targetId) btn.classList.add('active');
     else btn.classList.remove('active');
   });
+
+  // Widen main-content when on shopping view
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    if (targetId === 'view-shopping') {
+      mainContent.classList.add('shopping-view-active');
+    } else {
+      mainContent.classList.remove('shopping-view-active');
+    }
+  }
 
   if (targetId === 'view-shopping') {
     setTimeout(() => {
@@ -502,8 +701,16 @@ function openRecipeModal(recipeId: string) {
     btnStart.addEventListener('click', () => {
       state.activeRecipeForShopping = recipe;
       state.servingsCount = 2;
-      state.shoppingList = recipe.ingredients.map(ing => ({ ...ing, checked: false }));
+      state.shoppingList = recipe.ingredients.map(ing => ({ 
+        ...ing, 
+        checked: false,
+        isDiscrete: false,
+        baseQty: ing.qty,
+        initialBaseQty: ing.qty,
+        unitPrice: ing.basePrice / (ing.qty || 1)
+      }));
       
+      saveShoppingState();
       closeModal();
       renderShoppingList();
       renderStores();
@@ -521,6 +728,7 @@ function closeModal() {
 function initShopping() {
   document.getElementById('btn-inc-servings')?.addEventListener('click', () => {
     state.servingsCount++;
+    saveShoppingState();
     renderShoppingList();
     renderStores();
   });
@@ -528,32 +736,143 @@ function initShopping() {
   document.getElementById('btn-dec-servings')?.addEventListener('click', () => {
     if (state.servingsCount > 1) {
       state.servingsCount--;
+      saveShoppingState();
       renderShoppingList();
       renderStores();
     }
   });
 
   document.getElementById('btn-clear-cart')?.addEventListener('click', () => {
-    state.shoppingList = [];
-    renderShoppingList();
-    renderStores();
-  });
-
-  document.getElementById('btn-add-item')?.addEventListener('click', () => {
-    const input = document.getElementById('custom-item-input') as HTMLInputElement | null;
-    if (input && input.value.trim()) {
-      const val = input.value.trim();
-      state.shoppingList.push({
-        name: { ru: val, en: val, pl: val },
-        qty: 1,
-        unit: { ru: 'упак', en: 'pack', pl: 'opak' },
-        basePrice: 50,
-        checked: false
-      });
-      input.value = '';
+    const lang = state.currentLang;
+    if (confirm(lang === 'pl' ? 'Czy na pewno chcesz wyczyścić listę zakupów?' : (lang === 'en' ? 'Are you sure you want to clear the shopping list?' : 'Вы уверены, что хотите очистить список покупок?'))) {
+      state.shoppingList = [];
+      saveShoppingState();
       renderShoppingList();
       renderStores();
     }
+  });
+
+  // Custom Product Input with Smart Autocomplete & Unit Selector
+  const inputName = document.getElementById('custom-item-input') as HTMLInputElement | null;
+  const inputPrice = document.getElementById('custom-item-price') as HTMLInputElement | null;
+  const inputQty = document.getElementById('custom-item-qty') as HTMLInputElement | null;
+  const selectUnit = document.getElementById('custom-item-unit') as HTMLSelectElement | null;
+  const dropdown = document.getElementById('grocery-autocomplete-dropdown');
+  const validationMsg = document.getElementById('custom-item-validation-msg');
+
+  inputName?.addEventListener('input', () => {
+    const val = inputName.value.trim();
+    if (validationMsg) validationMsg.classList.add('hidden');
+    if (!val || val.length < 1) {
+      if (dropdown) dropdown.classList.add('hidden');
+      return;
+    }
+    const matches = searchCatalogProducts(val, state.currentLang);
+    if (!dropdown) return;
+    if (matches.length === 0) {
+      dropdown.classList.add('hidden');
+      return;
+    }
+    dropdown.innerHTML = matches.map(p => `
+      <div class="autocomplete-item" data-id="${p.id}" data-name="${p.name[state.currentLang]}" data-price="${p.marketPrice}" data-unit="${p.defaultUnit.pl}" data-qty="${p.defaultQty}">
+        <div class="autocomplete-left">
+          <span class="autocomplete-icon">${p.icon}</span>
+          <span class="autocomplete-name">${p.name[state.currentLang]}</span>
+        </div>
+        <span class="autocomplete-price">~${p.marketPrice.toFixed(2)} zł</span>
+      </div>
+    `).join('');
+    dropdown.classList.remove('hidden');
+
+    dropdown.querySelectorAll<HTMLDivElement>('.autocomplete-item').forEach(item => {
+      item.addEventListener('click', () => {
+        if (inputName) inputName.value = item.dataset.name || '';
+        if (inputPrice) inputPrice.value = (parseFloat(item.dataset.price || '4.50')).toFixed(2);
+        if (selectUnit) selectUnit.value = item.dataset.unit || 'szt';
+        if (inputQty) inputQty.value = item.dataset.qty || '1';
+        dropdown.classList.add('hidden');
+      });
+    });
+  });
+
+  // Hide dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (!dropdown?.contains(e.target as Node) && e.target !== inputName) {
+      dropdown?.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('btn-add-item')?.addEventListener('click', () => {
+    if (inputName) {
+      const rawName = inputName.value.trim().replace(/[<>]/g, '');
+      if (!rawName || rawName.length < 2) {
+        if (validationMsg) {
+          const lang = state.currentLang;
+          validationMsg.textContent = lang === 'pl' 
+            ? '⚠️ Wpisz poprawną nazwę produktu (min. 2 znaki).' 
+            : (lang === 'en' ? '⚠️ Enter a valid product name (min 2 chars).' : '⚠️ Введите корректное название товара (мин. 2 символа).');
+          validationMsg.classList.remove('hidden');
+        }
+        return;
+      }
+      if (validationMsg) validationMsg.classList.add('hidden');
+
+      const priceVal = inputPrice && parseFloat(inputPrice.value) > 0 ? parseFloat(inputPrice.value) : 4.50;
+      const qtyVal = inputQty && parseFloat(inputQty.value) > 0 ? parseFloat(inputQty.value) : 1;
+      const unitVal = selectUnit ? selectUnit.value : 'szt';
+
+      const unitLabelsMap: Record<string, { ru: string; en: string; pl: string }> = {
+        'szt': { ru: 'шт', en: 'pcs', pl: 'szt' },
+        'kg': { ru: 'кг', en: 'kg', pl: 'kg' },
+        'g': { ru: 'г', en: 'g', pl: 'g' },
+        'l': { ru: 'л', en: 'l', pl: 'l' },
+        'ml': { ru: 'мл', en: 'ml', pl: 'ml' },
+        'opak.': { ru: 'упак.', en: 'pack', pl: 'opak.' }
+      };
+      const localizedUnit = unitLabelsMap[unitVal] || { ru: unitVal, en: unitVal, pl: unitVal };
+
+      state.shoppingList.push({
+        name: { ru: rawName, en: rawName, pl: rawName },
+        qty: qtyVal,
+        unit: localizedUnit,
+        basePrice: priceVal,
+        checked: false,
+        isDiscrete: true
+      });
+
+      inputName.value = '';
+      if (inputPrice) inputPrice.value = '4.50';
+      if (inputQty) inputQty.value = '1';
+      dropdown?.classList.add('hidden');
+
+      saveShoppingState();
+      renderShoppingList();
+      renderStores();
+    }
+  });
+
+  // Deals Search & Sort Listeners
+  const searchInput = document.getElementById('promo-search-input') as HTMLInputElement | null;
+  searchInput?.addEventListener('input', () => {
+    promoSearchQuery = searchInput.value.trim();
+    renderPromotions();
+  });
+
+  const sortSelect = document.getElementById('promo-sort-select') as HTMLSelectElement | null;
+  sortSelect?.addEventListener('change', () => {
+    promoSortBy = sortSelect.value;
+    renderPromotions();
+  });
+
+  // Deals Category Filter Pills
+  const catPills = document.querySelectorAll<HTMLButtonElement>('#promo-cat-container .pill');
+  catPills.forEach(btn => {
+    btn.addEventListener('click', () => {
+      catPills.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePromoCategory = btn.dataset.promoCat || 'all';
+      renderPromotions();
+    });
   });
 
   const tabComparison = document.getElementById('tab-btn-comparison');
@@ -657,6 +976,8 @@ function initShopping() {
             });
             userLocationMarker = L.marker([lat, lng], { icon: searchIcon }).addTo(leafletMap);
           }
+          
+          state.userLocation = { lat, lng };
           await updateStoresForLocation(lat, lng);
         } else {
           alert('Adres nie został znaleziony. Spróbuj podać miasto i ulicę.');
@@ -670,8 +991,6 @@ function initShopping() {
   addressInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') searchAddr();
   });
-
-
 }
 
 async function updateStoresForLocation(lat: number, lng: number) {
@@ -687,46 +1006,179 @@ function renderShoppingList() {
   const title = document.getElementById('shopping-recipe-title');
   const servings = document.getElementById('servings-count');
   const list = document.getElementById('shopping-items-list');
+  const summaryBox = document.getElementById('cart-summary-box');
 
   const lang = state.currentLang;
   const tr = t();
+  const currency = 'zł';
 
-  if (title) title.innerText = `🛒 ${tr.shoppingCartHeader}: ${state.activeRecipeForShopping.title[lang]}`;
+  const recipeTitle = state.activeRecipeForShopping?.title?.[lang] || (lang === 'pl' ? 'Własny koszyk' : (lang === 'en' ? 'Custom Cart' : 'Мой список'));
+  if (title) title.innerText = `🛒 ${tr.shoppingCartHeader}: ${recipeTitle}`;
   if (servings) servings.innerText = state.servingsCount.toString();
   if (!list) return;
 
   const mult = state.servingsCount / 2;
 
-  list.innerHTML = state.shoppingList.map((item, idx) => `
-    <li class="shopping-item ${item.checked ? 'checked' : ''}">
-      <div class="item-left">
-        <input type="checkbox" class="chk-box" data-idx="${idx}" ${item.checked ? 'checked' : ''}>
-        <span class="item-name">${item.name[lang]}</span>
-      </div>
-      <div style="display: flex; align-items: center;">
-        <span class="qty-badge">${Math.round(item.qty * mult * 10) / 10} ${item.unit[lang]}</span>
-        <button class="btn-delete-item" data-idx="${idx}" title="${lang === 'pl' ? 'Usuń' : (lang === 'en' ? 'Delete' : 'Удалить')}">🗑️</button>
-      </div>
-    </li>
-  `).join('');
+  if (state.shoppingList.length === 0) {
+    list.innerHTML = `
+      <li style="padding: 28px 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem; list-style: none;">
+        🛒 ${lang === 'pl' ? 'Lista zakupów jest pusta. Dodaj składniki z przepisów lub z promocji!' : (lang === 'en' ? 'Shopping list is empty. Add items from recipes or hot deals!' : 'Список покупок пуст. Добавьте ингредиенты из рецептов или акций!')}
+      </li>
+    `;
+    if (summaryBox) summaryBox.innerHTML = '';
+    return;
+  }
 
+  list.innerHTML = state.shoppingList.map((item, idx) => {
+    let displayQtyStr = '';
+    const itemPrice = getItemDynamicPrice(item, state.servingsCount);
+
+    if (item.isDiscrete) {
+      displayQtyStr = `${item.qty} ${item.unit[lang]}`;
+    } else {
+      const baseQ = item.baseQty !== undefined ? item.baseQty : item.qty;
+      const scaledQty = Math.round(baseQ * mult * 10) / 10;
+      displayQtyStr = `${scaledQty} ${item.unit[lang]}`;
+    }
+
+    return `
+      <li class="shopping-item ${item.checked ? 'checked' : ''}">
+        <div class="item-left">
+          <input type="checkbox" class="chk-box" data-idx="${idx}" ${item.checked ? 'checked' : ''}>
+          <span class="item-name" title="${item.name[lang]}">${item.name[lang]}</span>
+        </div>
+        <div class="item-right">
+          <div class="qty-control-inline">
+            <button class="btn-qty-mini btn-dec-item-qty" data-idx="${idx}" title="Mniej">-</button>
+            <span class="qty-val-mini">${displayQtyStr}</span>
+            <button class="btn-qty-mini btn-inc-item-qty" data-idx="${idx}" title="Więcej">+</button>
+          </div>
+          <span class="item-price-pill">${itemPrice.toFixed(2)} ${currency}</span>
+          <button class="btn-delete-item" data-idx="${idx}" title="${lang === 'pl' ? 'Usuń' : (lang === 'en' ? 'Delete' : 'Удалить')}">🗑️</button>
+        </div>
+      </li>
+    `;
+  }).join('');
+
+  // Checkbox toggle
   list.querySelectorAll<HTMLInputElement>('.chk-box').forEach(chk => {
     chk.addEventListener('change', (e) => {
       const idx = parseInt((e.target as HTMLInputElement).dataset.idx || '0');
       state.shoppingList[idx].checked = (e.target as HTMLInputElement).checked;
+      saveShoppingState();
       renderShoppingList();
       renderStores();
     });
   });
 
-  list.querySelectorAll<HTMLButtonElement>('.btn-delete-item').forEach(btn => {
+  // Quantity stepper
+  list.querySelectorAll<HTMLButtonElement>('.btn-inc-item-qty').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const idx = parseInt((e.currentTarget as HTMLButtonElement).dataset.idx || '0');
-      state.shoppingList.splice(idx, 1);
+      const item = state.shoppingList[idx];
+      if (item.isDiscrete) {
+        item.qty = Math.round((item.qty + 1) * 10) / 10;
+      } else {
+        if (!item.initialBaseQty) {
+          item.initialBaseQty = item.qty || 1;
+        }
+        const u = item.unit.pl;
+        const step = (u === 'g' || u === 'ml') ? 50 : 1;
+        item.baseQty = (item.baseQty ?? item.qty) + step;
+      }
+      saveShoppingState();
       renderShoppingList();
       renderStores();
     });
   });
+
+  list.querySelectorAll<HTMLButtonElement>('.btn-dec-item-qty').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt((e.currentTarget as HTMLButtonElement).dataset.idx || '0');
+      const item = state.shoppingList[idx];
+      if (item.isDiscrete) {
+        if (item.qty > 1) {
+          item.qty = Math.round((item.qty - 1) * 10) / 10;
+        } else {
+          state.shoppingList.splice(idx, 1);
+        }
+      } else {
+        if (!item.initialBaseQty) {
+          item.initialBaseQty = item.qty || 1;
+        }
+        const u = item.unit.pl;
+        const step = (u === 'g' || u === 'ml') ? 50 : 1;
+        const currentBase = item.baseQty ?? item.qty;
+        if (currentBase > step) {
+          item.baseQty = currentBase - step;
+        } else {
+          state.shoppingList.splice(idx, 1);
+        }
+      }
+      saveShoppingState();
+      renderShoppingList();
+      renderStores();
+    });
+  });
+
+  // Delete item
+  list.querySelectorAll<HTMLButtonElement>('.btn-delete-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt((e.currentTarget as HTMLButtonElement).dataset.idx || '0');
+      state.shoppingList.splice(idx, 1);
+      saveShoppingState();
+      renderShoppingList();
+      renderStores();
+    });
+  });
+
+  // Render Cart Summary Box
+  if (summaryBox) {
+    const totalSubtotal = getCartActiveTotal(state.shoppingList, state.servingsCount);
+    const checkedCount = state.shoppingList.filter(item => item.checked).length;
+    const totalCount = state.shoppingList.length;
+
+    // Calculate best store cost
+    const stores = calculateStoreTotals(state.shoppingList, state.servingsCount, 'best-price', state.userLocation, realOsmStores);
+    const bestStore = stores[0];
+    const savings = bestStore ? Math.max(0, Math.round((totalSubtotal - (bestStore.totalCost || 0)) * 100) / 100) : 0;
+
+    summaryBox.innerHTML = `
+      <div class="cart-summary-metrics">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">📦 ${totalCount} ${tr.cartItemsCount} ${checkedCount > 0 ? `(${checkedCount} ${tr.boughtText})` : ''}</span>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.78rem; color: var(--text-muted);">${tr.cartSubtotal}</span>
+          <div class="subtotal-val">${Math.round(totalSubtotal * 100) / 100} ${currency}</div>
+        </div>
+      </div>
+      ${bestStore ? `
+        <div class="cart-savings-banner">
+          <span>🏆</span>
+          <span><strong>${bestStore.name}</strong>: ${bestStore.totalCost} ${currency} (${tr.savingText} ${savings} ${currency})</span>
+        </div>
+      ` : ''}
+      <button id="btn-copy-shopping-list" class="btn btn-sm btn-outline btn-copy-cart">
+        ${tr.cartCopyBtn}
+      </button>
+    `;
+
+    document.getElementById('btn-copy-shopping-list')?.addEventListener('click', () => {
+      const textToCopy = `🛒 ${tr.shoppingCartHeader} (${recipeTitle}):\n` + 
+        state.shoppingList.map(item => {
+          const q = item.isDiscrete ? item.qty : Math.round((item.baseQty ?? item.qty) * mult * 10) / 10;
+          return `• ${item.name[lang]}: ${q} ${item.unit[lang]}`;
+        }).join('\n') +
+        `\n💰 Suma: ${Math.round(totalSubtotal * 100) / 100} ${currency}`;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        alert(tr.cartCopiedMsg);
+      }).catch(() => {
+        alert('Skopiowano!');
+      });
+    });
+  }
 }
 
 function renderStores() {
@@ -737,35 +1189,63 @@ function renderStores() {
   const stores = calculateStoreTotals(state.shoppingList, state.servingsCount, state.storeFilterMode, state.userLocation, realOsmStores);
   const topId = stores[0]?.id;
 
-  const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
-  const mapBtnText = lang === 'pl' ? '📍 Google Maps' : (lang === 'en' ? '📍 Google Maps' : '📍 Google Карты');
+  const currency = 'zł';
+  const mapBtnText = lang === 'pl' ? '📍 Na mapie' : (lang === 'en' ? '📍 Map' : '📍 Карта');
+  const gmapBtnText = lang === 'pl' ? '🗺️ Google' : (lang === 'en' ? '🗺️ Google' : '🗺️ Google');
   const orderBtnText = lang === 'pl' ? '🚚 Zamów' : (lang === 'en' ? '🚚 Order' : '🚚 Заказать');
 
   // Collapse list by default to show only top 4 stores
   const visibleStores = state.isStoresListExpanded ? stores : stores.slice(0, 4);
 
-  let listHtml = visibleStores.map(store => `
-    <div class="store-item-card ${store.id === topId ? 'highlight' : ''}" id="store-card-${store.id}">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div class="store-logo">${store.logo}</div>
-        <div class="store-info">
-          <h4>${store.name} <span style="font-size: 0.72rem; color: var(--accent-primary); font-weight: 600;">[ ${store.badge[lang]} ]</span></h4>
-          <div class="store-meta">📍 ${store.address[lang]} • ${store.walkTime[lang]} (${store.distanceMeters} m)</div>
+  let listHtml = visibleStores.map((store) => {
+    const isCheapest = store.id === topId && (store.totalCost || 0) > 0;
+    const badgeText = typeof store.badge === 'object' && store.badge !== null
+      ? (store.badge[lang] || store.badge.pl || store.badge.ru || store.badge.en || '')
+      : (store.badge || (lang === 'pl' ? 'Sklep w okolicy' : (lang === 'en' ? 'Nearby store' : 'Магазин рядом')));
+    const cheapestBadgeText = lang === 'pl' ? '🏆 NAJTANIEJ' : (lang === 'en' ? '🏆 BEST VALUE' : '🏆 ВЫГОДНО');
+
+    const storeAddr = typeof store.address === 'object' && store.address !== null
+      ? (store.address[lang] || store.address.pl || store.address.ru || store.address.en || '')
+      : (store.address || '');
+
+    const storeWalk = typeof store.walkTime === 'object' && store.walkTime !== null
+      ? (store.walkTime[lang] || store.walkTime.pl || store.walkTime.ru || store.walkTime.en || '')
+      : (store.walkTime || (lang === 'pl' ? 'W pobliżu' : (lang === 'en' ? 'Nearby' : 'Рядом')));
+
+    return `
+      <div class="store-item-card ${isCheapest ? 'highlight' : ''}" id="store-card-${store.id}">
+        <div class="store-card-header">
+          <div class="store-brand-group">
+            <div class="store-logo">${store.logo}</div>
+            <div class="store-title-area">
+              <div class="store-name-line">
+                <h4>${store.name}</h4>
+                <span class="store-badge-pill">${badgeText}</span>
+                ${isCheapest ? `<span class="cheapest-badge-pill">${cheapestBadgeText}</span>` : ''}
+              </div>
+              <div class="store-meta-line">📍 ${storeAddr} • ⏱️ ${storeWalk} (${store.distanceMeters} m)</div>
+            </div>
+          </div>
+          <div class="store-price-area">
+            <div class="total-sum">${store.totalCost} ${currency}</div>
+          </div>
+        </div>
+        <div class="store-card-footer">
+          <div class="store-action-buttons">
+            <button class="btn btn-sm btn-outline btn-pan-store-map" data-lat="${store.lat}" data-lng="${store.lng}" data-id="${store.id}">
+              ${mapBtnText}
+            </button>
+            <a href="${store.mapUrl}" target="_blank" class="btn btn-sm btn-outline">
+              ${gmapBtnText}
+            </a>
+            <a href="${store.deliveryUrl}" target="_blank" class="btn btn-sm btn-primary">
+              ${orderBtnText}
+            </a>
+          </div>
         </div>
       </div>
-      <div class="store-price" style="text-align: right;">
-        <div class="total-sum">${store.totalCost} ${currency}</div>
-        <div style="display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end;">
-          <a href="${store.mapUrl}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.75rem; text-decoration: none; padding: 4px 8px;">
-            ${mapBtnText}
-          </a>
-          <a href="${store.deliveryUrl}" target="_blank" class="btn btn-sm btn-primary" style="font-size: 0.75rem; text-decoration: none; padding: 4px 8px;">
-            ${orderBtnText}
-          </a>
-        </div>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   if (stores.length > 4) {
     const buttonText = state.isStoresListExpanded 
@@ -780,6 +1260,25 @@ function renderStores() {
   }
 
   container.innerHTML = listHtml;
+
+  // Store card "📍 Na mapie" click handler
+  container.querySelectorAll<HTMLButtonElement>('.btn-pan-store-map').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const lat = parseFloat((e.currentTarget as HTMLButtonElement).dataset.lat || '0');
+      const lng = parseFloat((e.currentTarget as HTMLButtonElement).dataset.lng || '0');
+      if (leafletMap && lat && lng) {
+        leafletMap.setView([lat, lng], 15);
+        const targetMarker = mapMarkers.find(m => {
+          const pos = m.getLatLng();
+          return Math.abs(pos.lat - lat) < 0.0001 && Math.abs(pos.lng - lng) < 0.0001;
+        });
+        if (targetMarker) {
+          targetMarker.openPopup();
+        }
+        document.getElementById('real-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
 
   document.getElementById('btn-toggle-stores-list')?.addEventListener('click', () => {
     state.isStoresListExpanded = !state.isStoresListExpanded;
@@ -903,7 +1402,7 @@ function renderMap(stores: any[]) {
   if (!mapElem) return;
 
   const lang = state.currentLang;
-  const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
+  const currency = 'zł';
 
   const initialCenter = state.userLocation
     ? [state.userLocation.lat, state.userLocation.lng]
@@ -940,15 +1439,22 @@ function renderMap(stores: any[]) {
       iconAnchor: [40, 15]
     });
 
+    const popupTotalLabel = lang === 'pl' ? 'Wartość koszyka' : (lang === 'en' ? 'Cart Total' : 'Чек');
+    const popupOrderLabel = lang === 'pl' ? '🚚 Zamów online' : (lang === 'en' ? '🚚 Order online' : '🚚 Заказать');
+
+    const storeAddr = typeof store.address === 'object' && store.address !== null
+      ? (store.address[lang] || store.address.pl || store.address.ru || store.address.en || '')
+      : (store.address || '');
+
     const marker = L.marker([store.lat, store.lng], { icon: customIcon }).addTo(leafletMap);
     marker.bindPopup(`
       <div style="font-family: sans-serif; font-size: 13px; color: #111; padding: 4px;">
         <strong>${store.logo} ${store.name}</strong><br>
-        <span style="color: #666;">${store.address[lang]}</span><br>
-        <strong style="color: #10b981; font-size: 14px;">Чек: ${store.totalCost} ${currency}</strong><br>
+        <span style="color: #666; font-size: 12px;">${storeAddr}</span><br>
+        <strong style="color: #10b981; font-size: 14px;">${popupTotalLabel}: ${store.totalCost} ${currency}</strong><br>
         <div style="margin-top: 8px; display: flex; gap: 10px;">
-          <a href="${store.mapUrl}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: none;">📍 Google Maps</a>
-          <a href="${store.deliveryUrl}" target="_blank" style="color: #10b981; font-weight: bold; text-decoration: none;">🚚 Заказать</a>
+          <a href="${store.mapUrl}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: none; font-size: 12px;">📍 Google Maps</a>
+          <a href="${store.deliveryUrl}" target="_blank" style="color: #10b981; font-weight: bold; text-decoration: none; font-size: 12px;">${popupOrderLabel}</a>
         </div>
       </div>
     `);
@@ -973,7 +1479,7 @@ async function renderPromotions() {
 
   const lang = state.currentLang;
   const tr = t();
-  const currency = lang === 'pl' ? 'zł' : (lang === 'en' ? '$' : '₽');
+  const currency = 'zł';
 
   let rawPromos: PromotionItem[] = [];
 
@@ -989,7 +1495,7 @@ async function renderPromotions() {
     console.warn('API fetch failed for promotions, using local dynamic catalog:', err);
   }
 
-  // Fallback to rich local catalog if API failed or returned empty
+  // Fallback to rich local catalog
   if (!rawPromos || rawPromos.length === 0) {
     rawPromos = getDynamicPromotions();
   }
@@ -1029,51 +1535,88 @@ async function renderPromotions() {
     });
   }
 
-  // Filter promos by selected store
-  const filteredPromos = activePromoStore === 'all'
-    ? rawPromos
-    : rawPromos.filter(p => p.storeName.toLowerCase() === activePromoStore.toLowerCase());
+  // Filter promos by selected store, category, and search query
+  let filteredPromos = rawPromos;
+
+  if (activePromoStore !== 'all') {
+    filteredPromos = filteredPromos.filter(p => p.storeName.toLowerCase() === activePromoStore.toLowerCase());
+  }
+
+  if (activePromoCategory !== 'all') {
+    filteredPromos = filteredPromos.filter(p => p.category === activePromoCategory);
+  }
+
+  if (promoSearchQuery) {
+    const q = promoSearchQuery.toLowerCase();
+    filteredPromos = filteredPromos.filter(p => 
+      p.productName[lang].toLowerCase().includes(q) ||
+      p.productName.pl.toLowerCase().includes(q) ||
+      p.productName.ru.toLowerCase().includes(q) ||
+      p.storeName.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort promos
+  if (promoSortBy === 'discount') {
+    filteredPromos.sort((a, b) => {
+      const discA = parseFloat(a.discountBadge.replace(/[^0-9]/g, '')) || 0;
+      const discB = parseFloat(b.discountBadge.replace(/[^0-9]/g, '')) || 0;
+      return discB - discA;
+    });
+  } else if (promoSortBy === 'price-asc') {
+    filteredPromos.sort((a, b) => a.promoPrice - b.promoPrice);
+  } else if (promoSortBy === 'expiring') {
+    filteredPromos.sort((a, b) => a.validUntil.localeCompare(b.validUntil));
+  }
 
   if (filteredPromos.length === 0) {
-    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">Brak promocji dla wybranego sklepu</div>`;
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
+        🔍 ${lang === 'pl' ? 'Brak promocji spełniających kryteria wyszukiwania.' : (lang === 'en' ? 'No deals found matching your search.' : 'Нет акций по заданным фильтрам.')}
+      </div>
+    `;
     return;
   }
 
   container.innerHTML = filteredPromos.map((item: any) => `
-    <div class="promo-card" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
-      <div style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 2px 8px; border-radius: var(--radius-sm);">
-        ${item.discountBadge}
-      </div>
-      
+    <div class="promo-card">
       <div>
-        <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent-primary); margin-bottom: 6px;">
-          ${item.storeLogo} ${item.storeName}
+        <div class="promo-img-wrap">
+          <img src="${item.image}" alt="${item.productName[lang]}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80';">
+          <div class="promo-discount-badge">
+            ${item.discountBadge}
+          </div>
         </div>
 
-        <div style="height: 120px; overflow: hidden; border-radius: var(--radius-sm); margin-bottom: 10px;">
-          <img src="${item.image}" alt="${item.productName[lang]}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&auto=format&fit=crop&q=80';">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <div class="promo-store-tag">
+            <span>${item.storeLogo}</span>
+            <span>${item.storeName}</span>
+          </div>
+          ${item.unitWeight ? `<span style="font-size: 0.72rem; color: var(--text-muted);">${item.unitWeight}</span>` : ''}
         </div>
 
-        <h4 style="font-size: 0.92rem; font-weight: 600; margin: 0 0 4px 0; line-height: 1.3;">
+        <h4 class="promo-product-title">
           ${item.productName[lang]}
         </h4>
 
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">
+        <div class="promo-recommendation">
           ${item.recommendation[lang]}
         </div>
 
-        <div style="font-size: 0.7rem; color: #10b981; font-weight: 500; margin-bottom: 10px;">
-          ${tr.validUntilPrefix} ${item.validUntil}
+        <div style="font-size: 0.72rem; color: #10b981; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 4px;">
+          <span>⏰</span>
+          <span>${tr.validUntilPrefix} ${item.validUntil}</span>
         </div>
       </div>
 
       <div>
-        <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
-          <span style="font-size: 1.15rem; font-weight: 700; color: var(--accent-primary);">${item.promoPrice} ${currency}</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted); text-decoration: line-through;">${item.originalPrice} ${currency}</span>
+        <div class="promo-price-block">
+          <span class="promo-price-current">${item.promoPrice} ${currency}</span>
+          <span class="promo-price-old">${item.originalPrice} ${currency}</span>
         </div>
 
-        <button class="btn btn-sm btn-primary btn-add-promo" data-title="${item.productName[lang]}" data-price="${item.promoPrice}" style="width: 100%; font-size: 0.8rem; padding: 8px 10px; font-weight: 600;">
+        <button class="btn btn-sm btn-primary btn-add-promo" data-title="${item.productName[lang]}" data-price="${item.promoPrice}">
           ${tr.addToCartBtn}
         </button>
       </div>
@@ -1091,11 +1634,21 @@ async function renderPromotions() {
           qty: 1,
           unit: { ru: 'шт', en: 'pcs', pl: 'szt' },
           basePrice: price,
-          checked: false
+          checked: false,
+          isDiscrete: true
         });
+        saveShoppingState();
         renderShoppingList();
         renderStores();
-        alert(`✅ ${title} ${lang === 'pl' ? 'dodano do listy!' : (lang === 'en' ? 'added to shopping list!' : 'добавлено в список!')}`);
+        
+        // Button visual animation
+        const originalText = target.innerText;
+        target.innerText = '✅ ' + (lang === 'pl' ? 'Dodano!' : (lang === 'en' ? 'Added!' : 'Добавлено!'));
+        target.style.background = '#10b981';
+        setTimeout(() => {
+          target.innerText = originalText;
+          target.style.background = '';
+        }, 1200);
       }
     });
   });
@@ -1338,6 +1891,7 @@ function renderScanResult(result: VisionScanResult) {
 }
 
 function initDiary() {
+  // Gender buttons
   const genderBtns = document.querySelectorAll<HTMLButtonElement>('.gender-btn');
   genderBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1350,45 +1904,209 @@ function initDiary() {
     });
   });
 
-  const inputs = ['calc-age', 'calc-weight', 'calc-height', 'calc-activity', 'calc-goal'];
+  // Inputs
+  const inputs = ['calc-age', 'calc-weight', 'calc-height', 'calc-activity', 'calc-goal', 'calc-formula'];
   inputs.forEach(id => {
     const el = document.getElementById(id);
     el?.addEventListener('input', updateLiveCalculatorOutput);
     el?.addEventListener('change', updateLiveCalculatorOutput);
   });
 
+  // Apply Target to Diary Button
   document.getElementById('btn-apply-profile')?.addEventListener('click', () => {
     const profile = getProfileFromInputs();
     state.userProfile = profile;
     localStorage.setItem('cookcraft_user_profile', JSON.stringify(profile));
     renderDiary();
-    alert(state.currentLang === 'pl' ? 'Zapisano cel w dzienniku!' : (state.currentLang === 'en' ? 'Calorie target saved!' : 'Цель сохранена в дневнике!'));
+    const msg = state.currentLang === 'pl' 
+      ? `✅ Zapisano cel w dzienniku: ${profile.targetCalories.toLocaleString()} kcal!` 
+      : (state.currentLang === 'en' ? `✅ Calorie target saved: ${profile.targetCalories.toLocaleString()} kcal!` : `✅ Цель сохранена в дневнике: ${profile.targetCalories.toLocaleString()} ккал!`);
+    alert(msg);
   });
 
-  document.getElementById('btn-add-quick-meal')?.addEventListener('click', () => {
-    const titlePrompt = state.currentLang === 'pl' ? 'Nazwa dania:' : (state.currentLang === 'en' ? 'Meal name:' : 'Название блюда:');
-    const kcalPrompt = state.currentLang === 'pl' ? 'Kalorie (kcal):' : (state.currentLang === 'en' ? 'Calories (kcal):' : 'Калории (ккал):');
+  // Clear Day Button
+  document.getElementById('btn-clear-diary-day')?.addEventListener('click', () => {
+    const confirmMsg = state.currentLang === 'pl'
+      ? 'Czy na pewno chcesz wyczyścić dzisiejszy dziennik i licznik wody?'
+      : (state.currentLang === 'en' ? 'Are you sure you want to clear today\'s diary and water intake?' : 'Вы уверены, что хотите очистить записи за сегодня и счетчик воды?');
     
-    const name = prompt(titlePrompt, state.currentLang === 'pl' ? 'Przekąska' : 'Перекус');
-    if (!name) return;
-    const kcalStr = prompt(kcalPrompt, '250');
-    if (!kcalStr) return;
-    const calories = parseInt(kcalStr) || 0;
-    
+    if (confirm(confirmMsg)) {
+      state.loggedMeals = [];
+      state.waterConsumedMl = 0;
+      localStorage.setItem('cookcraft_logged_meals', JSON.stringify([]));
+      localStorage.setItem('cookcraft_water_consumed', '0');
+      renderDiary();
+    }
+  });
+
+  // Water Tracker controls
+  document.getElementById('btn-water-add')?.addEventListener('click', () => {
+    state.waterConsumedMl = (state.waterConsumedMl || 0) + 250;
+    localStorage.setItem('cookcraft_water_consumed', state.waterConsumedMl.toString());
+    renderDiary();
+  });
+
+  document.getElementById('btn-water-sub')?.addEventListener('click', () => {
+    state.waterConsumedMl = Math.max(0, (state.waterConsumedMl || 0) - 250);
+    localStorage.setItem('cookcraft_water_consumed', state.waterConsumedMl.toString());
+    renderDiary();
+  });
+
+  document.getElementById('btn-water-reset')?.addEventListener('click', () => {
+    state.waterConsumedMl = 0;
+    localStorage.setItem('cookcraft_water_consumed', '0');
+    renderDiary();
+  });
+
+  // Meal Category Filter Pills
+  const filterTabs = document.querySelectorAll<HTMLButtonElement>('#meal-filter-tabs .pill');
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      filterTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeMealCategoryFilter = (tab.dataset.mealFilter as any) || 'all';
+      renderDiary();
+    });
+  });
+
+  // Meal Logging Modal
+  const mealModal = document.getElementById('meal-modal');
+  const openModalBtn = document.getElementById('btn-open-meal-modal');
+  const closeModalBtn = document.getElementById('btn-close-meal-modal');
+  const cancelModalBtn = document.getElementById('btn-cancel-meal-modal');
+  const presetSelect = document.getElementById('meal-preset-select') as HTMLSelectElement | null;
+  const mealNameInput = document.getElementById('meal-input-name') as HTMLInputElement | null;
+  const mealTypeSelect = document.getElementById('meal-input-type') as HTMLSelectElement | null;
+  const mealKcalInput = document.getElementById('meal-input-kcal') as HTMLInputElement | null;
+  const mealPInput = document.getElementById('meal-input-protein') as HTMLInputElement | null;
+  const mealFInput = document.getElementById('meal-input-fat') as HTMLInputElement | null;
+  const mealCInput = document.getElementById('meal-input-carbs') as HTMLInputElement | null;
+
+  const openMealModal = () => {
+    if (!mealModal) return;
+    const lang = state.currentLang;
+
+    // Populate preset dropdown with recipes + smart presets
+    if (presetSelect) {
+      presetSelect.innerHTML = `<option value="">-- ${state.currentLang === 'pl' ? 'Wybierz gotowe danie lub wpisz własne' : (state.currentLang === 'en' ? 'Choose preset or type custom meal' : 'Выберите готовое блюдо или введите свое')} --</option>`;
+
+      // Add smart presets
+      const presetGroup = document.createElement('optgroup');
+      presetGroup.label = state.currentLang === 'pl' ? '💡 Popularne zdrowe posiłki' : (state.currentLang === 'en' ? '💡 Popular Healthy Meals' : '💡 Популярные ПП блюда');
+      SMART_MEAL_PRESETS.forEach((p, idx) => {
+        const opt = document.createElement('option');
+        opt.value = `smart_${idx}`;
+        opt.textContent = `${p.name[lang]} (${p.calories} kcal)`;
+        presetGroup.appendChild(opt);
+      });
+      presetSelect.appendChild(presetGroup);
+
+      // Add recipes from app
+      const recipeGroup = document.createElement('optgroup');
+      recipeGroup.label = state.currentLang === 'pl' ? '👨‍🍳 Przepisy z aplikacji' : (state.currentLang === 'en' ? '👨‍🍳 App Recipes' : '👨‍🍳 Рецепты из приложения');
+      state.recipes.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = `recipe_${r.id}`;
+        opt.textContent = `${r.title[lang]} (${r.calories} kcal)`;
+        recipeGroup.appendChild(opt);
+      });
+      presetSelect.appendChild(recipeGroup);
+    }
+
+    if (mealNameInput) mealNameInput.value = '';
+    if (mealKcalInput) mealKcalInput.value = '350';
+    if (mealPInput) mealPInput.value = '20';
+    if (mealFInput) mealFInput.value = '10';
+    if (mealCInput) mealCInput.value = '45';
+
+    mealModal.classList.remove('hidden');
+  };
+
+  const closeMealModal = () => {
+    mealModal?.classList.add('hidden');
+  };
+
+  openModalBtn?.addEventListener('click', openMealModal);
+  closeModalBtn?.addEventListener('click', closeMealModal);
+  cancelModalBtn?.addEventListener('click', closeMealModal);
+
+  // Preset Selection Change
+  presetSelect?.addEventListener('change', () => {
+    const val = presetSelect.value;
+    const lang = state.currentLang;
+    if (!val) return;
+
+    if (val.startsWith('smart_')) {
+      const idx = parseInt(val.replace('smart_', ''));
+      const preset = SMART_MEAL_PRESETS[idx];
+      if (preset) {
+        if (mealNameInput) mealNameInput.value = preset.name[lang];
+        if (mealTypeSelect) mealTypeSelect.value = preset.mealType;
+        if (mealKcalInput) mealKcalInput.value = preset.calories.toString();
+        if (mealPInput) mealPInput.value = preset.protein.toString();
+        if (mealFInput) mealFInput.value = preset.fat.toString();
+        if (mealCInput) mealCInput.value = preset.carbs.toString();
+      }
+    } else if (val.startsWith('recipe_')) {
+      const id = val.replace('recipe_', '');
+      const recipe = state.recipes.find(r => r.id === id);
+      if (recipe) {
+        if (mealNameInput) mealNameInput.value = recipe.title[lang];
+        if (mealTypeSelect) {
+          if (recipe.category === 'breakfast') mealTypeSelect.value = 'breakfast';
+          else if (recipe.category === 'lunch') mealTypeSelect.value = 'lunch';
+          else if (recipe.category === 'dinner') mealTypeSelect.value = 'dinner';
+          else mealTypeSelect.value = 'lunch';
+        }
+        if (mealKcalInput) mealKcalInput.value = recipe.calories.toString();
+        // Estimated macro distribution for recipe
+        if (mealPInput) mealPInput.value = Math.round((recipe.calories * 0.25) / 4).toString();
+        if (mealFInput) mealFInput.value = Math.round((recipe.calories * 0.28) / 9).toString();
+        if (mealCInput) mealCInput.value = Math.round((recipe.calories * 0.47) / 4).toString();
+      }
+    }
+  });
+
+  // Auto-estimate macros if user manually changes kcal
+  mealKcalInput?.addEventListener('input', () => {
+    const kcal = parseInt(mealKcalInput.value) || 0;
+    if (kcal > 0 && mealPInput && mealFInput && mealCInput) {
+      if (!mealPInput.value || mealPInput.value === '0') {
+        mealPInput.value = Math.round((kcal * 0.25) / 4).toString();
+      }
+      if (!mealFInput.value || mealFInput.value === '0') {
+        mealFInput.value = Math.round((kcal * 0.28) / 9).toString();
+      }
+      if (!mealCInput.value || mealCInput.value === '0') {
+        mealCInput.value = Math.round((kcal * 0.47) / 4).toString();
+      }
+    }
+  });
+
+  // Save Meal to Diary
+  document.getElementById('btn-save-meal-entry')?.addEventListener('click', () => {
+    const name = mealNameInput?.value.trim() || (state.currentLang === 'pl' ? 'Posiłek domowy' : (state.currentLang === 'en' ? 'Homemade meal' : 'Домашнее блюдо'));
+    const calories = parseInt(mealKcalInput?.value || '350') || 0;
+    const protein = parseInt(mealPInput?.value || '20') || 0;
+    const fat = parseInt(mealFInput?.value || '10') || 0;
+    const carbs = parseInt(mealCInput?.value || '45') || 0;
+    const mealType = (mealTypeSelect?.value as any) || 'lunch';
+
     const newMeal: MealEntry = {
       id: 'meal_' + Date.now(),
       name,
       calories,
-      protein: Math.round(calories * 0.15 / 4),
-      fat: Math.round(calories * 0.3 / 9),
-      carbs: Math.round(calories * 0.55 / 4),
-      mealType: 'snack',
+      protein,
+      fat,
+      carbs,
+      mealType,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     if (!state.loggedMeals) state.loggedMeals = [];
     state.loggedMeals.push(newMeal);
     localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
+    closeMealModal();
     renderDiary();
   });
 }
@@ -1401,33 +2119,59 @@ function getProfileFromInputs(): UserProfile {
   const height = parseFloat((document.getElementById('calc-height') as HTMLInputElement)?.value) || 178;
   const activity = ((document.getElementById('calc-activity') as HTMLSelectElement)?.value as any) || 'moderate';
   const goal = ((document.getElementById('calc-goal') as HTMLSelectElement)?.value as any) || 'maintain';
+  const formula = ((document.getElementById('calc-formula') as HTMLSelectElement)?.value as any) || 'mifflin';
 
-  return createFullUserProfile(gender, age, weight, height, activity, goal);
+  return createFullUserProfile(gender, age, weight, height, activity, goal, formula);
 }
 
 function updateLiveCalculatorOutput() {
   const profile = getProfileFromInputs();
-  
+  const tr = t();
+  const kcalUnit = state.currentLang === 'pl' ? 'kcal' : (state.currentLang === 'en' ? 'kcal' : 'ккал');
+
+  // Outputs
   const bmrEl = document.getElementById('res-bmr');
   const tdeeEl = document.getElementById('res-tdee');
   const targetEl = document.getElementById('res-target');
   const pEl = document.getElementById('res-macro-protein');
   const fEl = document.getElementById('res-macro-fat');
   const cEl = document.getElementById('res-macro-carbs');
-
-  const kcalUnit = state.currentLang === 'pl' ? 'kcal' : (state.currentLang === 'en' ? 'kcal' : 'ккал');
+  const fibEl = document.getElementById('res-macro-fiber');
 
   if (bmrEl) bmrEl.innerText = `${profile.bmr.toLocaleString()} ${kcalUnit}`;
   if (tdeeEl) tdeeEl.innerText = `${profile.tdee.toLocaleString()} ${kcalUnit}`;
   if (targetEl) targetEl.innerText = `${profile.targetCalories.toLocaleString()} ${kcalUnit}`;
-  
-  const pLabel = state.currentLang === 'pl' ? 'Białka' : (state.currentLang === 'en' ? 'Protein' : 'Белки');
-  const fLabel = state.currentLang === 'pl' ? 'Tłuszcze' : (state.currentLang === 'en' ? 'Fats' : 'Жиры');
-  const cLabel = state.currentLang === 'pl' ? 'Węglowodany' : (state.currentLang === 'en' ? 'Carbs' : 'Углеводы');
 
-  if (pEl) pEl.innerText = `${pLabel}: ${profile.targetProtein}g`;
-  if (fEl) fEl.innerText = `${fLabel}: ${profile.targetFat}g`;
-  if (cEl) cEl.innerText = `${cLabel}: ${profile.targetCarbs}g`;
+  if (pEl) pEl.innerText = `🥩 ${tr.proteinLabel}: ${profile.targetProtein}g`;
+  if (fEl) fEl.innerText = `🥑 ${tr.fatLabel}: ${profile.targetFat}g`;
+  if (cEl) cEl.innerText = `🌾 ${tr.carbsLabel}: ${profile.targetCarbs}g`;
+  if (fibEl) fibEl.innerText = `🥦 ${tr.fiberLabel}: ${profile.targetFiber}g`;
+
+  // BMI & Needle & Status Badge
+  const bmiValEl = document.getElementById('res-bmi-val');
+  const bmiBadgeEl = document.getElementById('res-bmi-badge');
+  const bmiNeedleEl = document.getElementById('bmi-needle');
+  const idealWeightEl = document.getElementById('res-ideal-weight');
+
+  if (bmiValEl) bmiValEl.innerText = profile.bmi.toFixed(1);
+
+  if (bmiBadgeEl) {
+    bmiBadgeEl.className = `bmi-badge ${profile.bmiCategory}`;
+    if (profile.bmiCategory === 'underweight') bmiBadgeEl.innerText = tr.bmiUnderweight;
+    else if (profile.bmiCategory === 'normal') bmiBadgeEl.innerText = tr.bmiNormal;
+    else if (profile.bmiCategory === 'overweight') bmiBadgeEl.innerText = tr.bmiOverweight;
+    else bmiBadgeEl.innerText = tr.bmiObese;
+  }
+
+  if (bmiNeedleEl) {
+    // Map BMI range (15 to 35) to percentage (4% to 96%)
+    const pct = Math.max(4, Math.min(96, ((profile.bmi - 14) / 22) * 100));
+    bmiNeedleEl.style.left = `${pct}%`;
+  }
+
+  if (idealWeightEl) {
+    idealWeightEl.innerText = `${profile.idealWeightMin} - ${profile.idealWeightMax} kg`;
+  }
 }
 
 function renderDiary() {
@@ -1445,6 +2189,11 @@ function renderDiary() {
   const heightInput = document.getElementById('calc-height') as HTMLInputElement | null;
   if (heightInput && heightInput.value !== profile.height.toString()) heightInput.value = profile.height.toString();
 
+  const formulaSelect = document.getElementById('calc-formula') as HTMLSelectElement | null;
+  if (formulaSelect && profile.formula && formulaSelect.value !== profile.formula) {
+    formulaSelect.value = profile.formula;
+  }
+
   updateLiveCalculatorOutput();
 
   // Sum today's meals
@@ -1452,10 +2201,11 @@ function renderDiary() {
   const totalProtein = Math.round(meals.reduce((sum, m) => sum + m.protein, 0));
   const totalFat = Math.round(meals.reduce((sum, m) => sum + m.fat, 0));
   const totalCarbs = Math.round(meals.reduce((sum, m) => sum + m.carbs, 0));
+  const totalFiber = Math.round((totalCalories / 1000) * 14 * 0.8); // Estimated consumed fiber
 
   state.diaryConsumed = totalCalories;
 
-  // Update Ring Gauge
+  // Update Energy Gauge & Center Text
   const consumedEl = document.getElementById('consumed-calories');
   if (consumedEl) consumedEl.innerText = totalCalories.toLocaleString();
 
@@ -1468,13 +2218,32 @@ function renderDiary() {
   if (progressBar) {
     const radius = 42;
     const circumference = 2 * Math.PI * radius; // ~263.89
-    const ratio = Math.min(totalCalories / profile.targetCalories, 1.2);
+    const ratio = Math.min(totalCalories / profile.targetCalories, 1.0);
     const offset = Math.max(0, circumference - (circumference * ratio));
     progressBar.style.strokeDasharray = `${circumference}`;
     progressBar.style.strokeDashoffset = `${offset}`;
   }
 
-  // Update Macro Bars
+  // Update Calorie Balance Flow Panel
+  const valTarget = document.getElementById('val-cal-target');
+  const valFood = document.getElementById('val-cal-food');
+  const valRemaining = document.getElementById('val-cal-remaining');
+
+  if (valTarget) valTarget.innerText = profile.targetCalories.toLocaleString();
+  if (valFood) valFood.innerText = totalCalories.toLocaleString();
+
+  const remaining = profile.targetCalories - totalCalories;
+  if (valRemaining) {
+    if (remaining >= 0) {
+      valRemaining.innerText = remaining.toLocaleString();
+      valRemaining.style.color = 'var(--accent-primary)';
+    } else {
+      valRemaining.innerText = `+${Math.abs(remaining).toLocaleString()}`;
+      valRemaining.style.color = '#ef4444';
+    }
+  }
+
+  // Update 4 Macro Progress Bars
   const pText = document.getElementById('macro-protein');
   if (pText) pText.innerText = `${totalProtein} g / ${profile.targetProtein} g`;
   const fillP = document.getElementById('fill-protein');
@@ -1490,19 +2259,88 @@ function renderDiary() {
   const fillC = document.getElementById('fill-carbs');
   if (fillC) fillC.style.width = `${Math.min(100, Math.round((totalCarbs / profile.targetCarbs) * 100))}%`;
 
-  // Render Meals List
+  const fibText = document.getElementById('macro-fiber');
+  if (fibText) fibText.innerText = `${totalFiber} g / ${profile.targetFiber} g`;
+  const fillFib = document.getElementById('fill-fiber');
+  if (fillFib) fillFib.style.width = `${Math.min(100, Math.round((totalFiber / profile.targetFiber) * 100))}%`;
+
+  // Update Hydration Tracker
+  const waterConsumed = state.waterConsumedMl || 0;
+  const targetWater = profile.targetWaterMl || 2800;
+
+  const waterTextEl = document.getElementById('water-consumed-text');
+  if (waterTextEl) {
+    waterTextEl.innerText = `${waterConsumed.toLocaleString()} / ${targetWater.toLocaleString()} ml`;
+  }
+
+  const waterFillEl = document.getElementById('water-progress-fill');
+  if (waterFillEl) {
+    waterFillEl.style.width = `${Math.min(100, Math.round((waterConsumed / targetWater) * 100))}%`;
+  }
+
+  const waterCupsRow = document.getElementById('water-cups-row');
+  if (waterCupsRow) {
+    const totalCups = Math.max(8, Math.ceil(targetWater / 250));
+    let cupsHtml = '';
+    for (let i = 0; i < totalCups; i++) {
+      const isFilled = (i + 1) * 250 <= waterConsumed;
+      cupsHtml += `
+        <button type="button" class="water-cup-btn ${isFilled ? 'filled' : ''}" data-cup-idx="${i}" title="${(i + 1) * 250} ml">
+          ${isFilled ? '💧' : '🥛'}
+        </button>
+      `;
+    }
+    waterCupsRow.innerHTML = cupsHtml;
+
+    waterCupsRow.querySelectorAll<HTMLButtonElement>('.water-cup-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.cupIdx || '0');
+        state.waterConsumedMl = (idx + 1) * 250;
+        localStorage.setItem('cookcraft_water_consumed', state.waterConsumedMl.toString());
+        renderDiary();
+      });
+    });
+  }
+
+  // Render Meals List (with category filtering)
   const mealsList = document.getElementById('meals-list');
   if (mealsList) {
-    if (meals.length === 0) {
-      mealsList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem;">
-        ${state.currentLang === 'pl' ? 'Brak wpisanych posiłków na dziś' : (state.currentLang === 'en' ? 'No logged meals for today' : 'Сегодня еще нет записей в дневнике')}
-      </div>`;
+    const filteredMeals = activeMealCategoryFilter === 'all'
+      ? meals
+      : meals.filter(m => m.mealType === activeMealCategoryFilter);
+
+    if (filteredMeals.length === 0) {
+      const emptyMsg = state.currentLang === 'pl' 
+        ? 'Brak wpisanych dań w tej kategorii. Kliknij «+ Dodaj блюдо», aby zapisać posiłek.' 
+        : (state.currentLang === 'en' ? 'No meals logged in this category. Click «+ Add Meal» to record food.' : 'В этой категории пока нет записей. Нажмите «+ Добавить блюдо».');
+
+      mealsList.innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); padding: 28px 20px; font-size: 0.9rem; background: var(--bg-input); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+          <div style="font-size: 2rem; margin-bottom: 8px;">🍽️</div>
+          ${emptyMsg}
+        </div>
+      `;
     } else {
-      mealsList.innerHTML = meals.map(m => `
+      const getCategoryIcon = (type: string) => {
+        switch (type) {
+          case 'breakfast': return '🌅';
+          case 'lunch': return '☀️';
+          case 'dinner': return '🌙';
+          case 'snack': return '🍎';
+          default: return '🍴';
+        }
+      };
+
+      mealsList.innerHTML = filteredMeals.map(m => `
         <div class="meal-item">
           <div class="meal-info-left">
-            <span class="meal-title-name">${m.name}</span>
-            <span class="meal-time-tag">⏱️ ${m.time} • P: ${m.protein}g, F: ${m.fat}g, C: ${m.carbs}g</span>
+            <span class="meal-title-name">${getCategoryIcon(m.mealType)} ${m.name}</span>
+            <span class="meal-time-tag">⏱️ ${m.time}</span>
+            <div class="meal-macro-pills">
+              <span class="meal-macro-pill p">P: ${m.protein}g</span>
+              <span class="meal-macro-pill f">F: ${m.fat}g</span>
+              <span class="meal-macro-pill c">C: ${m.carbs}g</span>
+            </div>
           </div>
           <div class="meal-info-right">
             <span class="meal-kcal-badge">${m.calories} kcal</span>

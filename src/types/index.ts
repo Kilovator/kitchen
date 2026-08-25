@@ -14,6 +14,10 @@ export interface Ingredient {
   unit: LocalizedString;
   basePrice: number;
   checked?: boolean;
+  isDiscrete?: boolean;
+  baseQty?: number;
+  initialBaseQty?: number;
+  unitPrice?: number;
 }
 
 export interface Recipe {
@@ -63,6 +67,7 @@ export interface ScanPreset {
 export type GenderType = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very' | 'extra';
 export type GoalType = 'lose' | 'maintain' | 'gain';
+export type BmrFormulaType = 'mifflin' | 'harris' | 'who';
 
 export interface UserProfile {
   gender: GenderType;
@@ -71,12 +76,19 @@ export interface UserProfile {
   height: number; // cm
   activity: ActivityLevel;
   goal: GoalType;
+  formula: BmrFormulaType;
   bmr: number;
   tdee: number;
   targetCalories: number;
   targetProtein: number; // grams
   targetFat: number; // grams
   targetCarbs: number; // grams
+  targetFiber: number; // grams
+  targetWaterMl: number; // ml
+  bmi: number;
+  bmiCategory: 'underweight' | 'normal' | 'overweight' | 'obese';
+  idealWeightMin: number;
+  idealWeightMax: number;
 }
 
 export interface MealEntry {
@@ -101,6 +113,7 @@ export interface AppState {
   shoppingList: Ingredient[];
   storeFilterMode: 'best-price' | 'nearest';
   diaryConsumed: number;
+  waterConsumedMl: number;
   cameraStream: MediaStream | null;
   theme: 'dark' | 'light';
   userLocation: { lat: number; lng: number } | null;

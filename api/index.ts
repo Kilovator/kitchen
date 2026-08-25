@@ -531,7 +531,7 @@ app.post('/api/scan-image', async (req, res) => {
       summary: {
         ru: "Источник медленных углеводов для долговременной энергии.",
         en: "Great source of complex carbs for long-lasting energy.",
-        pl: "Wspaniałe źródło węglowodanów złożonych на весь день."
+        pl: "Wspaniałe źródło węglowodanów złożonych na cały dzień."
       },
       image
     }
@@ -631,6 +631,48 @@ app.get('/api/promotions', async (_req, res) => {
   }
 
   return res.json(getDynamicPromotions());
+});
+
+// Supermarket basket live pricing endpoint
+app.post('/api/supermarket-prices', (req, res) => {
+  try {
+    const { items, servingsCount } = req.body;
+    const activeItems = Array.isArray(items) ? items : [];
+    const baseSum = activeItems.reduce((acc: number, it: any) => acc + (parseFloat(it.price) || 0), 0);
+
+    const storeMultipliers: Record<string, { name: string; multiplier: number }> = {
+      s1: { name: 'Biedronka', multiplier: 0.92 },
+      s2: { name: 'Lidl', multiplier: 0.94 },
+      s3: { name: 'Żabka', multiplier: 1.15 },
+      s4: { name: 'Carrefour', multiplier: 0.98 },
+      s5: { name: 'Auchan', multiplier: 0.90 },
+      s6: { name: 'Dino', multiplier: 0.93 },
+      s7: { name: 'Kaufland', multiplier: 0.95 },
+      s8: { name: 'Stokrotka', multiplier: 1.04 }
+    };
+
+    const results = Object.entries(storeMultipliers).map(([storeId, meta]) => {
+      const totalCost = Math.round(baseSum * meta.multiplier * 100) / 100;
+      return {
+        storeId,
+        storeName: meta.name,
+        totalCost,
+        savings: Math.max(0, Math.round((baseSum - totalCost) * 100) / 100),
+        itemCount: activeItems.length,
+        lastUpdated: new Date().toISOString()
+      };
+    }).sort((a, b) => a.totalCost - b.totalCost);
+
+    return res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      baseTotal: Math.round(baseSum * 100) / 100,
+      servingsCount: servingsCount || 2,
+      results
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // For local running (when not running inside Vercel serverless runtime)

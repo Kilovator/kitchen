@@ -17,10 +17,10 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Pożywny tradycyjny barszcz z burakami, świeżą kapustą i bułeczkami czosnkowymi."
     },
     ingredients: [
-      { name: { ru: "Говядина на кости", en: "Beef bone-in", pl: "Wołowina z kością" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 380 },
-      { name: { ru: "Свекла свежая", en: "Fresh beetroot", pl: "Świeże buraki" }, qty: 2, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 45 },
-      { name: { ru: "Капуста белокочанная", en: "White cabbage", pl: "Kapusta biała" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 35 },
-      { name: { ru: "Картофель", en: "Potatoes", pl: "Ziemniaki" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 30 }
+      { name: { ru: "Говядина на кости", en: "Beef bone-in", pl: "Wołowina z kością" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 15.50 },
+      { name: { ru: "Свекла свежая", en: "Fresh beetroot", pl: "Świeże buraki" }, qty: 2, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 2.20 },
+      { name: { ru: "Капуста белокочанная", en: "White cabbage", pl: "Kapusta biała" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.80 },
+      { name: { ru: "Картофель", en: "Potatoes", pl: "Ziemniaki" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 1.50 }
     ],
     steps: [
       {
@@ -61,9 +61,9 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Klasyczne spaghetti carbonara z chrupiącym guanciale, żółtkami i serem Pecorino."
     },
     ingredients: [
-      { name: { ru: "Спагетти", en: "Spaghetti pasta", pl: "Makaron Spaghetti" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 95 },
-      { name: { ru: "Гуанчиале / бекон", en: "Guanciale or bacon", pl: "Guanciale / boczek" }, qty: 120, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 190 },
-      { name: { ru: "Яичные желтки", en: "Egg yolks", pl: "Żółtka jaj" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 40 }
+      { name: { ru: "Спагетти", en: "Spaghetti pasta", pl: "Makaron Spaghetti" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.20 },
+      { name: { ru: "Гуанчиале / бекон", en: "Guanciale or bacon", pl: "Guanciale / boczek" }, qty: 120, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 6.90 },
+      { name: { ru: "Яичные желтки", en: "Egg yolks", pl: "Żółtka jaj" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 2.70 }
     ],
     steps: [
       {
@@ -104,8 +104,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Soczysty stek Ribeye Medium Rare z masłem czosnkowym i warzywami z grilla."
     },
     ingredients: [
-      { name: { ru: "Стейк Рибай", en: "Ribeye steak", pl: "Stek Ribeye" }, qty: 350, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 650 },
-      { name: { ru: "Масло сливочное", en: "Butter", pl: "Masło" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 65 }
+      { name: { ru: "Стейк Рибай", en: "Ribeye steak", pl: "Stek Ribeye" }, qty: 350, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 28.00 },
+      { name: { ru: "Масло сливочное", en: "Butter", pl: "Masło" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.90 }
     ],
     steps: [
       {
@@ -146,9 +146,9 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Tortille kukurydziane z szarpaną wołowiną, guacamole i świeżą salsą."
     },
     ingredients: [
-      { name: { ru: "Тортильи кукурузные", en: "Corn tortillas", pl: "Tortille kukurydziane" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 85 },
-      { name: { ru: "Говяжий фарш / мякоть", en: "Ground beef", pl: "Mięso wołowe" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 180 },
-      { name: { ru: "Авокадо для гуакамоле", en: "Avocado for guacamole", pl: "Awokado na guacamole" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 110 }
+      { name: { ru: "Тортильи кукурузные", en: "Corn tortillas", pl: "Tortille kukurydziane" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 3.90 },
+      { name: { ru: "Говяжий фарш / мякоть", en: "Ground beef", pl: "Mięso wołowe" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 7.90 },
+      { name: { ru: "Авокадо для гуакамоле", en: "Avocado for guacamole", pl: "Awokado na guacamole" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -184,9 +184,9 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Soczyste kawałki kurczaka w kremowym sosie pomidorowo-maślanym z przyprawami."
     },
     ingredients: [
-      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 190 },
-      { name: { ru: "Сливки 33%", en: "Heavy cream 33%", pl: "Śmietanka 33%" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 95 },
-      { name: { ru: "Томатный соус и специи", en: "Tomato sauce & garam masala", pl: "Sos pomidorowy i przyprawy" }, qty: 1, unit: { ru: "набор", en: "set", pl: "zestaw" }, basePrice: 75 }
+      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 7.80 },
+      { name: { ru: "Сливки 33%", en: "Heavy cream 33%", pl: "Śmietanka 33%" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 3.90 },
+      { name: { ru: "Томатный соус и специи", en: "Tomato sauce & garam masala", pl: "Sos pomidorowy i przyprawy" }, qty: 1, unit: { ru: "набор", en: "set", pl: "zestaw" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -217,8 +217,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Ostro-kwaśna tajska zupa z krewetkami i mlekiem kokosowym."
     },
     ingredients: [
-      { name: { ru: "Креветки", en: "Tiger prawns", pl: "Krewetki" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 420 },
-      { name: { ru: "Кокосовое молоко", en: "Coconut milk", pl: "Mleczko kokosowe" }, qty: 200, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 130 }
+      { name: { ru: "Креветки", en: "Tiger prawns", pl: "Krewetki" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 16.90 },
+      { name: { ru: "Кокосовое молоко", en: "Coconut milk", pl: "Mleczko kokosowe" }, qty: 200, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 4.80 }
     ],
     steps: [
       {
@@ -249,8 +249,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Japońska zupa z makaronem, chashu, jajkiem ajitama i nori."
     },
     ingredients: [
-      { name: { ru: "Лапша рамен", en: "Ramen noodles", pl: "Makaron ramen" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 110 },
-      { name: { ru: "Свинина Тясю", en: "Chashu pork", pl: "Wieprzowina Chashu" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 210 }
+      { name: { ru: "Лапша рамен", en: "Ramen noodles", pl: "Makaron ramen" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 4.50 },
+      { name: { ru: "Свинина Тясю", en: "Chashu pork", pl: "Wieprzowina Chashu" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 8.90 }
     ],
     steps: [
       {
@@ -281,8 +281,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Bliskowschodnie śniadanie z jajek w sosie pomidorowym."
     },
     ingredients: [
-      { name: { ru: "Яйца куриные", en: "Eggs", pl: "Jajka" }, qty: 4, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 45 },
-      { name: { ru: "Томаты", en: "Tomatoes", pl: "Pomidory" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 90 }
+      { name: { ru: "Яйца куриные", en: "Eggs", pl: "Jajka" }, qty: 4, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 3.60 },
+      { name: { ru: "Томаты", en: "Tomatoes", pl: "Pomidory" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.20 }
     ],
     steps: [
       {
@@ -313,8 +313,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Chrupiące gofry z lodami i świeżymi owocami."
     },
     ingredients: [
-      { name: { ru: "Мука пшеничная", en: "Flour", pl: "Mąka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 45 },
-      { name: { ru: "Свежие ягоды", en: "Fresh berries", pl: "Świeże owoce" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 140 }
+      { name: { ru: "Мука пшеничная", en: "Flour", pl: "Mąka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 0.90 },
+      { name: { ru: "Свежие ягоды", en: "Fresh berries", pl: "Świeże owoce" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -345,8 +345,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Sałata rzymska z grillowanym kurczakiem, grzankami i parmezanem."
     },
     ingredients: [
-      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 130 },
-      { name: { ru: "Салат Романо", en: "Romaine lettuce", pl: "Sałata rzymska" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 85 }
+      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 5.50 },
+      { name: { ru: "Салат Романо", en: "Romaine lettuce", pl: "Sałata rzymska" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.80 }
     ],
     steps: [
       {
@@ -372,8 +372,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Zrównoważona miska z łososiem, quinoa, ogórkiem i glonami chuka."
     },
     ingredients: [
-      { name: { ru: "Филе лосося", en: "Salmon fillet", pl: "Filet z łososia" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 320 },
-      { name: { ru: "Киноа", en: "Quinoa", pl: "Komosa ryżowa" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 60 }
+      { name: { ru: "Филе лосося", en: "Salmon fillet", pl: "Filet z łososia" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 12.50 },
+      { name: { ru: "Киноа", en: "Quinoa", pl: "Komosa ryżowa" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.20 }
     ],
     steps: [
       {
@@ -399,8 +399,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Tost wieloziarnisty z awokado i jajkiem w koszulce."
     },
     ingredients: [
-      { name: { ru: "Хлеб зерновой", en: "Grain bread", pl: "Chleb ziarnisty" }, qty: 2, unit: { ru: "куска", en: "slices", pl: "plasterki" }, basePrice: 55 },
-      { name: { ru: "Авокадо спелое", en: "Ripe avocado", pl: "Dojrzałe awokado" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 120 }
+      { name: { ru: "Хлеб зерновой", en: "Grain bread", pl: "Chleb ziarnisty" }, qty: 2, unit: { ru: "куска", en: "slices", pl: "plasterki" }, basePrice: 1.60 },
+      { name: { ru: "Авокадо спелое", en: "Ripe avocado", pl: "Dojrzałe awokado" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -426,8 +426,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Pizza na cienkim ciście z kiełbaskami pepperoni i mozzarellą."
     },
     ingredients: [
-      { name: { ru: "Тесто для пиццы", en: "Pizza dough", pl: "Ciasto na pizzę" }, qty: 1, unit: { ru: "упак", en: "pack", pl: "opak" }, basePrice: 90 },
-      { name: { ru: "Пепперони", en: "Pepperoni", pl: "Kiełbasa Pepperoni" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 150 }
+      { name: { ru: "Тесто для пиццы", en: "Pizza dough", pl: "Ciasto na pizzę" }, qty: 1, unit: { ru: "упак", en: "pack", pl: "opak" }, basePrice: 4.20 },
+      { name: { ru: "Пепперони", en: "Pepperoni", pl: "Kiełbasa Pepperoni" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 5.80 }
     ],
     steps: [
       {
@@ -453,10 +453,10 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Kremowa owsianka na mleku migdałowym z bananem i orzechami."
     },
     ingredients: [
-      { name: { ru: "Овсяные хлопья", en: "Oat flakes", pl: "Płatki owsiane" }, qty: 80, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 35 },
-      { name: { ru: "Миндальное молоко", en: "Almond milk", pl: "Mleko migdałowe" }, qty: 250, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 50 },
-      { name: { ru: "Банан спелый", en: "Ripe banana", pl: "Dojrzały banan" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 25 },
-      { name: { ru: "Мед натуральный", en: "Natural honey", pl: "Miód naturalny" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 30 }
+      { name: { ru: "Овсяные хлопья", en: "Oat flakes", pl: "Płatki owsiane" }, qty: 80, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 0.90 },
+      { name: { ru: "Миндальное молоко", en: "Almond milk", pl: "Mleko migdałowe" }, qty: 250, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 2.20 },
+      { name: { ru: "Банан спелый", en: "Ripe banana", pl: "Dojrzały banan" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 1.50 },
+      { name: { ru: "Мед натуральный", en: "Natural honey", pl: "Miód naturalny" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.20 }
     ],
     steps: [
       {
@@ -487,10 +487,10 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Soczysty burger z wołowiny Black Angus z roztopionym cheddarem, bekonem i sosem na bułce brioche."
     },
     ingredients: [
-      { name: { ru: "Говяжий фарш Блэк Ангус", en: "Black Angus ground beef", pl: "Wołowina mielona Black Angus" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 240 },
-      { name: { ru: "Булочки Бриошь", en: "Brioche burger buns", pl: "Bułki Brioche" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 65 },
-      { name: { ru: "Сыр Чеддер", en: "Cheddar cheese", pl: "Ser Cheddar" }, qty: 2, unit: { ru: "ломтика", en: "slices", pl: "plastry" }, basePrice: 50 },
-      { name: { ru: "Бекон хрустящий", en: "Crispy bacon", pl: "Boczek chrupiący" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 70 }
+      { name: { ru: "Говяжий фарш Блэк Ангус", en: "Black Angus ground beef", pl: "Wołowina mielona Black Angus" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 9.50 },
+      { name: { ru: "Булочки Бриошь", en: "Brioche burger buns", pl: "Bułki Brioche" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 2.50 },
+      { name: { ru: "Сыр Чеддер", en: "Cheddar cheese", pl: "Ser Cheddar" }, qty: 2, unit: { ru: "ломтика", en: "slices", pl: "plastry" }, basePrice: 2.20 },
+      { name: { ru: "Бекон хрустящий", en: "Crispy bacon", pl: "Boczek chrupiący" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 2.80 }
     ],
     steps: [
       {
@@ -526,10 +526,10 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Tradycyjna włoska lazania z gęstym sosem Bolognese, sosem beszamelowym i parmezanem."
     },
     ingredients: [
-      { name: { ru: "Листы для лазаньи", en: "Lasagna sheets", pl: "Płaty do lazanii" }, qty: 12, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 95 },
-      { name: { ru: "Фарш говядина/свинина", en: "Beef & pork mince", pl: "Mięso mielone wołowo-wieprzowe" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 220 },
-      { name: { ru: "Сыр Моцарелла", en: "Mozzarella cheese", pl: "Ser Mozzarella" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 130 },
-      { name: { ru: "Томатная пассата", en: "Tomato passata", pl: "Passata pomidorowa" }, qty: 350, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 75 }
+      { name: { ru: "Листы для лазаньи", en: "Lasagna sheets", pl: "Płaty do lazanii" }, qty: 12, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 4.50 },
+      { name: { ru: "Фарш говядина/свинина", en: "Beef & pork mince", pl: "Mięso mielone wołowo-wieprzowe" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 9.90 },
+      { name: { ru: "Сыр Моцарелла", en: "Mozzarella cheese", pl: "Ser Mozzarella" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 5.80 },
+      { name: { ru: "Томатная пассата", en: "Tomato passata", pl: "Passata pomidorowa" }, qty: 350, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 3.90 }
     ],
     steps: [
       {
@@ -565,10 +565,10 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Słynny tajski makaron ryżowy z wok z krewetkami, orzeszkami ziemnymi i sosem tamaryndowym."
     },
     ingredients: [
-      { name: { ru: "Рисовая лапша", en: "Rice noodles", pl: "Makaron ryżowy" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 80 },
-      { name: { ru: "Тигровые креветки", en: "Tiger prawns", pl: "Krewetki tygrysie" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 320 },
-      { name: { ru: "Арахис дробленый", en: "Crushed peanuts", pl: "Orzeszki ziemne" }, qty: 30, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 35 },
-      { name: { ru: "Соус Пад Тай", en: "Pad Thai tamarind sauce", pl: "Sos Pad Thai" }, qty: 50, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 65 }
+      { name: { ru: "Рисовая лапша", en: "Rice noodles", pl: "Makaron ryżowy" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.50 },
+      { name: { ru: "Тигровые креветки", en: "Tiger prawns", pl: "Krewetki tygrysie" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 13.90 },
+      { name: { ru: "Арахис дробленый", en: "Crushed peanuts", pl: "Orzeszki ziemne" }, qty: 30, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.20 },
+      { name: { ru: "Соус Пад Тай", en: "Pad Thai tamarind sauce", pl: "Sos Pad Thai" }, qty: 50, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 2.80 }
     ],
     steps: [
       {
@@ -604,10 +604,10 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Klasyczny włoski deser z serem mascarpone, biszkoptami nasączonymi espresso i kakao."
     },
     ingredients: [
-      { name: { ru: "Сыр Маскарпоне", en: "Mascarpone cheese", pl: "Ser Mascarpone" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 160 },
-      { name: { ru: "Печенье Савоярди", en: "Ladyfingers (Savoiardi)", pl: "Biszkopty Savoiardi" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 90 },
-      { name: { ru: "Эспрессо свежесваренный", en: "Freshly brewed espresso", pl: "Świeże espresso" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 40 },
-      { name: { ru: "Какао-порошок", en: "Cocoa powder", pl: "Kakao" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 25 }
+      { name: { ru: "Сыр Маскарпоне", en: "Mascarpone cheese", pl: "Ser Mascarpone" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 6.90 },
+      { name: { ru: "Печенье Савоярди", en: "Ladyfingers (Savoiardi)", pl: "Biszkopty Savoiardi" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.90 },
+      { name: { ru: "Эспрессо свежесваренный", en: "Freshly brewed espresso", pl: "Świeże espresso" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 1.80 },
+      { name: { ru: "Какао-порошок", en: "Cocoa powder", pl: "Kakao" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.20 }
     ],
     steps: [
       {

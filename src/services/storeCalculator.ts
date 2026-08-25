@@ -1,5 +1,6 @@
 import { Ingredient, Supermarket } from '../types';
 import { SUPERMARKETS } from '../data/recipes';
+import { getCartActiveTotal } from './supermarketPriceService';
 
 function getHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
@@ -32,10 +33,7 @@ export function calculateStoreTotals(
   userLoc?: { lat: number; lng: number } | null,
   customStoresList?: Supermarket[] | null
 ): Supermarket[] {
-  const multiplier = servingsCount / 2;
-  const activeItems = shoppingList.filter(item => !item.checked);
-
-  const baseTotal = activeItems.reduce((acc, item) => acc + (item.basePrice * multiplier), 0);
+  const baseTotal = getCartActiveTotal(shoppingList, servingsCount);
 
   const sourceStores = (customStoresList && customStoresList.length > 0) ? customStoresList : SUPERMARKETS;
 
