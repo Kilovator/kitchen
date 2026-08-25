@@ -17,10 +17,10 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Pożywny tradycyjny barszcz z burakami, świeżą kapustą i bułeczkami czosnkowymi."
     },
     ingredients: [
-      { name: { ru: "Говядина на кости", en: "Beef bone-in", pl: "Wołowina z kością" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 380 },
-      { name: { ru: "Свекла свежая", en: "Fresh beetroot", pl: "Świeże buraki" }, qty: 2, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 45 },
-      { name: { ru: "Капуста белокочанная", en: "White cabbage", pl: "Kapusta biała" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 35 },
-      { name: { ru: "Картофель", en: "Potatoes", pl: "Ziemniaki" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 30 }
+      { name: { ru: "Говядина на кости", en: "Beef bone-in", pl: "Wołowina z kością" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 15.50 },
+      { name: { ru: "Свекла свежая", en: "Fresh beetroot", pl: "Świeże buraki" }, qty: 2, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 2.20 },
+      { name: { ru: "Капуста белокочанная", en: "White cabbage", pl: "Kapusta biała" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.80 },
+      { name: { ru: "Картофель", en: "Potatoes", pl: "Ziemniaki" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 1.50 }
     ],
     steps: [
       {
@@ -53,7 +53,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 520,
     rating: 4.95,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/pasta_carbonara_1786617618459.jpg",
+    image: "/images/pasta_carbonara_1786617618459.jpg",
     videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
     description: {
       ru: "Классическая спагетти карбонара с хрустящей гуанчиале, яичными желтками и сыром Пекорино.",
@@ -61,9 +61,9 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Klasyczne spaghetti carbonara z chrupiącym guanciale, żółtkami i serem Pecorino."
     },
     ingredients: [
-      { name: { ru: "Спагетти", en: "Spaghetti pasta", pl: "Makaron Spaghetti" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 95 },
-      { name: { ru: "Гуанчиале / бекон", en: "Guanciale or bacon", pl: "Guanciale / boczek" }, qty: 120, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 190 },
-      { name: { ru: "Яичные желтки", en: "Egg yolks", pl: "Żółtka jaj" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 40 }
+      { name: { ru: "Спагетти", en: "Spaghetti pasta", pl: "Makaron Spaghetti" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.20 },
+      { name: { ru: "Гуанчиале / бекон", en: "Guanciale or bacon", pl: "Guanciale / boczek" }, qty: 120, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 6.90 },
+      { name: { ru: "Яичные желтки", en: "Egg yolks", pl: "Żółtka jaj" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 2.70 }
     ],
     steps: [
       {
@@ -96,7 +96,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 640,
     rating: 4.98,
     difficulty: { ru: "Сложно", en: "Hard", pl: "Trudny" },
-    image: "images/ribeye_steak_1786617848688.jpg",
+    image: "/images/ribeye_steak_1786617848688.jpg",
     videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
     description: {
       ru: "Сочный стейк Medium Rare с чесноком, розмарином и овощами-гриль.",
@@ -104,8 +104,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Soczysty stek Ribeye Medium Rare z masłem czosnkowym i warzywami z grilla."
     },
     ingredients: [
-      { name: { ru: "Стейк Рибай", en: "Ribeye steak", pl: "Stek Ribeye" }, qty: 350, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 650 },
-      { name: { ru: "Масло сливочное", en: "Butter", pl: "Masło" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 65 }
+      { name: { ru: "Стейк Рибай", en: "Ribeye steak", pl: "Stek Ribeye" }, qty: 350, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 28.00 },
+      { name: { ru: "Масло сливочное", en: "Butter", pl: "Masło" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.90 }
     ],
     steps: [
       {
@@ -138,7 +138,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 450,
     rating: 4.88,
     difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "images/beef_tacos_1786619969488.jpg",
+    image: "/images/beef_tacos_1786619969488.jpg",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
       ru: "Кукурузные лепешки с тушеной говядиной, свежим гуакамоле и сальсой Пико-де-гальо.",
@@ -146,9 +146,9 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Tortille kukurydziane z szarpaną wołowiną, guacamole i świeżą salsą."
     },
     ingredients: [
-      { name: { ru: "Тортильи кукурузные", en: "Corn tortillas", pl: "Tortille kukurydziane" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 85 },
-      { name: { ru: "Говяжий фарш / мякоть", en: "Ground beef", pl: "Mięso wołowe" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 180 },
-      { name: { ru: "Авокадо для гуакамоле", en: "Avocado for guacamole", pl: "Awokado na guacamole" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 110 }
+      { name: { ru: "Тортильи кукурузные", en: "Corn tortillas", pl: "Tortille kukurydziane" }, qty: 3, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 3.90 },
+      { name: { ru: "Говяжий фарш / мякоть", en: "Ground beef", pl: "Mięso wołowe" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 7.90 },
+      { name: { ru: "Авокадо для гуакамоле", en: "Avocado for guacamole", pl: "Awokado na guacamole" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -176,7 +176,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 560,
     rating: 4.93,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/butter_chicken_1786619986389.jpg",
+    image: "/images/butter_chicken_1786619986389.jpg",
     videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
     description: {
       ru: "Нежные кусочки куриного филе в соусе из томатов, сливок и пряных индийских специй.",
@@ -184,9 +184,9 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Soczyste kawałki kurczaka w kremowym sosie pomidorowo-maślanym z przyprawami."
     },
     ingredients: [
-      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 190 },
-      { name: { ru: "Сливки 33%", en: "Heavy cream 33%", pl: "Śmietanka 33%" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 95 },
-      { name: { ru: "Томатный соус и специи", en: "Tomato sauce & garam masala", pl: "Sos pomidorowy i przyprawy" }, qty: 1, unit: { ru: "набор", en: "set", pl: "zestaw" }, basePrice: 75 }
+      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 7.80 },
+      { name: { ru: "Сливки 33%", en: "Heavy cream 33%", pl: "Śmietanka 33%" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 3.90 },
+      { name: { ru: "Томатный соус и специи", en: "Tomato sauce & garam masala", pl: "Sos pomidorowy i przyprawy" }, qty: 1, unit: { ru: "набор", en: "set", pl: "zestaw" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -209,7 +209,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 360,
     rating: 4.9,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/tom_yum_soup_1786617631167.jpg",
+    image: "/images/tom_yum_soup_1786617631167.jpg",
     videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
     description: {
       ru: "Остро-кислый тайский суп с креветками и кокосовым молоком.",
@@ -217,8 +217,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Ostro-kwaśna tajska zupa z krewetkami i mlekiem kokosowym."
     },
     ingredients: [
-      { name: { ru: "Креветки", en: "Tiger prawns", pl: "Krewetki" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 420 },
-      { name: { ru: "Кокосовое молоко", en: "Coconut milk", pl: "Mleczko kokosowe" }, qty: 200, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 130 }
+      { name: { ru: "Креветки", en: "Tiger prawns", pl: "Krewetki" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 16.90 },
+      { name: { ru: "Кокосовое молоко", en: "Coconut milk", pl: "Mleczko kokosowe" }, qty: 200, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 4.80 }
     ],
     steps: [
       {
@@ -241,7 +241,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 580,
     rating: 4.92,
     difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
-    image: "images/japanese_ramen_1786617864557.jpg",
+    image: "/images/japanese_ramen_1786617864557.jpg",
     videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
     description: {
       ru: "Японский суп рамен с нежной свининой Тясю, яйцом аджитама и нори.",
@@ -249,8 +249,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Japońska zupa z makaronem, chashu, jajkiem ajitama i nori."
     },
     ingredients: [
-      { name: { ru: "Лапша рамен", en: "Ramen noodles", pl: "Makaron ramen" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 110 },
-      { name: { ru: "Свинина Тясю", en: "Chashu pork", pl: "Wieprzowina Chashu" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 210 }
+      { name: { ru: "Лапша рамен", en: "Ramen noodles", pl: "Makaron ramen" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 4.50 },
+      { name: { ru: "Свинина Тясю", en: "Chashu pork", pl: "Wieprzowina Chashu" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 8.90 }
     ],
     steps: [
       {
@@ -273,7 +273,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 310,
     rating: 4.85,
     difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "images/shakshuka_breakfast_1786617643118.jpg",
+    image: "/images/shakshuka_breakfast_1786617643118.jpg",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
       ru: "Восточный завтрак из яиц в сочном томатном соусе.",
@@ -281,8 +281,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Bliskowschodnie śniadanie z jajek w sosie pomidorowym."
     },
     ingredients: [
-      { name: { ru: "Яйца куриные", en: "Eggs", pl: "Jajka" }, qty: 4, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 45 },
-      { name: { ru: "Томаты", en: "Tomatoes", pl: "Pomidory" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 90 }
+      { name: { ru: "Яйца куриные", en: "Eggs", pl: "Jajka" }, qty: 4, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 3.60 },
+      { name: { ru: "Томаты", en: "Tomatoes", pl: "Pomidory" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.20 }
     ],
     steps: [
       {
@@ -305,7 +305,7 @@ export const RECIPES_DATA: Recipe[] = [
     calories: 420,
     rating: 4.9,
     difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "images/belgian_waffles_1786617880120.jpg",
+    image: "/images/belgian_waffles_1786617880120.jpg",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
       ru: "Хрустящие вафли с мороженым и свежими ягодами.",
@@ -313,8 +313,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Chrupiące gofry z lodami i świeżymi owocami."
     },
     ingredients: [
-      { name: { ru: "Мука пшеничная", en: "Flour", pl: "Mąka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 45 },
-      { name: { ru: "Свежие ягоды", en: "Fresh berries", pl: "Świeże owoce" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 140 }
+      { name: { ru: "Мука пшеничная", en: "Flour", pl: "Mąka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 0.90 },
+      { name: { ru: "Свежие ягоды", en: "Fresh berries", pl: "Świeże owoce" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -345,8 +345,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Sałata rzymska z grillowanym kurczakiem, grzankami i parmezanem."
     },
     ingredients: [
-      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 130 },
-      { name: { ru: "Салат Романо", en: "Romaine lettuce", pl: "Sałata rzymska" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 85 }
+      { name: { ru: "Куриное филе", en: "Chicken breast", pl: "Pierś z kurczaka" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 5.50 },
+      { name: { ru: "Салат Романо", en: "Romaine lettuce", pl: "Sałata rzymska" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.80 }
     ],
     steps: [
       {
@@ -372,8 +372,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Zrównoważona miska z łososiem, quinoa, ogórkiem i glonami chuka."
     },
     ingredients: [
-      { name: { ru: "Филе лосося", en: "Salmon fillet", pl: "Filet z łososia" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 320 },
-      { name: { ru: "Киноа", en: "Quinoa", pl: "Komosa ryżowa" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 60 }
+      { name: { ru: "Филе лосося", en: "Salmon fillet", pl: "Filet z łososia" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 12.50 },
+      { name: { ru: "Киноа", en: "Quinoa", pl: "Komosa ryżowa" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.20 }
     ],
     steps: [
       {
@@ -399,8 +399,8 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Tost wieloziarnisty z awokado i jajkiem w koszulce."
     },
     ingredients: [
-      { name: { ru: "Хлеб зерновой", en: "Grain bread", pl: "Chleb ziarnisty" }, qty: 2, unit: { ru: "куска", en: "slices", pl: "plasterki" }, basePrice: 55 },
-      { name: { ru: "Авокадо спелое", en: "Ripe avocado", pl: "Dojrzałe awokado" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 120 }
+      { name: { ru: "Хлеб зерновой", en: "Grain bread", pl: "Chleb ziarnisty" }, qty: 2, unit: { ru: "куска", en: "slices", pl: "plasterki" }, basePrice: 1.60 },
+      { name: { ru: "Авокадо спелое", en: "Ripe avocado", pl: "Dojrzałe awokado" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 4.50 }
     ],
     steps: [
       {
@@ -426,67 +426,14 @@ export const RECIPES_DATA: Recipe[] = [
       pl: "Pizza na cienkim ciście z kiełbaskami pepperoni i mozzarellą."
     },
     ingredients: [
-      { name: { ru: "Тесто для пиццы", en: "Pizza dough", pl: "Ciasto na pizzę" }, qty: 1, unit: { ru: "упак", en: "pack", pl: "opak" }, basePrice: 90 },
-      { name: { ru: "Пепперони", en: "Pepperoni", pl: "Kiełbasa Pepperoni" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 150 }
+      { name: { ru: "Тесто для пиццы", en: "Pizza dough", pl: "Ciasto na pizzę" }, qty: 1, unit: { ru: "упак", en: "pack", pl: "opak" }, basePrice: 4.20 },
+      { name: { ru: "Пепперони", en: "Pepperoni", pl: "Kiełbasa Pepperoni" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 5.80 }
     ],
     steps: [
       {
         ru: "Выпечка: раскатайте тесто до 3 мм, выложите моцареллу и пепперони, выпекайте при 220°C ровно 12 минут.",
         en: "Baking: roll dough to 3mm, top with mozzarella & pepperoni, bake at 220°C for exactly 12 minutes.",
         pl: "Pieczenie: rozwałkuj ciasto na 3 mm, ułóż mozzarellę i pepperoni, piecz w 220°C przez 12 minut."
-      }
-    ]
-  },
-  {
-    id: "syrniki",
-    title: { ru: "Нежные сырники с ягодами", en: "Cottage Cheese Pancakes", pl: "Ser Nicze z owocami" },
-    category: "breakfast",
-    prepTime: { ru: "15 мин", en: "15 min", pl: "15 min" },
-    calories: 340,
-    rating: 4.9,
-    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=600&q=80",
-    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
-    description: {
-      ru: "Пышные сырники из фермерского творога со свежими ягодами.",
-      en: "Fluffy cottage cheese pancakes with fresh raspberries.",
-      pl: "Puszyste serniczki z twarogu ze świeżymi malinami."
-    },
-    ingredients: [
-      { name: { ru: "Творог 9%", en: "Cottage cheese 9%", pl: "Twaróg 9%" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 140 }
-    ],
-    steps: [
-      {
-        ru: "Жарка: сформируйте 6 шайб толщиной 2 см, обжаривайте на среднем огне по 3.5 минуты с каждой стороны.",
-        en: "Frying: shape into 6 discs (2cm thick), fry on medium heat for 3.5 minutes per side.",
-        pl: "Smażenie: uformuj 6 krążków o grubości 2 cm, smaż na średnim ogniu po 3.5 minuty z każdej strony."
-      }
-    ]
-  },
-  {
-    id: "greek_salad",
-    title: { ru: "Греческий салат с фетой", en: "Greek Salad with Feta", pl: "Sałatka grecka z fetą" },
-    category: "healthy",
-    prepTime: { ru: "10 мин", en: "10 min", pl: "10 min" },
-    calories: 260,
-    rating: 4.85,
-    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
-    description: {
-      ru: "Сочные огурцы, томаты, оливки Каламата и кубики сыра фета с орегано.",
-      en: "Crisp cucumbers, tomatoes, Kalamata olives, and feta cheese cubes.",
-      pl: "Świeże ogórki, pomidory, oliwki Kalamata i ser feta z oregano."
-    },
-    ingredients: [
-      { name: { ru: "Огурцы и томаты", en: "Cucumbers & tomatoes", pl: "Ogórki i pomidory" }, qty: 300, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 90 },
-      { name: { ru: "Сыр Фета", en: "Feta cheese", pl: "Ser Feta" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 110 }
-    ],
-    steps: [
-      {
-        ru: "Нарезка: нарежьте томаты и огурцы крупными кубиками 2×2 см, фету кубиками 1.5×1.5 см.",
-        en: "Chopping: cut tomatoes and cucumbers into 2x2 cm chunks, feta into 1.5x1.5 cm cubes.",
-        pl: "Krojenie: pokrój pomidory i ogórki w dużą kostkę 2x2 cm, fetę w kostkę 1.5x1.5 cm."
       }
     ]
   },
@@ -501,19 +448,284 @@ export const RECIPES_DATA: Recipe[] = [
     image: "https://images.unsplash.com/photo-1517673400267-0251440c45dc?auto=format&fit=crop&w=600&q=80",
     videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
     description: {
-      ru: "Кремовая овсяная каша на миндальном молоке с бананом и орехами пекан.",
+      ru: "Кремовая овсяная каша на миндальном молоке с карамелизованным бананом и пеканом.",
       en: "Creamy almond milk oatmeal topped with caramelized banana and pecans.",
       pl: "Kremowa owsianka na mleku migdałowym z bananem i orzechami."
     },
     ingredients: [
-      { name: { ru: "Овсяные хлопья", en: "Oat flakes", pl: "Płatki owsiane" }, qty: 80, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 35 },
-      { name: { ru: "Банан", en: "Banana", pl: "Banan" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 25 }
+      { name: { ru: "Овсяные хлопья", en: "Oat flakes", pl: "Płatki owsiane" }, qty: 80, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 0.90 },
+      { name: { ru: "Миндальное молоко", en: "Almond milk", pl: "Mleko migdałowe" }, qty: 250, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 2.20 },
+      { name: { ru: "Банан спелый", en: "Ripe banana", pl: "Dojrzały banan" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 1.50 },
+      { name: { ru: "Мед натуральный", en: "Natural honey", pl: "Miód naturalny" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.20 }
     ],
     steps: [
       {
-        ru: "Варите 80г хлопьев в 200мл миндального молока ровно 5 минут на слабом огне.",
-        en: "Simmer 80g oat flakes in 200ml almond milk for exactly 5 minutes on low heat.",
-        pl: "Gotuj 80g płatków owsianych w 200ml mleka migdałowego dokładnie 5 minut."
+        ru: "Варка каши: засыпьте 80г овсяных хлопьев в сотейник с 250мл миндального молока и щепоткой соли. Варите 5 минут на слабом огне.",
+        en: "Cooking oatmeal: combine 80g oat flakes with 250ml almond milk and pinch of salt. Simmer 5 minutes on low heat.",
+        pl: "Gotowanie: wsyp 80g płatków owsianych do 250ml mleka migdałowego z szczyptą soli. Gotuj 5 minut na małym ogniu."
+      },
+      {
+        ru: "Карамелизация: нарежьте банан кружочками 1 см. Обжарьте на 10г сливочного масла с 1 ч.л. меда по 1.5 минуты с каждой стороны.",
+        en: "Caramelization: slice banana into 1cm coins. Fry in 10g butter with 1 tsp honey for 1.5 minutes per side until golden.",
+        pl: "Karmelizacja: pokrój banan w plastry 1 cm. Smaż na 10g masła z miodem po 1.5 minuty z każdej strony."
+      }
+    ]
+  },
+  {
+    id: "beef_burger",
+    title: { ru: "Чизбургер Блэк Ангус", en: "Black Angus Bacon Cheeseburger", pl: "Cheeseburger Black Angus z bekonem" },
+    category: "fast",
+    prepTime: { ru: "22 мин", en: "22 min", pl: "22 min" },
+    calories: 720,
+    rating: 4.96,
+    difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
+    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
+    description: {
+      ru: "Сочный бургер из мраморной говядины Блэк Ангус с расплавленным чеддером и беконом на бриошь.",
+      en: "Juicy Black Angus beef patty topped with melted cheddar, crispy bacon, and truffle sauce on brioche bun.",
+      pl: "Soczysty burger z wołowiny Black Angus z roztopionym cheddarem, bekonem i sosem na bułce brioche."
+    },
+    ingredients: [
+      { name: { ru: "Говяжий фарш Блэк Ангус", en: "Black Angus ground beef", pl: "Wołowina mielona Black Angus" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 9.50 },
+      { name: { ru: "Булочки Бриошь", en: "Brioche burger buns", pl: "Bułki Brioche" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 2.50 },
+      { name: { ru: "Сыр Чеддер", en: "Cheddar cheese", pl: "Ser Cheddar" }, qty: 2, unit: { ru: "ломтика", en: "slices", pl: "plastry" }, basePrice: 2.20 },
+      { name: { ru: "Бекон хрустящий", en: "Crispy bacon", pl: "Boczek chrupiący" }, qty: 40, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 2.80 }
+    ],
+    steps: [
+      {
+        ru: "Котлета: сформируйте из 180г фарша плоскую котлету диаметром 11 см, посолите и поперчите перед жаркой.",
+        en: "Patty prep: shape 180g beef into flat patty (11 cm wide), season with sea salt and black pepper just before searing.",
+        pl: "Kotlecie: uformuj z 180g wołowiny płaski kotlet (średnica 11 cm), dopraw solą i pieprzem tuż przed smażeniem."
+      },
+      {
+        ru: "Жарка: обжаривайте котлету на раскаленной сковороде по 2.5 минуты с каждой стороны. За 1 минуту до готовности выложите 2 ломтика чеддера.",
+        en: "Searing: cook patty on smoking hot skillet for 2.5 minutes per side. Top with 2 cheddar slices 1 minute before finishing to melt.",
+        pl: "Smażenie: smaż kotlet na mocno rozgrzanej patelni po 2.5 minuty z każdej strony. Połóż 2 plastry cheddara na 1 minutę przed końcem."
+      },
+      {
+        ru: "Сборка: обжарьте разрезанную булочку бриошь 1 минуту на сливочном масле. Смажьте соусом, выложите котлету с сыром, бекон и свежий огурец.",
+        en: "Assembly: toast sliced brioche bun in butter for 1 minute. Spread sauce, lay cheeseburger patty, crispy bacon, and pickles.",
+        pl: "Składanie: podsmaż bułkę brioche na masłe przez 1 minutę. Posmaruj sosem, ułóż kotlet z serem, bekon i ogórek konserwowy."
+      }
+    ]
+  },
+  {
+    id: "lasagna",
+    title: { ru: "Итальянская Лазанья Болоньезе", en: "Classic Lasagna Bolognese", pl: "Włoska Lazania Bolognese" },
+    category: "lunch",
+    prepTime: { ru: "50 мин", en: "50 min", pl: "50 min" },
+    calories: 610,
+    rating: 4.97,
+    difficulty: { ru: "Сложно", en: "Hard", pl: "Trudny" },
+    image: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
+    description: {
+      ru: "Традиционная итальянская лазанья с густым соусом Болоньезе, Бешамель и пармезаном.",
+      en: "Traditional Italian lasagna layered with rich Bolognese ragu, silky Béchamel, and parmesan.",
+      pl: "Tradycyjna włoska lazania z gęstym sosem Bolognese, sosem beszamelowym i parmezanem."
+    },
+    ingredients: [
+      { name: { ru: "Листы для лазаньи", en: "Lasagna sheets", pl: "Płaty do lazanii" }, qty: 12, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 4.50 },
+      { name: { ru: "Фарш говядина/свинина", en: "Beef & pork mince", pl: "Mięso mielone wołowo-wieprzowe" }, qty: 400, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 9.90 },
+      { name: { ru: "Сыр Моцарелла", en: "Mozzarella cheese", pl: "Ser Mozzarella" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 5.80 },
+      { name: { ru: "Томатная пассата", en: "Tomato passata", pl: "Passata pomidorowa" }, qty: 350, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 3.90 }
+    ],
+    steps: [
+      {
+        ru: "Соус Болоньезе: обжарьте лук, чеснок и 400г фарша 8 минут. Добавьте 350мл пассаты, базилик и томите 20 минут на слабом огне.",
+        en: "Bolognese sauce: saute onion, garlic and 400g mince for 8 minutes. Add 350ml passata, basil, and simmer 20 minutes on low heat.",
+        pl: "Sos Bolognese: podsmaż cebulę, czosnek i 400g mięsa przez 8 minut. Dodaj passatę pomidorową i dusić 20 minut."
+      },
+      {
+        ru: "Соус Бешамель: растопите 40г сливочного масла, всыпьте 40г муки, влейте 500мл молока и варите до загустения 5 минут со щепоткой мускатного ореха.",
+        en: "Béchamel sauce: melt 40g butter, whisk in 40g flour, pour 500ml milk and cook 5 minutes until thickened with pinch of nutmeg.",
+        pl: "Sos beszamelowy: roztop 40g masła, dodaj 40g mąki, wlej 500ml mleka i gotuj 5 minut do zgęstnienia."
+      },
+      {
+        ru: "Запекание: выложите слоями в форму: Бешамель, листы лазаньи, Болоньезе, моцареллу. Выпекайте при 190°C ровно 30 минут до золотистой корочки.",
+        en: "Baking: layer in baking dish: Béchamel, pasta sheets, Bolognese, mozzarella. Bake at 190°C for exactly 30 minutes until golden.",
+        pl: "Pieczenie: układaj warstwami: beszamel, płaty, Bolognese, mozzarellę. Piecz w 190°C przez dokładnie 30 minut."
+      }
+    ]
+  },
+  {
+    id: "pad_thai",
+    title: { ru: "Пад Тай с креветками", en: "Shrimp Pad Thai Noodles", pl: "Pad Thai z krewetkami" },
+    category: "lunch",
+    prepTime: { ru: "25 мин", en: "25 min", pl: "25 min" },
+    calories: 490,
+    rating: 4.92,
+    difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
+    image: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
+    description: {
+      ru: "Знаменитая тайская рисовая лапша вок с тигровыми креветками, арахисом и соусом тамаринд.",
+      en: "Famous Thai wok rice noodles stir-fried with tiger prawns, crushed peanuts, bean sprouts, and tamarind sauce.",
+      pl: "Słynny tajski makaron ryżowy z wok z krewetkami, orzeszkami ziemnymi i sosem tamaryndowym."
+    },
+    ingredients: [
+      { name: { ru: "Рисовая лапша", en: "Rice noodles", pl: "Makaron ryżowy" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.50 },
+      { name: { ru: "Тигровые креветки", en: "Tiger prawns", pl: "Krewetki tygrysie" }, qty: 180, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 13.90 },
+      { name: { ru: "Арахис дробленый", en: "Crushed peanuts", pl: "Orzeszki ziemne" }, qty: 30, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.20 },
+      { name: { ru: "Соус Пад Тай", en: "Pad Thai tamarind sauce", pl: "Sos Pad Thai" }, qty: 50, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 2.80 }
+    ],
+    steps: [
+      {
+        ru: "Замачивание: замочите 150г рисовой лапши в теплой воде на 15 минут. Обжарьте 180г креветок в воке 2 минуты на сильном огне.",
+        en: "Soaking: soak 150g rice noodles in warm water for 15 minutes. Stir-fry 180g prawns in hot wok for 2 minutes on high heat.",
+        pl: "Namaczanie: namocz 150g makaronu ryżowego w ciepłej wodzie przez 15 minut. Smaż 180g krewetek w woku przez 2 minuty."
+      },
+      {
+        ru: "Вок: отодвиньте креветки, вбей яйцо и быстро перемешайте. Добавьте лапшу, 50мл соуса Пад Тай и обжаривайте 3 минуты.",
+        en: "Wok stir-fry: push prawns aside, scramble 1 egg. Add drained noodles, 50ml Pad Thai sauce and toss vigorously for 3 minutes.",
+        pl: "Smażenie: przesuń krewetki, wbij jajko i wymieszaj. Dodaj makaron, sos Pad Thai i smaż przez 3 minuty."
+      },
+      {
+        ru: "Подача: посыпьте 30г дробленого арахиса, ростками сои и полейте соком 1/2 лайма.",
+        en: "Serving: top with 30g crushed peanuts, fresh bean sprouts, cilantro, and fresh lime wedge.",
+        pl: "Podanie: posyp 30g orzeszków ziemnych, kiełkami soi i skrop sokiem z limonki."
+      }
+    ]
+  },
+  {
+    id: "tiramisu",
+    title: { ru: "Итальянский десерт Тирамису", en: "Classic Italian Tiramisu", pl: "Włoski Deser Tiramisu" },
+    category: "dessert",
+    prepTime: { ru: "20 мин", en: "20 min", pl: "20 min" },
+    calories: 410,
+    rating: 4.99,
+    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
+    image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/3AAdKl1UYZs",
+    description: {
+      ru: "Нежнейший итальянский десерт с сыром маскарпоне, печеньем савоярди и эспрессо.",
+      en: "Classic Italian dessert with creamy mascarpone, espresso-soaked ladyfingers, and cocoa powder.",
+      pl: "Klasyczny włoski deser z serem mascarpone, biszkoptami nasączonymi espresso i kakao."
+    },
+    ingredients: [
+      { name: { ru: "Сыр Маскарпоне", en: "Mascarpone cheese", pl: "Ser Mascarpone" }, qty: 250, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 6.90 },
+      { name: { ru: "Печенье Савоярди", en: "Ladyfingers (Savoiardi)", pl: "Biszkopty Savoiardi" }, qty: 150, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 3.90 },
+      { name: { ru: "Эспрессо свежесваренный", en: "Freshly brewed espresso", pl: "Świeże espresso" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 1.80 },
+      { name: { ru: "Какао-порошок", en: "Cocoa powder", pl: "Kakao" }, qty: 20, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 1.20 }
+    ],
+    steps: [
+      {
+        ru: "Крем: взбейте 3 желтка с 60г сахарной пудры до белой пены. Добавьте 250г маскарпоне и аккуратно перемешайте лопаткой.",
+        en: "Cream: beat 3 egg yolks with 60g powdered sugar until pale foam forms. Fold in 250g mascarpone gently with spatula.",
+        pl: "Krem: ubij 3 żółtka z 60g cukru pudru na puszystą masę. Dodaj 250g mascarpone i delikatnie wymieszaj."
+      },
+      {
+        ru: "Сборка: быстрыми движениями окунайте печенье савоярди в остывший эспрессо на 1 секунду и выкладывайте слоями с кремом.",
+        en: "Assembly: dip ladyfingers quickly into cold espresso (1 sec per side) and layer with mascarpone cream.",
+        pl: "Składanie: zanurzaj biszkopty w zimnym espresso na 1 sekundę i układaj warstwami z kremem."
+      },
+      {
+        ru: "Охлаждение: посыпьте сверху какао-порошком через ситечко и поставьте в холодильник минимум на 2 часа.",
+        en: "Chilling: dust top generously with cocoa powder and chill in refrigerator for at least 2 hours.",
+        pl: "Chłodzenie: posyp z wierzchu kakao i wstaw do lodówki na co najmniej 2 godziny."
+      }
+    ]
+  },
+  {
+    id: "salmon_cream_pasta",
+    title: { ru: "Паста с лососем и шпинатом", en: "Creamy Salmon & Spinach Pasta", pl: "Makaron z łososiem i szpinakiem" },
+    category: "lunch",
+    prepTime: { ru: "20 мин", en: "20 min", pl: "20 min" },
+    calories: 540,
+    rating: 4.94,
+    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
+    image: "https://images.unsplash.com/photo-1621996346565-e3d5d6288339?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/5-9M4d23q0U",
+    description: {
+      ru: "Фетучини с обжаренным филе лосося, свежим шпинатом и сливочно-чесночным соусом.",
+      en: "Fettuccine pasta with seared salmon chunks, fresh baby spinach, and garlic cream sauce.",
+      pl: "Fettuccine z podsmażonym filet z łososia, świeżym szpinakiem i sosem śmietankowym."
+    },
+    ingredients: [
+      { name: { ru: "Фетучини / Пенне", en: "Fettuccine pasta", pl: "Makaron Fettuccine" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 85 },
+      { name: { ru: "Филе лосося свежее", en: "Fresh salmon fillet", pl: "Filet z łososia" }, qty: 220, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 360 },
+      { name: { ru: "Сливки 20%", en: "Cooking cream 20%", pl: "Śmietanka 20%" }, qty: 150, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 65 },
+      { name: { ru: "Шпинат свежий", en: "Fresh baby spinach", pl: "Szpinak świeży" }, qty: 80, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 50 }
+    ],
+    steps: [
+      {
+        ru: "Лосось: нарежьте 220г лосося кубиками 2×2 см. Обжарьте на оливковом масле 3 минуты до золотистой корочки, переложите на тарелку.",
+        en: "Salmon: dice 220g salmon fillet into 2x2 cm cubes. Sear in olive oil for 3 minutes until golden, remove to plate.",
+        pl: "Łosoś: pokrój 220g łososia w kostkę 2x2 cm. Smaż na oliwie przez 3 minuty na złoty kolor, przełóż na talerz."
+      }
+    ]
+  },
+  {
+    id: "french_onion_soup",
+    title: { ru: "Французский Луковый Суп", en: "French Onion Soup with Gruyere", pl: "Francuska Zupa Cebulowa z serem" },
+    category: "lunch",
+    prepTime: { ru: "45 мин", en: "45 min", pl: "45 min" },
+    calories: 390,
+    rating: 4.89,
+    difficulty: { ru: "Средне", en: "Medium", pl: "Średni" },
+    image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
+    description: {
+      ru: "Классический суп из карамелизованного репчатого лука на говяжьем бульоне с запеченным сырным багетом.",
+      en: "Rich caramelized onion soup in beef broth topped with toasted baguette slice and melted Gruyere cheese.",
+      pl: "Klasyczna zupa z karmelizowanej cebuli na wywarze wołowym z pieczoną bagietką i serem."
+    },
+    ingredients: [
+      { name: { ru: "Лук репчатый", en: "Yellow onions", pl: "Cebula żółta" }, qty: 600, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 40 },
+      { name: { ru: "Говяжий бульон", en: "Beef broth", pl: "Wywar wołowy" }, qty: 700, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 60 },
+      { name: { ru: "Сыр Грюйер / Эмменталь", en: "Gruyere cheese", pl: "Ser Gruyere" }, qty: 100, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 120 },
+      { name: { ru: "Багет французский", en: "French baguette", pl: "Bagietka francuska" }, qty: 4, unit: { ru: "ломтика", en: "slices", pl: "plastry" }, basePrice: 35 }
+    ],
+    steps: [
+      {
+        ru: "Карамелизация: тонко нашинкуйте 600г лука. Томите на 40г сливочного масла на слабом огне 30 минут до глубокого янтарного цвета.",
+        en: "Caramelization: slice 600g onions thinly. Cook slowly in 40g butter on low heat for 30 minutes until deep golden brown.",
+        pl: "Karmelizacja: pokrój 600g cebuli w cienkie piórka. Smaż na 40g masła na małym ogieniu przez 30 minut na złoty kolor."
+      },
+      {
+        ru: "Бульон: влейте 700мл говяжьего бульона, 100мл белого сухого вина, добавьте тимьян и варите 15 минут.",
+        en: "Simmering: pour in 700ml beef broth, 100ml dry white wine, add fresh thyme and simmer 15 minutes.",
+        pl: "Gotowanie: wlej 700ml wywaru, 100ml białego wina, dodaj tymianek i gotuj 15 minut."
+      },
+      {
+        ru: "Запекание: разлейте суп в порционные горшочки, сверху выложите гренку багета и щедро посыпьте 100г сыра. Запекайте при 220°C ровно 6 минут до пузырящейся корочки.",
+        en: "Gratin: ladle soup into ovenproof bowls, top with toasted baguette and 100g cheese. Broil at 220°C for 6 mins until bubbly.",
+        pl: "Zapiekanie: rozlej zupę do miseczek, ułóż bagietkę i posyp serem. Zapiekaj w 220°C przez 6 minut."
+      }
+    ]
+  },
+  {
+    id: "pancakes",
+    title: { ru: "Американские панкейки с сиропом", en: "Fluffy American Pancakes", pl: "Puszyste Amerykańskie Pancakes" },
+    category: "breakfast",
+    prepTime: { ru: "15 мин", en: "15 min", pl: "15 min" },
+    calories: 380,
+    rating: 4.91,
+    difficulty: { ru: "Легко", en: "Easy", pl: "Łatwy" },
+    image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=600&q=80",
+    videoUrl: "https://www.youtube.com/embed/gL2-11a5q0U",
+    description: {
+      ru: "Пышные мягкие панкейки со сливочным маслом и натуральным кленовым сиропом.",
+      en: "Stack of fluffy, tender American pancakes served with butter and maple syrup.",
+      pl: "Puszyste amerykańskie pancakes podawane z masłem i syropem klonowym."
+    },
+    ingredients: [
+      { name: { ru: "Мука пшеничная", en: "Wheat flour", pl: "Mąka pszenna" }, qty: 200, unit: { ru: "г", en: "g", pl: "g" }, basePrice: 40 },
+      { name: { ru: "Молоко 3.2%", en: "Milk 3.2%", pl: "Mleko 3.2%" }, qty: 220, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 35 },
+      { name: { ru: "Яйцо куриное", en: "Egg", pl: "Jajko" }, qty: 1, unit: { ru: "шт", en: "pcs", pl: "szt" }, basePrice: 15 },
+      { name: { ru: "Кленовый сироп", en: "Maple syrup", pl: "Syrop klonowy" }, qty: 50, unit: { ru: "мл", en: "ml", pl: "ml" }, basePrice: 120 }
+    ],
+    steps: [
+      {
+        ru: "Тесто: смешайте 200г муки, 1 ч.л. разрыхлителя, 2 ст.л. сахара, 220мл молока, 1 яйцо и 30г растопленного масла до однородности.",
+        en: "Batter: whisk 200g flour, 1 tsp baking powder, 2 tbsp sugar, 220ml milk, 1 egg, and 30g melted butter until smooth.",
+        pl: "Ciasto: wymieszaj 200g mąki, proszek do pieczenia, cukier, 220ml mleka, 1 jajko i 30g roztopionego masła."
+      },
+      {
+        ru: "Жарка: выливайте по 2 ст.л. теста на сухую антипригарную сковороду. Жарьте 2 минуты до появления пузырьков, переверните и жарьте еще 1 минуту.",
+        en: "Cooking: pour 2 tbsp batter onto dry non-stick skillet. Cook 2 mins until bubbles form, flip and cook 1 min more until golden.",
+        pl: "Smażenie: nakładaj po 2 łyżki ciasta na suchą patelnię. Smaż 2 minuty do pojawienia się pęcherzyków, przewróć na 1 minutę."
       }
     ]
   }
@@ -600,42 +812,122 @@ export const SCAN_PRESETS: Record<string, ScanPreset> = {
 export const SUPERMARKETS: Supermarket[] = [
   {
     id: "s1",
-    name: { ru: "Пятёрочка", en: "FreshMart", pl: "Biedronka" },
-    logo: "🔴",
-    priceMultiplier: 0.95,
-    distanceMeters: 320,
-    walkTime: { ru: "4 мин пешком", en: "4 min walk", pl: "4 min pieszo" },
-    badge: { ru: "Минимальный чек", en: "Lowest Total", pl: "Najtaniej" },
-    deliveryAvailable: true
+    name: "Biedronka",
+    logo: "🐞",
+    priceMultiplier: 0.92,
+    distanceMeters: 310,
+    walkTime: { pl: "4 min pieszo", en: "4 min walk", ru: "4 мин пешком" },
+    badge: { pl: "Najniższa cena", en: "Best Price", ru: "Лучшая цена" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://www.biedronka.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Biedronka",
+    lat: 52.2315,
+    lng: 21.0105,
+    address: { pl: "ul. Marszałkowska 104, Warszawa", en: "104 Marszalkowska St, Warsaw", ru: "ул. Маршаловская 104, Варшава" }
   },
   {
     id: "s2",
-    name: { ru: "Перекрёсток", en: "SuperMarket", pl: "Lidl" },
-    logo: "🟢",
-    priceMultiplier: 1.08,
-    distanceMeters: 650,
-    walkTime: { ru: "8 мин пешком", en: "8 min walk", pl: "8 min pieszo" },
-    badge: { ru: "Широкий выбор", en: "Wide Selection", pl: "Duży выбор" },
-    deliveryAvailable: true
+    name: "Lidl",
+    logo: "🟡",
+    priceMultiplier: 0.94,
+    distanceMeters: 550,
+    walkTime: { pl: "7 min pieszo", en: "7 min walk", ru: "7 мин пешком" },
+    badge: { pl: "Gwarancja jakości", en: "Quality Guarantee", ru: "Гарантия качества" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://www.lidl.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Lidl",
+    lat: 52.2270,
+    lng: 21.0060,
+    address: { pl: "Aleje Jerozolimskie 56, Warszawa", en: "56 Jerozolimskie Ave, Warsaw", ru: "Аллеи Иерусалимские 56, Варшава" }
   },
   {
     id: "s3",
-    name: { ru: "ВкусВилл", en: "BioMarket", pl: "Carrefour" },
-    logo: "🌿",
-    priceMultiplier: 1.25,
-    distanceMeters: 450,
-    walkTime: { ru: "5 мин пешком", en: "5 min walk", pl: "5 min pieszo" },
-    badge: { ru: "Эко-продукты", en: "Organic", pl: "Produkty Eko" },
-    deliveryAvailable: true
+    name: "Żabka (Nano / Jush)",
+    logo: "🐸",
+    priceMultiplier: 1.14,
+    distanceMeters: 140,
+    walkTime: { pl: "15 min dostawa", en: "15 min delivery", ru: "Доставка 15 мин" },
+    badge: { pl: "Dostawa w 15 min", en: "15 min Delivery", ru: "Доставка за 15 мин" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://www.zabka.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Zabka",
+    lat: 52.2305,
+    lng: 21.0130,
+    address: { pl: "ul. Nowy Świat 22, Warszawa", en: "22 Nowy Swiat St, Warsaw", ru: "ул. Новый Свят 22, Варшава" }
   },
   {
     id: "s4",
-    name: { ru: "Лента", en: "HyperMarket", pl: "Auchan" },
-    logo: "🟡",
+    name: "Carrefour Market",
+    logo: "🔵",
+    priceMultiplier: 1.04,
+    distanceMeters: 620,
+    walkTime: { pl: "8 min pieszo", en: "8 min walk", ru: "8 мин пешком" },
+    badge: { pl: "Duży wybór", en: "Wide Selection", ru: "Широкий выбор" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://www.carrefour.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Carrefour",
+    lat: 52.2240,
+    lng: 21.0180,
+    address: { pl: "ul. Wołoska 12, Warszawa", en: "12 Woloska St, Warsaw", ru: "ул. Волоская 12, Варшава" }
+  },
+  {
+    id: "s5",
+    name: "Auchan Supermarket",
+    logo: "🔴",
     priceMultiplier: 0.90,
-    distanceMeters: 1200,
-    walkTime: { ru: "15 мин на авто", en: "15 min drive", pl: "15 min autem" },
-    badge: { ru: "Выгодная упаковка", en: "Bulk Savings", pl: "Znakomita cena" },
-    deliveryAvailable: true
+    distanceMeters: 1100,
+    walkTime: { pl: "14 min pieszo", en: "14 min walk", ru: "14 мин пешком" },
+    badge: { pl: "Super ceny", en: "Super Prices", ru: "Супер цены" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://www.auchan.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Auchan",
+    lat: 52.2360,
+    lng: 21.0020,
+    address: { pl: "ul. Modlińska 8, Warszawa", en: "8 Modlinska St, Warsaw", ru: "ул. Модлиньская 8, Варшава" }
+  },
+  {
+    id: "s6",
+    name: "Dino",
+    logo: "🟢",
+    priceMultiplier: 0.95,
+    distanceMeters: 780,
+    walkTime: { pl: "10 min pieszo", en: "10 min walk", ru: "10 мин пешком" },
+    badge: { pl: "Blisko Ciebie", en: "Close to You", ru: "Рядом с вами" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://marketdino.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Dino",
+    lat: 52.2255,
+    lng: 21.0150,
+    address: { pl: "ul. Grójecka 45, Warszawa", en: "45 Grojecka St, Warsaw", ru: "ул. Груецкая 45, Варшава" }
+  },
+  {
+    id: "s7",
+    name: "Kaufland",
+    logo: "⚪",
+    priceMultiplier: 0.93,
+    distanceMeters: 1250,
+    walkTime: { pl: "15 min pieszo", en: "15 min walk", ru: "15 мин пешком" },
+    badge: { pl: "Hipermarket", en: "Hypermarket", ru: "Гипермаркет" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://www.kaufland.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Kaufland",
+    lat: 52.2380,
+    lng: 21.0220,
+    address: { pl: "ul. Biruty 18, Warszawa", en: "18 Biruty St, Warsaw", ru: "ул. Бируты 18, Варшава" }
+  },
+  {
+    id: "s8",
+    name: "Stokrotka",
+    logo: "🌼",
+    priceMultiplier: 1.06,
+    distanceMeters: 420,
+    walkTime: { pl: "5 min pieszo", en: "5 min walk", ru: "5 мин пешком" },
+    badge: { pl: "Świeże i Eko", en: "Fresh & Eco", ru: "Свежие и Эко" },
+    deliveryAvailable: true,
+    deliveryUrl: "https://stokrotka.pl/",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Stokrotka",
+    lat: 52.2320,
+    lng: 21.0170,
+    address: { pl: "ul. Chmielna 15, Warszawa", en: "15 Chmielna St, Warsaw", ru: "ул. Хмельная 15, Варшава" }
   }
 ];

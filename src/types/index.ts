@@ -1,6 +1,6 @@
 import { Language } from '../i18n/translations';
 
-export type CategoryType = 'all' | 'breakfast' | 'lunch' | 'healthy' | 'fast';
+export type CategoryType = 'all' | 'breakfast' | 'lunch' | 'dinner' | 'healthy' | 'fast' | 'dessert';
 
 export interface LocalizedString {
   ru: string;
@@ -14,6 +14,10 @@ export interface Ingredient {
   unit: LocalizedString;
   basePrice: number;
   checked?: boolean;
+  isDiscrete?: boolean;
+  baseQty?: number;
+  initialBaseQty?: number;
+  unitPrice?: number;
 }
 
 export interface Recipe {
@@ -33,13 +37,18 @@ export interface Recipe {
 
 export interface Supermarket {
   id: string;
-  name: LocalizedString;
+  name: string;
   logo: string;
   priceMultiplier: number;
   distanceMeters: number;
   walkTime: LocalizedString;
   badge: LocalizedString;
   deliveryAvailable: boolean;
+  mapUrl: string;
+  deliveryUrl: string;
+  lat: number;
+  lng: number;
+  address: LocalizedString;
   totalCost?: number;
 }
 
@@ -55,6 +64,44 @@ export interface ScanPreset {
   image: string;
 }
 
+export type GenderType = 'male' | 'female';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very' | 'extra';
+export type GoalType = 'lose' | 'maintain' | 'gain';
+export type BmrFormulaType = 'mifflin' | 'harris' | 'who';
+
+export interface UserProfile {
+  gender: GenderType;
+  age: number;
+  weight: number; // kg
+  height: number; // cm
+  activity: ActivityLevel;
+  goal: GoalType;
+  formula: BmrFormulaType;
+  bmr: number;
+  tdee: number;
+  targetCalories: number;
+  targetProtein: number; // grams
+  targetFat: number; // grams
+  targetCarbs: number; // grams
+  targetFiber: number; // grams
+  targetWaterMl: number; // ml
+  bmi: number;
+  bmiCategory: 'underweight' | 'normal' | 'overweight' | 'obese';
+  idealWeightMin: number;
+  idealWeightMax: number;
+}
+
+export interface MealEntry {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  time: string;
+}
+
 export interface AppState {
   currentLang: Language;
   currentView: string;
@@ -66,6 +113,12 @@ export interface AppState {
   shoppingList: Ingredient[];
   storeFilterMode: 'best-price' | 'nearest';
   diaryConsumed: number;
+  waterConsumedMl: number;
   cameraStream: MediaStream | null;
   theme: 'dark' | 'light';
+  userLocation: { lat: number; lng: number } | null;
+  isStoresListExpanded?: boolean;
+  lastScanResult?: any;
+  userProfile?: UserProfile;
+  loggedMeals?: MealEntry[];
 }

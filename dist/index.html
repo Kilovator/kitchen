@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CookCraft — Asystent Kulinarny i Porównywarka Cen Sklepów w Polsce</title>
+  <meta name="description" content="Culinary assistant: recipes with video, photo calorie scanner, and supermarket price comparison in RU, EN, PL.">
+  <meta name="theme-color" content="#111827">
+  
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/assets/manifest-n0t3UtBO.json">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App Styling -->
+  <script type="module" crossorigin src="/assets/index-CnPYvX63.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CWl3OJkU.css">
+</head>
+<body class="dark-theme">
+  <div id="app">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="logo">
+          <div class="logo-icon">🍳</div>
+          <span class="logo-text">CookCraft</span>
+        </div>
+        
+        <!-- Navigation Menu in Header -->
+        <nav class="header-nav">
+          <button class="nav-item active" data-target="view-recipes">
+            <span class="nav-icon">📖</span>
+            <span class="nav-label">Рецепты</span>
+          </button>
+          <button class="nav-item" data-target="view-scanner">
+            <span class="nav-icon">📷</span>
+            <span class="nav-label">Сканер</span>
+          </button>
+          <button class="nav-item" data-target="view-shopping">
+            <span class="nav-icon">🛒</span>
+            <span class="nav-label">Покупки</span>
+          </button>
+          <button class="nav-item" data-target="view-diary">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Дневник</span>
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <!-- Language Switcher (RU | EN | PL) -->
+          <div class="lang-switcher">
+            <button class="lang-btn active" data-lang="ru">RU</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="pl">PL</button>
+          </div>
+
+          <button id="btn-theme-toggle" class="icon-btn" title="Theme">
+            <span class="theme-icon">🌙</span>
+          </button>
+          <div class="user-avatar" title="Profile">
+            <span>KM</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- VIEW 1: RECIPES -->
+      <section id="view-recipes" class="view-page active">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title">Кулинарные рецепты</h1>
+            <p class="page-subtitle">Вкусные блюда с видеоуроками и расчет ингредиентов</p>
+          </div>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="recipe-search" placeholder="Поиск рецепта или ингредиента...">
+          </div>
+          <div class="category-pills">
+            <button class="pill active" data-cat="all">Все</button>
+            <button class="pill" data-cat="breakfast">Завтраки</button>
+            <button class="pill" data-cat="lunch">Обеды & Ужины</button>
+            <button class="pill" data-cat="healthy">ПП & Фитнес</button>
+            <button class="pill" data-cat="fast">До 20 мин</button>
+          </div>
+        </div>
+
+        <!-- Recipe Grid -->
+        <div id="recipes-grid" class="recipes-grid">
+          <!-- Dynamically filled -->
+        </div>
+      </section>
+
+      <!-- VIEW 2: CAMERA & PHOTO SCANNERS -->
+      <section id="view-scanner" class="view-page">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title">Сканер калорий по фото</h1>
+            <p class="page-subtitle">Сфотографируйте блюдо для моментального определения калорий и состава через Vision AI</p>
+          </div>
+        </div>
+
+
+
+        <div class="scanner-container">
+          <div class="viewfinder-card">
+            <div class="viewfinder-wrapper">
+              <video id="camera-feed" autoplay playsinline muted class="camera-feed hidden"></video>
+              <img id="image-preview" src="" alt="Preview" class="image-preview hidden">
+              
+              <div id="camera-placeholder" class="camera-placeholder">
+                <div class="cam-icon-pulse">📷</div>
+                <p>Нажмите «Включить Камеру» или выберите фото готового блюда</p>
+              </div>
+
+              <div id="scan-hud" class="scan-hud hidden">
+                <div class="scan-corner top-left"></div>
+                <div class="scan-corner top-right"></div>
+                <div class="scan-corner bottom-left"></div>
+                <div class="scan-corner bottom-right"></div>
+              </div>
+            </div>
+
+            <!-- Camera controls -->
+            <div class="scanner-actions">
+              <button id="btn-toggle-camera" class="btn btn-primary">
+                <span class="btn-icon">📹</span> Включить Камеру
+              </button>
+              <button id="btn-capture-scan" class="btn btn-accent hidden">
+                <span class="btn-icon">⚡</span> Определить калории
+              </button>
+              <label for="file-upload" class="btn btn-outline">
+                <span class="btn-icon">📁</span> Выбрать из Галереи
+              </label>
+              <input type="file" id="file-upload" accept="image/*" class="hidden">
+            </div>
+          </div>
+
+          <!-- Quick Test Preset Samples -->
+          <div class="preset-samples">
+            <h3>Или выберите готовый пример блюда:</h3>
+            <div class="sample-chips">
+              <button class="sample-chip" data-sample="borscht">🥣 Борщ домашний</button>
+              <button class="sample-chip" data-sample="carbonara">🍝 Паста Карбонара</button>
+              <button class="sample-chip" data-sample="ribeye">🥩 Стейк Рибай</button>
+            </div>
+          </div>
+
+          <!-- Scan Results Panel -->
+          <div id="scan-results" class="scan-results-card hidden">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: SHOPPING LIST & STORES -->
+      <section id="view-shopping" class="view-page">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title">Список покупок & Магазины</h1>
+            <p class="page-subtitle">Рассчитайте стоимость продуктов и выберите выгодный супермаркет</p>
+          </div>
+        </div>
+
+        <div class="shopping-layout">
+          <!-- Left Column: Persistent Shopping Cart -->
+          <div class="shopping-list-card glass-panel">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+              <div style="flex: 1;">
+                <h2 id="shopping-recipe-title" style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin: 0; line-height: 1.4;">🛒 Lista Zakupów</h2>
+              </div>
+              <button id="btn-clear-cart" class="btn btn-sm btn-outline danger" style="padding: 5px 12px; font-size: 0.78rem; font-weight: 600; border-radius: 20px; white-space: nowrap; border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; background: rgba(239, 68, 68, 0.1); cursor: pointer; transition: all 0.2s ease;">
+                🗑️ Wyczyść
+              </button>
+            </div>
+
+            <!-- Servings Stepper -->
+            <div class="servings-control">
+              <span id="lbl-servings-title">Liczba porcji:</span>
+              <div class="stepper">
+                <button id="btn-dec-servings" class="step-btn" title="Mniej porcji">-</button>
+                <span id="servings-count" class="step-val">2</span>
+                <button id="btn-inc-servings" class="step-btn" title="Więcej porcji">+</button>
+              </div>
+            </div>
+
+            <!-- Items List -->
+            <ul id="shopping-items-list" class="shopping-items-list">
+              <!-- Dynamically populated with individual prices and checkbox -->
+            </ul>
+
+            <!-- Add Custom Product Form with Smart Autocomplete & Unit Picker -->
+            <div class="add-custom-item-card">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="lbl-add-custom-title">➕ Dodaj własny produkt</span>
+                <span id="lbl-add-custom-hint" style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Inteligentne podpowiedzi</span>
+              </div>
+              <div style="position: relative; margin-bottom: 8px;">
+                <input type="text" id="custom-item-input" autocomplete="off" placeholder="Wpisz np. Mleko, Chleb, Masło, Kurczak..." style="width: 100%; padding: 9px 12px; font-size: 0.88rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-main); outline: none;">
+                <!-- Smart autocomplete dropdown container -->
+                <div id="grocery-autocomplete-dropdown" class="grocery-autocomplete-dropdown hidden"></div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1.3fr 1.1fr; gap: 8px; margin-bottom: 10px;">
+                <div>
+                  <label id="lbl-custom-qty" style="display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 3px;">Ilość</label>
+                  <input type="number" id="custom-item-qty" min="0.1" step="0.5" value="1" style="width: 100%; padding: 7px 10px; font-size: 0.85rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-main); outline: none;">
+                </div>
+                <div>
+                  <label id="lbl-custom-unit" style="display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 3px;">Jednostka</label>
+                  <select id="custom-item-unit" class="calc-select" style="width: 100%; padding: 7px 8px; font-size: 0.82rem; border-radius: var(--radius-sm);">
+                    <option value="szt" selected>szt (sztuka)</option>
+                    <option value="kg">kg (kilogram)</option>
+                    <option value="g">g (gram)</option>
+                    <option value="l">l (litr)</option>
+                    <option value="ml">ml (mililitr)</option>
+                    <option value="opak.">opak. (opak.)</option>
+                  </select>
+                </div>
+                <div>
+                  <label id="lbl-custom-price" style="display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 3px;">Cena (zł)</label>
+                  <input type="number" id="custom-item-price" placeholder="np. 4.50" min="0.1" step="0.1" value="4.50" style="width: 100%; padding: 7px 10px; font-size: 0.85rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-main); outline: none;">
+                </div>
+              </div>
+
+              <div id="custom-item-validation-msg" class="validation-msg hidden" style="font-size: 0.75rem; color: #ef4444; margin-bottom: 6px;"></div>
+
+              <button id="btn-add-item" class="btn btn-sm btn-primary" style="width: 100%; font-weight: 600; padding: 8px 12px; font-size: 0.88rem;">
+                ➕ Dodaj do listy zakupów
+              </button>
+            </div>
+
+            <!-- Cart Summary & Best Store Box -->
+            <div id="cart-summary-box" class="cart-summary-box">
+              <!-- Dynamically rendered cart totals & best store banner -->
+            </div>
+          </div>
+
+          <!-- Right Column: Store Comparison & Hot Deals Subtabs -->
+          <div class="stores-card glass-panel" style="padding: 18px;">
+            <div class="shopping-subtabs" style="display: flex; gap: 10px; margin-bottom: 16px;">
+              <button id="tab-btn-comparison" class="btn btn-sm btn-primary active-tab" style="flex: 1; padding: 10px 14px; font-size: 0.9rem; font-weight: 600;">
+                🛒 Porównanie cen
+              </button>
+              <button id="tab-btn-deals" class="btn btn-sm btn-outline" style="flex: 1; padding: 10px 14px; font-size: 0.9rem; font-weight: 600;">
+                🔥 Wyjątkowe Promocje
+              </button>
+            </div>
+
+            <!-- Subtab 1: Price Comparison & Map -->
+            <div id="subtab-comparison-content">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h2 id="lbl-stores-header" style="font-size: 1.1rem; margin: 0;">🏬 Ceny w Supermarketach</h2>
+                <div class="store-filter-toggles" style="display: flex; gap: 6px;">
+                  <button id="filter-best-price" class="pill active" data-mode="best-price">💡 Najtaniej</button>
+                  <button id="filter-nearest" class="pill" data-mode="nearest">📍 Najbliżej</button>
+                </div>
+              </div>
+
+              <div class="map-container" style="margin-bottom: 16px;">
+                <div class="map-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span id="lbl-map-header">🗺️ Mapa sklepów w okolicy</span>
+                  <button id="btn-locate-me" class="geo-badge-btn" title="Moja lokalizacja">📍 Znajdź mnie (GPS)</button>
+                </div>
+                <div id="real-map" class="real-map" style="height: 280px; width: 100%; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);"></div>
+              </div>
+
+              <div class="address-search-bar" style="margin-bottom: 14px; display: flex; gap: 8px;">
+                <input type="text" id="store-address-input" placeholder="🔍 Wpisz swój adres lub miasto w Polsce (np. Warszawa, ul. Marszałkowska)..." style="flex-grow: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.85rem; outline: none;" />
+                <button id="btn-search-address" class="btn btn-sm btn-primary">Szukaj</button>
+              </div>
+
+              <div id="stores-list" class="stores-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Subtab 2: Hot Deals & Promotions with Search & Filters -->
+            <div id="subtab-deals-content" class="hidden">
+              <!-- Deals Search & Sort Bar -->
+              <div class="deals-search-sort-bar" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                <input type="text" id="promo-search-input" placeholder="🔍 Szukaj w promocjach (np. łosoś, kawa, oliwa)..." style="flex: 2; min-width: 180px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; outline: none;">
+                <select id="promo-sort-select" class="calc-select" style="flex: 1; min-width: 140px; font-size: 0.82rem; padding: 8px 10px; border-radius: var(--radius-sm);">
+                  <option value="discount" selected>🔥 Największa zniżka %</option>
+                  <option value="price-asc">💰 Najniższa cena (zł)</option>
+                  <option value="expiring">⏰ Kończące się wkrótce</option>
+                </select>
+              </div>
+
+              <!-- Two-tier segmented filter bar -->
+              <div class="deals-filters-panel" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 14px;">
+                <!-- Category Filter Pills -->
+                <div id="lbl-promo-cat-header" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;">📂 Kategoria:</div>
+                <div class="promo-cat-pills" id="promo-cat-container" style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                  <button class="pill active" data-promo-cat="all">🌐 Wszystkie</button>
+                  <button class="pill" data-promo-cat="healthy">🥗 Zdrowe & Fit</button>
+                  <button class="pill" data-promo-cat="breakfast">🍳 Śniadania</button>
+                  <button class="pill" data-promo-cat="lunch">🍲 Obiady & Mięso</button>
+                  <button class="pill" data-promo-cat="fast">⚡ Przekąski</button>
+                  <button class="pill" data-promo-cat="dessert">🍫 Desery</button>
+                </div>
+
+                <!-- Supermarket Chain Filter Pills -->
+                <div id="lbl-promo-store-header" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;">🏬 Sklep:</div>
+                <div class="promo-filter-chips" id="promo-filter-container" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                  <!-- Supermarket filter pills dynamically populated -->
+                </div>
+              </div>
+
+              <!-- Promos Cards Grid (2-column layout) -->
+              <div id="promos-grid" class="promos-grid">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: DIARY / NUTRITION -->
+      <section id="view-diary" class="view-page">
+        <div class="section-header">
+          <div>
+            <h1 class="page-title" id="diary-title">Дневник питания & Метаболизм</h1>
+            <p class="page-subtitle" id="diary-subtitle">Научный расчет BMR/TDEE, трекер калорий, БЖУ, воды и ИМТ</p>
+          </div>
+          <div class="diary-header-actions" style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" id="btn-open-meal-modal" class="btn btn-primary btn-sm">➕ Добавить блюдо</button>
+            <button type="button" id="btn-clear-diary-day" class="btn btn-outline danger btn-sm" style="border-radius: var(--radius-full);">🗑️ Очистить день</button>
+          </div>
+        </div>
+
+        <div class="diary-dashboard">
+          <!-- Left Column: BMR & TDEE Scientific Calculator Card -->
+          <div class="calculator-card glass-panel">
+            <div class="calc-top-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <h2 id="calc-header-title" style="margin: 0;">🧮 Научный Калькулятор BMR & TDEE</h2>
+              <span class="calc-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-primary); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3);">Clinical v2.4</span>
+            </div>
+            <p class="calc-desc" id="calc-desc-text">Формулы Миффлина-Сан Жеора, Харриса-Бенедикта и ВОЗ для точной нормы</p>
+            
+            <form id="bmr-calculator-form" onsubmit="return false;">
+              <!-- Formula Selector -->
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="calc-formula" id="lbl-calc-formula">Формула расчета</label>
+                <select id="calc-formula" class="calc-select">
+                  <option value="mifflin" selected>⭐ Миффлин-Сан Жеор (Золотой стандарт)</option>
+                  <option value="harris">🧬 Харрис-Бенедикт (1984)</option>
+                  <option value="who">🌍 ВОЗ / ФАО (WHO/UNU)</option>
+                </select>
+              </div>
+
+              <!-- Gender selector -->
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label id="lbl-calc-gender">Пол</label>
+                <div class="gender-toggle">
+                  <button type="button" class="gender-btn active" data-gender="male" id="btn-gender-male">👨 Мужчина</button>
+                  <button type="button" class="gender-btn" data-gender="female" id="btn-gender-female">👩 Женщина</button>
+                </div>
+              </div>
+
+              <!-- Body parameters grid -->
+              <div class="params-grid" style="margin-bottom: 12px;">
+                <div class="form-group">
+                  <label for="calc-age" id="lbl-calc-age">Возраст (лет)</label>
+                  <input type="number" id="calc-age" min="12" max="100" value="25" class="calc-input">
+                </div>
+                <div class="form-group">
+                  <label for="calc-weight" id="lbl-calc-weight">Вес (кг)</label>
+                  <input type="number" id="calc-weight" min="30" max="250" value="75" step="0.5" class="calc-input">
+                </div>
+                <div class="form-group">
+                  <label for="calc-height" id="lbl-calc-height">Рост (см)</label>
+                  <input type="number" id="calc-height" min="100" max="230" value="178" class="calc-input">
+                </div>
+              </div>
+
+              <!-- Activity Level Select -->
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="calc-activity" id="lbl-calc-activity">Уровень активности</label>
+                <select id="calc-activity" class="calc-select">
+                  <option value="sedentary">💤 Сидячий образ жизни (x1.2)</option>
+                  <option value="light" selected>🚶 Легкие тренировки 1-3 р/нед (x1.375)</option>
+                  <option value="moderate">🏃 Умеренная активность 3-5 р/нед (x1.55)</option>
+                  <option value="very">🔥 Высокая активность 6-7 р/нед (x1.725)</option>
+                  <option value="extra">⚡ Экстремальный / Физический труд (x1.9)</option>
+                </select>
+              </div>
+
+              <!-- Goal Select -->
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label for="calc-goal" id="lbl-calc-goal">Ваша цель</label>
+                <select id="calc-goal" class="calc-select">
+                  <option value="lose">📉 Похудение (-15% дефицит)</option>
+                  <option value="maintain" selected>⚖️ Поддержание веса (баланс)</option>
+                  <option value="gain">📈 Набор массы (+15% профицит)</option>
+                </select>
+              </div>
+
+              <!-- Interactive BMI & Anthropometric Card -->
+              <div class="bmi-result-card">
+                <div class="bmi-header">
+                  <span id="lbl-bmi">Индекс массы тела (BMI):</span>
+                  <div class="bmi-val-wrap">
+                    <strong id="res-bmi-val">23.7</strong>
+                    <span id="res-bmi-badge" class="bmi-badge normal">Здоровый вес (Норма)</span>
+                  </div>
+                </div>
+                <div class="bmi-bar-track">
+                  <div class="bmi-bar-seg under" title="< 18.5 Niedowaga"></div>
+                  <div class="bmi-bar-seg normal" title="18.5 - 24.9 Norma"></div>
+                  <div class="bmi-bar-seg over" title="25.0 - 29.9 Nadwaga"></div>
+                  <div class="bmi-bar-seg obese" title="≥ 30.0 Otyłość"></div>
+                  <div id="bmi-needle" class="bmi-needle" style="left: 42%;"></div>
+                </div>
+                <div class="ideal-weight-hint">
+                  <span id="lbl-ideal-weight">Здоровый диапазон веса:</span>
+                  <strong id="res-ideal-weight">58.6 - 78.9 кг</strong>
+                </div>
+              </div>
+
+              <!-- Live Calculated Output Box -->
+              <div class="calc-results-box">
+                <div class="result-row">
+                  <span id="lbl-bmr">Базовый метаболизм (BMR):</span>
+                  <strong id="res-bmr">1 743 ккал</strong>
+                </div>
+                <div class="result-row">
+                  <span id="lbl-tdee">Суточный расход (TDEE):</span>
+                  <strong id="res-tdee">2 397 ккал</strong>
+                </div>
+                <div class="result-row highlight">
+                  <span id="lbl-target">Суточная норма:</span>
+                  <strong id="res-target">2 397 ккал</strong>
+                </div>
+                <div class="macros-breakdown-row">
+                  <span id="res-macro-protein" class="macro-badge p">🥩 Белки: 150г</span>
+                  <span id="res-macro-fat" class="macro-badge f">🥑 Жиры: 75г</span>
+                  <span id="res-macro-carbs" class="macro-badge c">🌾 Углеводы: 281г</span>
+                  <span id="res-macro-fiber" class="macro-badge fib">🥦 Клетчатка: 34г</span>
+                </div>
+              </div>
+
+              <button type="button" id="btn-apply-profile" class="btn-primary apply-calc-btn">
+                🎯 Применить норму в дневнике
+              </button>
+            </form>
+          </div>
+
+          <!-- Right Column: Today's Summary, Hydration & Categorized Meals -->
+          <div class="tracker-column">
+            <!-- Calorie & Macros Energy Gauge Card -->
+            <div class="calorie-summary-card glass-panel">
+              <div class="gauge-hero-layout">
+                <div class="gauge-ring-wrap">
+                  <svg viewBox="0 0 100 100" class="gauge-svg">
+                    <circle cx="50" cy="50" r="42" class="bg-ring"></circle>
+                    <circle cx="50" cy="50" r="42" class="progress-ring" id="calorie-progress-bar"></circle>
+                  </svg>
+                  <div class="gauge-center-text">
+                    <span id="consumed-calories" class="gauge-num">720</span>
+                    <span class="gauge-target-label" id="consumed-label-text">из 2 397 kcal</span>
+                  </div>
+                </div>
+
+                <div class="calorie-balance-panel">
+                  <div class="balance-metric">
+                    <span class="lbl" id="lbl-cal-target-title">Цель</span>
+                    <strong class="val" id="val-cal-target">2 397</strong>
+                  </div>
+                  <div class="balance-math-sign">-</div>
+                  <div class="balance-metric">
+                    <span class="lbl" id="lbl-cal-food-title">Еда</span>
+                    <strong class="val" id="val-cal-food">720</strong>
+                  </div>
+                  <div class="balance-math-sign">=</div>
+                  <div class="balance-metric remaining">
+                    <span class="lbl" id="lbl-cal-rem-title">Осталось</span>
+                    <strong class="val highlight" id="val-cal-remaining">1 677</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Macros Breakdown Bars -->
+              <div class="macros-grid">
+                <div class="macro-item protein">
+                  <div class="macro-info">
+                    <span id="lbl-macro-p-title">🥩 Белки</span>
+                    <strong id="macro-protein">42 g / 150 g</strong>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill fill-p" id="fill-protein" style="width: 28%;"></div></div>
+                </div>
+                <div class="macro-item fat">
+                  <div class="macro-info">
+                    <span id="lbl-macro-f-title">🥑 Жиры</span>
+                    <strong id="macro-fat">38 g / 75 g</strong>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill fill-f" id="fill-fat" style="width: 51%;"></div></div>
+                </div>
+                <div class="macro-item carbs">
+                  <div class="macro-info">
+                    <span id="lbl-macro-c-title">🌾 Углеводы</span>
+                    <strong id="macro-carbs">52 g / 281 g</strong>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill fill-c" id="fill-carbs" style="width: 19%;"></div></div>
+                </div>
+                <div class="macro-item fiber">
+                  <div class="macro-info">
+                    <span id="lbl-macro-fib-title">🥦 Клетчатка</span>
+                    <strong id="macro-fiber">12 g / 34 g</strong>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill fill-fib" id="fill-fiber" style="width: 35%;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hydration Tracker Card -->
+            <div class="hydration-card glass-panel">
+              <div class="hydration-header">
+                <div class="hydr-title-wrap">
+                  <h3 id="lbl-water-title" style="margin: 0; font-size: 1.05rem;">💧 Дневное Наводнение</h3>
+                  <span id="water-consumed-text" class="water-consumed-badge">0 / 3 125 ml</span>
+                </div>
+                <div class="water-actions" style="display: flex; gap: 6px;">
+                  <button type="button" id="btn-water-add" class="btn btn-xs btn-accent" style="padding: 4px 8px; font-size: 0.75rem;">💧 +250 ml</button>
+                  <button type="button" id="btn-water-sub" class="btn btn-xs btn-outline" style="padding: 4px 8px; font-size: 0.75rem;">-250 ml</button>
+                  <button type="button" id="btn-water-reset" class="btn btn-xs btn-outline" style="padding: 4px 8px; font-size: 0.75rem;" title="Reset">🔄</button>
+                </div>
+              </div>
+              <div class="water-progress-track">
+                <div id="water-progress-fill" class="water-progress-fill" style="width: 0%;"></div>
+              </div>
+              <div id="water-cups-row" class="water-cups-row">
+                <!-- Clickable water cup icons -->
+              </div>
+            </div>
+
+            <!-- Categorized Logged Meals Card -->
+            <div class="meals-log-card glass-panel">
+              <div class="meals-log-header">
+                <h2 id="lbl-meals-header" style="margin: 0; font-size: 1.1rem;">Приёмы пищи сегодня</h2>
+                <div class="meal-category-filter-pills" id="meal-filter-tabs" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                  <button type="button" class="pill active" data-meal-filter="all">Все</button>
+                  <button type="button" class="pill" data-meal-filter="breakfast">🌅 Завтрак</button>
+                  <button type="button" class="pill" data-meal-filter="lunch">☀️ Обед</button>
+                  <button type="button" class="pill" data-meal-filter="dinner">🌙 Ужин</button>
+                  <button type="button" class="pill" data-meal-filter="snack">🍎 Перекус</button>
+                </div>
+              </div>
+              <div id="meals-list" class="meals-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RECIPE MODAL -->
+    <div id="recipe-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <button id="btn-close-modal" class="modal-close">&times;</button>
+        <div id="modal-content" class="modal-content">
+          <!-- Dynamically inserted -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MEAL LOGGING MODAL -->
+    <div id="meal-modal" class="modal-overlay hidden">
+      <div class="modal-card modal-sm" style="max-width: 480px; width: 95%;">
+        <button id="btn-close-meal-modal" class="modal-close">&times;</button>
+        <div class="meal-modal-body" style="padding: 20px;">
+          <h2 id="lbl-modal-meal-title" style="margin-bottom: 14px; font-size: 1.2rem; font-weight: 700; color: var(--text-main);">➕ Добавить блюдо в дневник</h2>
+          
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label id="lbl-quick-preset" style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; display: block;">⚡ Быстрый выбор из рецептов и готовых блюд:</label>
+            <select id="meal-preset-select" class="calc-select" style="font-size: 0.85rem;">
+              <option value="">-- Выберите готовое блюдо или введите свое ниже --</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="meal-input-name" id="lbl-modal-name" style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; display: block;">Название блюда</label>
+            <input type="text" id="meal-input-name" class="calc-input" placeholder="Например, Овсянка с ягодами">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="meal-input-type" id="lbl-modal-type" style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; display: block;">Приём пищи</label>
+            <select id="meal-input-type" class="calc-select">
+              <option value="breakfast">🌅 Завтрак (Breakfast)</option>
+              <option value="lunch" selected>☀️ Обед (Lunch)</option>
+              <option value="dinner">🌙 Ужин (Dinner)</option>
+              <option value="snack">🍎 Перекус (Snack)</option>
+            </select>
+          </div>
+
+          <div class="params-grid" style="margin-bottom: 12px;">
+            <div class="form-group">
+              <label for="meal-input-kcal" id="lbl-modal-kcal" style="font-size: 0.82rem; font-weight: 600; color: var(--accent-amber); margin-bottom: 4px; display: block;">Калории (ккал)</label>
+              <input type="number" id="meal-input-kcal" min="0" max="5000" value="350" class="calc-input">
+            </div>
+            <div class="form-group">
+              <label for="meal-input-protein" style="font-size: 0.82rem; font-weight: 600; color: #3b82f6; margin-bottom: 4px; display: block;">Белки (г)</label>
+              <input type="number" id="meal-input-protein" min="0" max="300" value="20" class="calc-input">
+            </div>
+            <div class="form-group">
+              <label for="meal-input-fat" style="font-size: 0.82rem; font-weight: 600; color: #f59e0b; margin-bottom: 4px; display: block;">Жиры (г)</label>
+              <input type="number" id="meal-input-fat" min="0" max="300" value="10" class="calc-input">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="meal-input-carbs" style="font-size: 0.82rem; font-weight: 600; color: #10b981; margin-bottom: 4px; display: block;">Углеводы (г)</label>
+            <input type="number" id="meal-input-carbs" min="0" max="500" value="45" class="calc-input">
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button type="button" id="btn-cancel-meal-modal" class="btn btn-outline" style="flex: 1;">Отмена</button>
+            <button type="button" id="btn-save-meal-entry" class="btn btn-primary" style="flex: 2;">✅ Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+</body>
+</html>
