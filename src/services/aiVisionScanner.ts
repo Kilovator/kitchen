@@ -13,20 +13,7 @@ export interface VisionScanResult {
 }
 
 export class AIVisionScanner {
-  private apiKey: string = '';
-
-  constructor() {
-    this.apiKey = localStorage.getItem('cookcraft_vision_api_key') || '';
-  }
-
-  public setApiKey(key: string) {
-    this.apiKey = key.trim();
-    localStorage.setItem('cookcraft_vision_api_key', this.apiKey);
-  }
-
-  public getApiKey(): string {
-    return this.apiKey;
-  }
+  constructor() {}
 
   /**
    * Capture real current video frame from HTML5 video element via Canvas
@@ -44,73 +31,23 @@ export class AIVisionScanner {
   }
 
   /**
-   * Analyze captured image frame using Gemini Vision API / AI engine
+   * Analyze captured image frame using Express backend Vision API proxy
    */
   public async analyzeImage(imageDataUrl: string): Promise<VisionScanResult> {
-    if (this.apiKey) {
-      try {
-        return await this.callGeminiVisionApi(imageDataUrl);
-      } catch (err) {
-        console.warn("Gemini API call failed, using intelligent vision engine:", err);
+    try {
+      const response = await fetch('/api/scan-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageDataUrl })
+      });
+      if (!response.ok) {
+        throw new Error('API server returned error');
       }
+      return await response.json();
+    } catch (err) {
+      console.warn("Backend Gemini Vision API call failed, using local bio-analyzer simulator:", err);
+      return this.simulateIntelligentVision(imageDataUrl);
     }
-    return this.simulateIntelligentVision(imageDataUrl);
-  }
-
-  private async callGeminiVisionApi(imageDataUrl: string): Promise<VisionScanResult> {
-    const base64Data = imageDataUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
-    
-    const prompt = `Analyze this dish/food image. Return ONLY a JSON object with:
-    {
-      "title_ru": "Название блюда на русском",
-      "title_en": "Dish name in English",
-      "title_pl": "Nazwa dania po polsku",
-      "weightGrams": 250,
-      "calories": 420,
-      "protein": 24,
-      "fat": 16,
-      "carbs": 45,
-      "healthScore_ru": "92% (Отличный баланс)",
-      "healthScore_en": "92% (Great Balance)",
-      "healthScore_pl": "92% (Świetny bilans)",
-      "summary_ru": "Краткое описание полезности на русском",
-      "summary_en": "Brief nutrition summary in English",
-      "summary_pl": "Krótkie podsumowanie po polsku"
-    }`;
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: "image/jpeg", data: base64Data } }
-          ]
-        }]
-      })
-    });
-
-    const data = await response.json();
-    const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonMatch = textOutput.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        title: { ru: parsed.title_ru, en: parsed.title_en, pl: parsed.title_pl },
-        weightGrams: parsed.weightGrams || 250,
-        calories: parsed.calories || 350,
-        protein: parsed.protein || 20,
-        fat: parsed.fat || 12,
-        carbs: parsed.carbs || 40,
-        healthScore: { ru: parsed.healthScore_ru, en: parsed.healthScore_en, pl: parsed.healthScore_pl },
-        summary: { ru: parsed.summary_ru, en: parsed.summary_en, pl: parsed.summary_pl },
-        image: imageDataUrl
-      };
-    }
-    throw new Error("Could not parse AI response JSON");
   }
 
   /**
