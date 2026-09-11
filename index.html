@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CookCraft — Asystent Kulinarny i Porównywarka Cen Sklepów w Polsce</title>
-  <meta name="description" content="Culinary assistant: recipes with video, photo calorie scanner, and supermarket price comparison in RU, EN, PL.">
-  <meta name="theme-color" content="#111827">
+  <title>ZUVIA — Умный помощник питания</title>
+  <meta name="description" content="ZUVIA: кулинарный помощник, трекер питания, калькулятор калорий и акции супермаркетов">
+  <meta name="theme-color" content="#4a0614">
   
   <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -24,31 +24,26 @@
 </head>
 <body class="dark-theme">
   <div id="app">
-    <!-- Top Header -->
+    <!-- Top Header (ZUVIA burgundy navbar) -->
     <header class="app-header">
       <div class="header-container">
         <div class="logo">
-          <div class="logo-icon">🍳</div>
-          <span class="logo-text">CookCraft</span>
+          <span class="logo-text">ZUVIA</span>
         </div>
         
         <!-- Navigation Menu in Header -->
         <nav class="header-nav">
-          <button class="nav-item active" data-target="view-recipes">
-            <span class="nav-icon">📖</span>
+          <button class="nav-item active" data-target="view-home">
+            <span class="nav-label">Главная</span>
+          </button>
+          <button class="nav-item" data-target="view-recipes">
             <span class="nav-label">Рецепты</span>
           </button>
-          <button class="nav-item" data-target="view-scanner">
-            <span class="nav-icon">📷</span>
-            <span class="nav-label">Сканер</span>
-          </button>
           <button class="nav-item" data-target="view-shopping">
-            <span class="nav-icon">🛒</span>
             <span class="nav-label">Покупки</span>
           </button>
           <button class="nav-item" data-target="view-diary">
-            <span class="nav-icon">📊</span>
-            <span class="nav-label">Дневник</span>
+            <span class="nav-label">Калории</span>
           </button>
         </nav>
 
@@ -60,11 +55,10 @@
             <button class="lang-btn" data-lang="pl">PL</button>
           </div>
 
-          <button id="btn-theme-toggle" class="icon-btn" title="Theme">
-            <span class="theme-icon">🌙</span>
-          </button>
-          <div class="user-avatar" title="Profile">
-            <span>KM</span>
+          <div class="user-avatar" title="Профиль">
+            <svg class="user-avatar-svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
           </div>
         </div>
       </div>
@@ -72,8 +66,126 @@
 
     <!-- Main Content Area -->
     <main class="main-content">
+      <!-- VIEW 0: ZUVIA HOME DASHBOARD (Desktop - 1 mockup) -->
+      <section id="view-home" class="view-page active">
+        <!-- Hero Greeting -->
+        <div class="zuvia-hero">
+          <h1 id="zuvia-greeting" class="zuvia-greeting-title">Добрый вечер!</h1>
+          <p id="zuvia-subtitle" class="zuvia-greeting-sub">Вот что происходит с твоим питанием сегодня</p>
+        </div>
+
+        <!-- Section: Прогресс -->
+        <div class="zuvia-section">
+          <h2 id="zuvia-progress-title" class="zuvia-section-heading">Прогресс</h2>
+          <div class="zuvia-progress-layout">
+            <!-- Big Blue Pill Card -->
+            <div class="zuvia-progress-card">
+              <div class="zuvia-progress-kcal-wrap">
+                <span id="home-consumed-kcal" class="zuvia-kcal-val">1 840</span>
+                <span class="zuvia-kcal-divider">/</span>
+                <span id="home-target-kcal" class="zuvia-kcal-val">2 200</span>
+                <span class="zuvia-kcal-unit">kcal</span>
+              </div>
+              <div class="zuvia-bar-track">
+                <div id="home-bar-fill" class="zuvia-bar-fill" style="width: 83.6%;"></div>
+              </div>
+              <div class="zuvia-rem-kcal" id="home-remaining-kcal">Осталось 360 kcal</div>
+            </div>
+
+            <!-- 3 Dual-tone Macro Pill Cards -->
+            <div class="zuvia-macros-row">
+              <!-- Белки: Top Burgundy, Bottom Cream -->
+              <div class="zuvia-macro-split-pill pill-protein">
+                <div class="macro-top-block">
+                  <span class="macro-split-label" id="home-lbl-protein">Белки</span>
+                </div>
+                <div class="macro-bot-block">
+                  <span id="home-macro-protein" class="macro-split-val">92 / 120 g</span>
+                </div>
+              </div>
+
+              <!-- Жиры: Top Blue, Bottom Burgundy -->
+              <div class="zuvia-macro-split-pill pill-fat">
+                <div class="macro-top-block">
+                  <span class="macro-split-label" id="home-lbl-fat">Жиры</span>
+                </div>
+                <div class="macro-bot-block">
+                  <span id="home-macro-fat" class="macro-split-val">92 / 120 g</span>
+                </div>
+              </div>
+
+              <!-- Углеводы: Top Cream, Bottom Blue -->
+              <div class="zuvia-macro-split-pill pill-carbs">
+                <div class="macro-top-block">
+                  <span class="macro-split-label" id="home-lbl-carbs">Углеводы</span>
+                </div>
+                <div class="macro-bot-block">
+                  <span id="home-macro-carbs" class="macro-split-val">92 / 120 g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Сегодня -->
+        <div class="zuvia-section">
+          <div class="zuvia-section-header-flex">
+            <h2 id="zuvia-today-title" class="zuvia-section-heading">Сегодня</h2>
+            <button id="btn-home-add-meal" class="zuvia-plus-btn" title="Добавить блюдо">+</button>
+          </div>
+          <div class="zuvia-meals-row">
+            <!-- 1. Завтрак (Burgundy) -->
+            <div class="zuvia-meal-pill meal-breakfast" data-meal="breakfast" role="button" tabindex="0">
+              <div class="meal-pill-title" id="home-meal-breakfast-title">Завтрак</div>
+              <div class="meal-pill-kcal" id="home-meal-breakfast-kcal">420 kcal</div>
+            </div>
+
+            <!-- 2. Обед (Blue) -->
+            <div class="zuvia-meal-pill meal-lunch" data-meal="lunch" role="button" tabindex="0">
+              <div class="meal-pill-title" id="home-meal-lunch-title">Обед</div>
+              <div class="meal-pill-kcal" id="home-meal-lunch-kcal">680 kcal</div>
+            </div>
+
+            <!-- 3. Ужин (Cream) -->
+            <div class="zuvia-meal-pill meal-dinner" data-meal="dinner" role="button" tabindex="0">
+              <div class="meal-pill-title" id="home-meal-dinner-title">Ужин</div>
+              <div class="meal-pill-kcal" id="home-meal-dinner-kcal">540 kcal</div>
+            </div>
+
+            <!-- 4. Перекус (Burgundy) -->
+            <div class="zuvia-meal-pill meal-snack" data-meal="snack" role="button" tabindex="0">
+              <div class="meal-pill-title" id="home-meal-snack-title">Перекус</div>
+              <div class="meal-pill-kcal" id="home-meal-snack-kcal">200 kcal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Рекомендуемые рецепты & Акции -->
+        <div class="zuvia-bottom-grid">
+          <div class="zuvia-bottom-col">
+            <div class="zuvia-section-header-flex">
+              <h2 id="zuvia-recs-title" class="zuvia-section-heading">Рекомендуемые рецепты</h2>
+              <button class="zuvia-view-all-link" data-target="view-recipes">Все &rarr;</button>
+            </div>
+            <div id="home-recipes-grid" class="zuvia-cards-row">
+              <!-- Dynamically populated recipe cards in ZUVIA style -->
+            </div>
+          </div>
+
+          <div class="zuvia-bottom-col">
+            <div class="zuvia-section-header-flex">
+              <h2 id="zuvia-deals-title" class="zuvia-section-heading">Акции</h2>
+              <button class="zuvia-view-all-link" data-target="view-shopping">Все &rarr;</button>
+            </div>
+            <div id="home-deals-grid" class="zuvia-cards-row">
+              <!-- Dynamically populated promo cards in ZUVIA style -->
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- VIEW 1: RECIPES -->
-      <section id="view-recipes" class="view-page active">
+      <section id="view-recipes" class="view-page">
         <div class="section-header">
           <div>
             <h1 class="page-title">Кулинарные рецепты</h1>
@@ -334,7 +446,8 @@
             <h1 class="page-title" id="diary-title">Дневник питания & Метаболизм</h1>
             <p class="page-subtitle" id="diary-subtitle">Научный расчет BMR/TDEE, трекер калорий, БЖУ, воды и ИМТ</p>
           </div>
-          <div class="diary-header-actions" style="display: flex; gap: 10px; align-items: center;">
+          <div class="diary-header-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline btn-sm" data-target="view-scanner" style="border-radius: var(--radius-full); font-weight: 600;">📷 Сканер по фото</button>
             <button type="button" id="btn-open-meal-modal" class="btn btn-primary btn-sm">➕ Добавить блюдо</button>
             <button type="button" id="btn-clear-diary-day" class="btn btn-outline danger btn-sm" style="border-radius: var(--radius-full);">🗑️ Очистить день</button>
           </div>
@@ -633,6 +746,142 @@
       </div>
     </div>
 
+    <!-- AUTH MODAL (Styled after user's mockup) -->
+    <div id="auth-modal" class="modal-overlay hidden">
+      <div class="auth-modal-card">
+        <button id="btn-close-auth-modal" class="auth-modal-close" title="Zamknij">&times;</button>
+        
+        <div class="auth-modal-header">
+          <div class="auth-shield-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+            </svg>
+          </div>
+          <h2 class="auth-modal-title">ZUVIA ACCOUNT</h2>
+          <p id="auth-modal-subtitle" class="auth-modal-sub">Zaloguj się</p>
+        </div>
+
+        <!-- Auth Tabs: Login vs Register -->
+        <div class="auth-tabs">
+          <button type="button" id="tab-auth-login" class="auth-tab-btn active">ZALOGUJ SIĘ</button>
+          <button type="button" id="tab-auth-register" class="auth-tab-btn">REJESTRACJA</button>
+        </div>
+
+        <!-- Auth Form -->
+        <form id="auth-form" onsubmit="return false;" class="auth-form">
+          <!-- Name field (shown only in register mode) -->
+          <div id="auth-name-group" class="auth-input-group hidden">
+            <label id="lbl-auth-name" class="auth-label">IMIĘ I NAZWISKO</label>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon">👤</span>
+              <input type="text" id="auth-input-name" placeholder="np. Jan Kowalski" autocomplete="name">
+            </div>
+          </div>
+
+          <!-- Email field -->
+          <div class="auth-input-group">
+            <label id="lbl-auth-email" class="auth-label">ADRES E-MAIL</label>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon">✉️</span>
+              <input type="email" id="auth-input-email" placeholder="twoj-email@domena.pl" autocomplete="email" required>
+            </div>
+          </div>
+
+          <!-- Password field -->
+          <div class="auth-input-group">
+            <div class="auth-label-row">
+              <label id="lbl-auth-password" class="auth-label">HASŁO</label>
+              <button type="button" id="btn-forgot-password" class="auth-forgot-link">Zapomniałeś hasła?</button>
+            </div>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon">🔒</span>
+              <input type="password" id="auth-input-password" placeholder="••••••••••••••" autocomplete="current-password" required>
+            </div>
+          </div>
+
+          <!-- Error / Success message alert -->
+          <div id="auth-error-msg" class="auth-msg-banner error hidden"></div>
+          <div id="auth-success-msg" class="auth-msg-banner success hidden"></div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="btn-auth-submit" class="auth-submit-btn">
+            ZALOGUJ SIĘ
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- USER PROFILE MODAL (When authenticated) -->
+    <div id="profile-modal" class="modal-overlay hidden">
+      <div class="profile-modal-card">
+        <button id="btn-close-profile-modal" class="auth-modal-close" title="Zamknij">&times;</button>
+        
+        <div class="profile-hero">
+          <div class="profile-avatar-large" id="profile-avatar-display">
+            <span>KM</span>
+          </div>
+          <div class="profile-meta">
+            <h2 id="profile-display-name" class="profile-name">Jan Kowalski</h2>
+            <p id="profile-display-email" class="profile-email">jan@example.com</p>
+            <span class="profile-badge">⭐ ZUVIA Member</span>
+          </div>
+        </div>
+
+        <!-- User Quick Stats Row -->
+        <div class="profile-stats-grid">
+          <div class="profile-stat-box">
+            <span class="stat-icon">🍳</span>
+            <strong id="stat-cooked-count" class="stat-number">0</strong>
+            <span id="lbl-stat-cooked" class="stat-label">Ugotowane</span>
+          </div>
+          <div class="profile-stat-box">
+            <span class="stat-icon">📊</span>
+            <strong id="stat-diary-count" class="stat-number">0</strong>
+            <span id="lbl-stat-diary" class="stat-label">Wpisy diety</span>
+          </div>
+          <div class="profile-stat-box">
+            <span class="stat-icon">🎯</span>
+            <strong id="stat-target-cal" class="stat-number">2 200</strong>
+            <span id="lbl-stat-target" class="stat-label">Cel kcal</span>
+          </div>
+        </div>
+
+        <!-- Profile Tabs -->
+        <div class="profile-subtabs">
+          <button type="button" id="tab-profile-history" class="prof-tab-btn active">🍳 Historia gotowania</button>
+          <button type="button" id="tab-profile-diary" class="prof-tab-btn">📊 Historia posiłków</button>
+          <button type="button" id="tab-profile-favorites" class="prof-tab-btn">⭐ Ulubione</button>
+        </div>
+
+        <!-- Tab 1: Cooked Recipes History -->
+        <div id="prof-content-history" class="prof-tab-content">
+          <div id="profile-history-list" class="profile-records-list">
+            <!-- Dynamically populated from Prisma database -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Diary Meals History -->
+        <div id="prof-content-diary" class="prof-tab-content hidden">
+          <div id="profile-diary-list" class="profile-records-list">
+            <!-- Dynamically populated from Prisma database -->
+          </div>
+        </div>
+
+        <!-- Tab 3: Favorites -->
+        <div id="prof-content-favorites" class="prof-tab-content hidden">
+          <div id="profile-favorites-list" class="profile-records-list">
+            <!-- Dynamically populated from Prisma database -->
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="profile-modal-footer">
+          <button type="button" id="btn-profile-logout" class="btn-logout">
+            🚪 Wyloguj się
+          </button>
+        </div>
+      </div>
+    </div>
 
   </div>
 

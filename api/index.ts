@@ -2,40 +2,54 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import pg from 'pg';
+import crypto from 'crypto';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 const app = express();
 
-// Setup Prisma with PostgreSQL Driver Adapter (Prisma 7 requirement for Serverless Vercel)
-// Wrap in try-catch to allow the server to run even if PostgreSQL is not yet configured or is offline.
+// Setup Prisma with Driver Adapter (SQLite for local dev, PostgreSQL for remote)
 let prisma: PrismaClient | null = null;
-const dbUrl = process.env.DATABASE_URL || '';
+const dbUrl = process.env.DATABASE_URL || 'file:./dev.db';
 
 if (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')) {
   try {
     const pool = new pg.Pool({
       connectionString: dbUrl,
-      max: 4, // limit pool size for serverless environment
+      max: 4,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
     });
     const adapter = new PrismaPg(pool);
     prisma = new PrismaClient({ adapter });
-    console.log('[Prisma] Connected to PostgreSQL cache database.');
+    console.log('[Prisma] Connected to PostgreSQL database.');
   } catch (err: any) {
-    console.warn('[Prisma] Failed to initialize database connection. Caching is disabled:', err.message);
+    console.warn('[Prisma] Failed to connect PostgreSQL:', err.message);
   }
 } else {
-  console.log('[Prisma] No valid PostgreSQL DATABASE_URL found. Running in cacheless fallback mode.');
+  try {
+    const sqlitePath = dbUrl.replace(/^file:/, '').replace(/^\.\//, '') || 'dev.db';
+    const adapter = new PrismaBetterSqlite3({ url: sqlitePath });
+    prisma = new PrismaClient({ adapter });
+    console.log('[Prisma] Connected to SQLite database:', sqlitePath);
+  } catch (err: any) {
+    console.warn('[Prisma] Failed to connect SQLite:', err.message);
+  }
 }
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+import { 
+  CURATED_POLAND_SUPERMARKETS, 
+  mapStoreDetails, 
+  getHaversineDistance 
+} from '../src/data/supermarketsData';
+
 // 1. Geocoding Proxy and Cache
-app.get('/api/geocode', async (req, res) => {
+app.get(['/api/geocode', '/geocode'], async (req, res) => {
   const query = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
   if (!query) {
     return res.status(400).json({ error: 'Missing query parameter q' });
@@ -139,50 +153,8 @@ function mapStoreDetails(rawName: string) {
   return { logo, priceMultiplier, badgeText, deliveryUrl };
 }
 
-// Pre-indexed verified real supermarket dataset for instant zero-wait responses
-const CURATED_VERIFIED_STORES = [
-  // Biedronka stores
-  { id: 'curated_b1', name: 'Biedronka', brand: 'biedronka', lat: 51.097929, lng: 17.018821, address: 'ul. Tadeusza Zielińskiego 61' },
-  { id: 'curated_b2', name: 'Biedronka', brand: 'biedronka', lat: 51.099679, lng: 17.023749, address: 'ul. Zielińskiego 22a / Swobodna' },
-  { id: 'curated_b3', name: 'Biedronka', brand: 'biedronka', lat: 51.110982, lng: 17.025211, address: 'ul. Ruska 51' },
-  { id: 'curated_b4', name: 'Biedronka', brand: 'biedronka', lat: 51.103685, lng: 17.031249, address: 'ul. Świdnicka 40' },
-  { id: 'curated_b5', name: 'Biedronka', brand: 'biedronka', lat: 51.108518, lng: 17.034318, address: 'ul. Szewska 6/7' },
-  { id: 'curated_b6', name: 'Biedronka', brand: 'biedronka', lat: 51.108625, lng: 17.038107, address: 'ul. Krawiecka 3' },
-  { id: 'curated_b7', name: 'Biedronka', brand: 'biedronka', lat: 51.084815, lng: 17.010532, address: 'ul. Powstańców Śląskich 159' },
-  { id: 'curated_b8', name: 'Biedronka', brand: 'biedronka', lat: 51.110982, lng: 17.056980, address: 'plac Grunwaldzki 12-14' },
-  { id: 'curated_b9', name: 'Biedronka', brand: 'biedronka', lat: 51.123140, lng: 17.052010, address: 'ul. Nowowiejska 48' },
-  { id: 'curated_b10', name: 'Biedronka', brand: 'biedronka', lat: 51.096500, lng: 16.995800, address: 'ul. Grabiszyńska 240' },
-  { id: 'curated_b11', name: 'Biedronka', brand: 'biedronka', lat: 51.089500, lng: 17.046200, address: 'ul. Hubska 84' },
-  { id: 'curated_b12', name: 'Biedronka', brand: 'biedronka', lat: 51.119279, lng: 16.979205, address: 'ul. Bystrzycka 55' },
-
-  // Lidl stores
-  { id: 'curated_l1', name: 'Lidl', brand: 'lidl', lat: 51.076800, lng: 17.008900, address: 'ul. Powstańców Śląskich 211 (Krzyki)' },
-  { id: 'curated_l2', name: 'Lidl', brand: 'lidl', lat: 51.086200, lng: 17.042500, address: 'ul. Borowska 114' },
-  { id: 'curated_l3', name: 'Lidl', brand: 'lidl', lat: 51.111800, lng: 17.013500, address: 'ul. Braniborska 14' },
-  { id: 'curated_l4', name: 'Lidl', brand: 'lidl', lat: 51.085400, lng: 17.049100, address: 'ul. Hubska 102' },
-  { id: 'curated_l5', name: 'Lidl', brand: 'lidl', lat: 51.122500, lng: 17.021000, address: 'ul. Długa 37' },
-  { id: 'curated_l6', name: 'Lidl', brand: 'lidl', lat: 51.092500, lng: 17.039000, address: 'ul. Gliniana 36' },
-  { id: 'curated_l7', name: 'Lidl', brand: 'lidl', lat: 51.140576, lng: 17.082861, address: 'ul. Bolesława Krzywoustego 110' },
-
-  // Kaufland stores
-  { id: 'curated_k1', name: 'Kaufland', brand: 'kaufland', lat: 51.118900, lng: 16.992500, address: 'ul. Legnicka 62' },
-  { id: 'curated_k2', name: 'Kaufland', brand: 'kaufland', lat: 51.083100, lng: 17.048900, address: 'ul. Armii Krajowej 51' },
-
-  // Auchan & Carrefour & Dino stores
-  { id: 'curated_a1', name: 'Auchan', brand: 'auchan', lat: 51.141200, lng: 17.084500, address: 'ul. Bolesława Krzywoustego 126 (Korona)' },
-  { id: 'curated_c1', name: 'Carrefour', brand: 'carrefour', lat: 51.108000, lng: 17.039500, address: 'pl. Dominikański 3' },
-  { id: 'curated_c2', name: 'Carrefour', brand: 'carrefour', lat: 51.086900, lng: 17.001800, address: 'ul. Gen. Tadeusza Kutrzeby 4 (Borek)' },
-  { id: 'curated_d1', name: 'Dino', brand: 'dino', lat: 51.099679, lng: 17.023749, address: 'ul. Tadeusza Zielińskiego 22a' },
-
-  // Żabka stores
-  { id: 'curated_z1', name: 'Żabka', brand: 'żabka', lat: 51.111200, lng: 17.026000, address: 'ul. Ruska 41' },
-  { id: 'curated_z2', name: 'Żabka', brand: 'żabka', lat: 51.100100, lng: 17.024500, address: 'ul. Zielińskiego 18' },
-  { id: 'curated_z3', name: 'Żabka', brand: 'żabka', lat: 51.109800, lng: 17.031500, address: 'Rynek 12' },
-  { id: 'curated_z4', name: 'Żabka', brand: 'żabka', lat: 51.106500, lng: 17.032200, address: 'ul. Świdnicka 19' }
-];
-
 // 2. Supermarkets Near Location Proxy and Cache
-app.get('/api/supermarkets', async (req, res) => {
+app.get(['/api/supermarkets', '/supermarkets'], async (req, res) => {
   const latVal = req.query.lat ? parseFloat(String(req.query.lat)) : NaN;
   const lngVal = req.query.lng ? parseFloat(String(req.query.lng)) : NaN;
 
@@ -212,7 +184,7 @@ app.get('/api/supermarkets', async (req, res) => {
     const seenIds = new Set<string>();
 
     // 1. Instantly populate verified curated stores within 6km radius (< 1ms)
-    CURATED_VERIFIED_STORES.forEach(s => {
+    CURATED_POLAND_SUPERMARKETS.forEach(s => {
       const dist = getHaversineDistance(latVal, lngVal, s.lat, s.lng);
       if (dist > 6000) return; // 6km boundary
 
@@ -402,7 +374,7 @@ app.get('/api/supermarkets', async (req, res) => {
 });
 
 // 3. AI Calorie Vision Scanner Proxy
-app.post('/api/scan-image', async (req, res) => {
+app.post(['/api/scan-image', '/scan-image'], async (req, res) => {
   const { image } = req.body;
   if (!image) {
     return res.status(400).json({ error: 'Missing image data' });
@@ -544,7 +516,7 @@ app.post('/api/scan-image', async (req, res) => {
 import { getDynamicPromotions } from '../src/data/promotions';
 
 // Automated Vercel Cron Job Route (runs every night at 03:00 UTC)
-app.get('/api/cron/update-promotions', async (_req, res) => {
+app.get(['/api/cron/update-promotions', '/cron/update-promotions'], async (_req, res) => {
   try {
     const timestamp = new Date().toISOString();
     const currentPromos = getDynamicPromotions();
@@ -605,7 +577,7 @@ app.get('/api/cron/update-promotions', async (_req, res) => {
 });
 
 // Fetch active promotions
-app.get('/api/promotions', async (_req, res) => {
+app.get(['/api/promotions', '/promotions'], async (_req, res) => {
   try {
     if (prisma) {
       const dbPromos = await (prisma as any).promotion.findMany().catch(() => null);
@@ -634,7 +606,7 @@ app.get('/api/promotions', async (_req, res) => {
 });
 
 // Supermarket basket live pricing endpoint
-app.post('/api/supermarket-prices', (req, res) => {
+app.post(['/api/supermarket-prices', '/supermarket-prices'], (req, res) => {
   try {
     const { items, servingsCount } = req.body;
     const activeItems = Array.isArray(items) ? items : [];
@@ -672,6 +644,326 @@ app.post('/api/supermarket-prices', (req, res) => {
     });
   } catch (error: any) {
     return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ==========================================================================
+// User Authentication & Prisma Data Routes
+// ==========================================================================
+const JWT_SECRET = process.env.JWT_SECRET || 'zuvia_super_secret_jwt_key_2026';
+
+function hashPassword(password: string): string {
+  return crypto.scryptSync(password, 'zuvia_salt_salt', 32).toString('hex');
+}
+
+function generateToken(userId: string, email: string): string {
+  const payload = { userId, email, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 };
+  const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', JWT_SECRET).update(data).digest('base64url');
+  return `${data}.${signature}`;
+}
+
+function verifyToken(token: string): { userId: string; email: string } | null {
+  try {
+    const [data, signature] = token.split('.');
+    if (!data || !signature) return null;
+    const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(data).digest('base64url');
+    if (signature !== expectedSig) return null;
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString('utf8'));
+    if (payload.exp && Date.now() > payload.exp) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function authMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Brak autoryzacji / Unauthorized' });
+  }
+  const token = authHeader.substring(7);
+  const payload = verifyToken(token);
+  if (!payload) {
+    return res.status(401).json({ error: 'Nieprawidłowy lub wygasły token / Invalid token' });
+  }
+  (req as any).user = payload;
+  next();
+}
+
+// 1. Register
+app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const { email, password, name } = req.body;
+
+  if (!email || !password || password.length < 6) {
+    return res.status(400).json({ error: 'Niepoprawny email lub hasło za krótkie (min 6 znaków)' });
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  try {
+    const existing = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (existing) {
+      return res.status(400).json({ error: 'Użytkownik z tym adresem e-mail już istnieje' });
+    }
+
+    const hashedPassword = hashPassword(password);
+    const user = await prisma.user.create({
+      data: {
+        email: cleanEmail,
+        password: hashedPassword,
+        name: name ? String(name).trim() : cleanEmail.split('@')[0],
+      }
+    });
+
+    const token = generateToken(user.id, user.email);
+    const { password: _, ...safeUser } = user;
+    return res.json({ success: true, token, user: safeUser });
+  } catch (err: any) {
+    console.error('Register error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Login
+app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Podaj email i hasło' });
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  try {
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (!user) {
+      return res.status(401).json({ error: 'Nieprawidłowy e-mail lub hasło' });
+    }
+
+    const hashedPassword = hashPassword(password);
+    if (user.password !== hashedPassword) {
+      return res.status(401).json({ error: 'Nieprawidłowy e-mail lub hasło' });
+    }
+
+    const token = generateToken(user.id, user.email);
+    const { password: _, ...safeUser } = user;
+    return res.json({ success: true, token, user: safeUser });
+  } catch (err: any) {
+    console.error('Login error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Current User Profile (/me)
+app.get(['/api/auth/me', '/auth/me'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        _count: {
+          select: {
+            cookingHistory: true,
+            meals: true,
+            savedRecipes: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    }
+
+    const { password: _, ...safeUser } = user;
+    return res.json({
+      success: true,
+      user: safeUser,
+      stats: {
+        cookedCount: user._count.cookingHistory,
+        diaryCount: user._count.meals,
+        savedCount: user._count.savedRecipes
+      }
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Diary Meals: GET, POST, DELETE
+app.get(['/api/user/diary', '/user/diary'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+  const { date } = req.query;
+
+  try {
+    const whereClause: any = { userId };
+    if (date) whereClause.date = String(date);
+
+    const meals = await prisma.mealLog.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'asc' }
+    });
+    return res.json({ success: true, meals });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/user/diary', '/user/diary'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+  const { name, calories, protein, fat, carbs, mealType, date, time } = req.body;
+
+  try {
+    const meal = await prisma.mealLog.create({
+      data: {
+        userId,
+        name: name ? String(name) : 'Posiłek',
+        calories: parseInt(calories) || 0,
+        protein: parseFloat(protein) || 0,
+        fat: parseFloat(fat) || 0,
+        carbs: parseFloat(carbs) || 0,
+        mealType: mealType || 'lunch',
+        date: date || new Date().toISOString().split('T')[0],
+        time: time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    });
+    return res.json({ success: true, meal });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete(['/api/user/diary/:id', '/user/diary/:id'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+  const { id } = req.params;
+
+  try {
+    await prisma.mealLog.deleteMany({
+      where: { id, userId }
+    });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. Cooking History: GET, POST
+app.get(['/api/user/history', '/user/history'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+
+  try {
+    const history = await prisma.cookedRecipe.findMany({
+      where: { userId },
+      orderBy: { cookedAt: 'desc' }
+    });
+    return res.json({ success: true, history });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/user/history', '/user/history'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+  const { recipeId, title, image, calories, servings, notes } = req.body;
+
+  try {
+    const cooked = await prisma.cookedRecipe.create({
+      data: {
+        userId,
+        recipeId: recipeId || 'custom',
+        title: title || 'Przepis',
+        image: image || null,
+        calories: parseInt(calories) || 0,
+        servings: parseInt(servings) || 2,
+        notes: notes || null
+      }
+    });
+    return res.json({ success: true, cooked });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. Saved Recipes / Favorites: GET, POST
+app.get(['/api/user/favorites', '/user/favorites'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+
+  try {
+    const favorites = await prisma.savedRecipe.findMany({
+      where: { userId },
+      orderBy: { savedAt: 'desc' }
+    });
+    return res.json({ success: true, favorites });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/user/favorites', '/user/favorites'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza данных niedostępna' });
+  const userId = (req as any).user.userId;
+  const { recipeId, title, image, calories } = req.body;
+
+  try {
+    const existing = await prisma.savedRecipe.findFirst({
+      where: { userId, recipeId }
+    });
+
+    if (existing) {
+      await prisma.savedRecipe.delete({ where: { id: existing.id } });
+      return res.json({ success: true, saved: false });
+    } else {
+      const saved = await prisma.savedRecipe.create({
+        data: {
+          userId,
+          recipeId,
+          title: title || 'Przepis',
+          image: image || null,
+          calories: parseInt(calories) || 0
+        }
+      });
+      return res.json({ success: true, saved: true, item: saved });
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 7. Update User Profile Settings & Daily Targets
+app.put(['/api/user/profile', '/user/profile'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+  const { gender, age, weight, height, activity, goal, targetCalories, targetProtein, targetFat, targetCarbs } = req.body;
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        gender,
+        age: age ? parseInt(age) : undefined,
+        weight: weight ? parseFloat(weight) : undefined,
+        height: height ? parseFloat(height) : undefined,
+        activity,
+        goal,
+        targetCalories: targetCalories ? parseInt(targetCalories) : undefined,
+        targetProtein: targetProtein ? parseInt(targetProtein) : undefined,
+        targetFat: targetFat ? parseInt(targetFat) : undefined,
+        targetCarbs: targetCarbs ? parseInt(targetCarbs) : undefined
+      }
+    });
+    const { password: _, ...safeUser } = user;
+    return res.json({ success: true, user: safeUser });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
   }
 });
 

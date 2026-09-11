@@ -20,6 +20,7 @@ import { aiVisionScanner, VisionScanResult } from './services/aiVisionScanner';
 import { TRANSLATIONS, Language } from './i18n/translations';
 import { createFullUserProfile } from './services/nutritionCalculator';
 import { MealEntry, UserProfile, Ingredient } from './types';
+import { authService, AuthUser } from './services/authService';
 
 // Leaflet Map Global Variables (Declared at top to prevent TDZ ReferenceError)
 let leafletMap: any = null;
@@ -118,7 +119,7 @@ let promoSortBy = 'discount';
 // App State
 const state: AppState = {
   currentLang: savedLang,
-  currentView: 'view-recipes',
+  currentView: 'view-home',
   recipes: RECIPES_DATA,
   activeFilter: 'all',
   searchQuery: '',
@@ -145,11 +146,13 @@ function saveShoppingState() {
 function startApp() {
   initLangSwitcher();
   initNavigation();
+  initHomeDashboard();
   initRecipes();
   initShopping();
   initScanner();
   initDiary();
   initThemeToggle();
+  initAuth();
   renderAll();
   renderPromotions();
   updateStaticTexts();
@@ -488,15 +491,46 @@ function updateStaticTexts() {
     const target = nav.dataset.target;
     const label = nav.querySelector('.nav-label');
     if (!label) return;
+    if (target === 'view-home') label.textContent = tr.navHome;
     if (target === 'view-recipes') label.textContent = tr.navRecipes;
     if (target === 'view-scanner') label.textContent = tr.navScanner;
     if (target === 'view-shopping') label.textContent = tr.navShopping;
     if (target === 'view-diary') label.textContent = tr.navDiary;
   });
 
+  // ZUVIA Home Dashboard Texts
+  const homeGreeting = document.getElementById('zuvia-greeting');
+  if (homeGreeting) homeGreeting.textContent = tr.homeGreeting;
+  const homeSub = document.getElementById('zuvia-subtitle');
+  if (homeSub) homeSub.textContent = tr.homeSubtitle;
+  const homeProgTitle = document.getElementById('zuvia-progress-title');
+  if (homeProgTitle) homeProgTitle.textContent = tr.homeProgressTitle;
+  const homeTodayTitle = document.getElementById('zuvia-today-title');
+  if (homeTodayTitle) homeTodayTitle.textContent = tr.homeTodayTitle;
+  const homeRecsTitle = document.getElementById('zuvia-recs-title');
+  if (homeRecsTitle) homeRecsTitle.textContent = tr.homeRecsTitle;
+  const homeDealsTitle = document.getElementById('zuvia-deals-title');
+  if (homeDealsTitle) homeDealsTitle.textContent = tr.homeDealsTitle;
+
+  const homeLblP = document.getElementById('home-lbl-protein');
+  if (homeLblP) homeLblP.textContent = tr.proteinLabel;
+  const homeLblF = document.getElementById('home-lbl-fat');
+  if (homeLblF) homeLblF.textContent = tr.fatLabel;
+  const homeLblC = document.getElementById('home-lbl-carbs');
+  if (homeLblC) homeLblC.textContent = tr.carbsLabel;
+
+  const homeMealB = document.getElementById('home-meal-breakfast-title');
+  if (homeMealB) homeMealB.textContent = tr.mealBreakfast.replace(/^[^\wа-яА-ЯёЁąęółśżźćńĄĘÓŁŚŻŹĆŃ]+/u, '');
+  const homeMealL = document.getElementById('home-meal-lunch-title');
+  if (homeMealL) homeMealL.textContent = tr.mealLunch.replace(/^[^\wа-яА-ЯёЁąęółśżźćńĄĘÓŁŚŻŹĆŃ]+/u, '');
+  const homeMealD = document.getElementById('home-meal-dinner-title');
+  if (homeMealD) homeMealD.textContent = tr.mealDinner.replace(/^[^\wа-яА-ЯёЁąęółśżźćńĄĘÓŁŚŻŹĆŃ]+/u, '');
+  const homeMealS = document.getElementById('home-meal-snack-title');
+  if (homeMealS) homeMealS.textContent = tr.mealSnack.replace(/^[^\wа-яА-ЯёЁąęółśżźćńĄĘÓŁŚŻŹĆŃ]+/u, '');
 }
 
 function renderAll() {
+  renderHomeDashboard();
   renderRecipes();
   renderShoppingList();
   renderStores();
@@ -547,7 +581,178 @@ function switchView(targetId: string) {
     }, 100);
   }
 
+  if (targetId === 'view-home') {
+    renderHomeDashboard();
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// --- ZUVIA Home Dashboard ---
+function initHomeDashboard() {
+  const plusBtn = document.getElementById('btn-home-add-meal');
+  if (plusBtn) {
+    plusBtn.addEventListener('click', () => {
+      triggerMealModal('lunch');
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('.zuvia-meal-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const mealType = pill.dataset.meal;
+      if (mealType) {
+        triggerMealModal(mealType);
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLElement>('.zuvia-view-all-link').forEach(link => {
+    link.addEventListener('click', () => {
+      const target = link.dataset.target;
+      if (target) switchView(target);
+    });
+  });
+
+  document.querySelectorAll<HTMLElement>('button[data-target]').forEach(btn => {
+    if (!btn.classList.contains('nav-item') && !btn.classList.contains('zuvia-view-all-link')) {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        if (target) switchView(target);
+      });
+    }
+  });
+}
+
+function triggerMealModal(mealType?: string) {
+  const openModalBtn = document.getElementById('btn-open-meal-modal');
+  if (openModalBtn) {
+    openModalBtn.click();
+    if (mealType) {
+      const typeSelect = document.getElementById('meal-input-type') as HTMLSelectElement | null;
+      if (typeSelect) typeSelect.value = mealType;
+    }
+  }
+}
+
+function renderHomeDashboard() {
+  const profile = state.userProfile || defaultProfile;
+  const meals = state.loggedMeals || [];
+
+  // Calories
+  const totalCalories = meals.reduce((sum, m) => sum + m.calories, 0);
+  const totalProtein = Math.round(meals.reduce((sum, m) => sum + m.protein, 0));
+  const totalFat = Math.round(meals.reduce((sum, m) => sum + m.fat, 0));
+  const totalCarbs = Math.round(meals.reduce((sum, m) => sum + m.carbs, 0));
+
+  const consumedEl = document.getElementById('home-consumed-kcal');
+  const targetEl = document.getElementById('home-target-kcal');
+  const remEl = document.getElementById('home-remaining-kcal');
+  const fillEl = document.getElementById('home-bar-fill');
+
+  if (consumedEl) consumedEl.textContent = totalCalories.toLocaleString();
+  if (targetEl) targetEl.textContent = profile.targetCalories.toLocaleString();
+
+  const ratio = Math.min(1.0, totalCalories / profile.targetCalories);
+  if (fillEl) fillEl.style.width = `${Math.max(6, Math.round(ratio * 100))}%`;
+
+  const remaining = profile.targetCalories - totalCalories;
+  const tr = TRANSLATIONS[state.currentLang];
+  if (remEl) {
+    if (remaining >= 0) {
+      remEl.textContent = tr.homeLeftKcal.replace('{count}', remaining.toLocaleString());
+    } else {
+      const surplusPrefix = state.currentLang === 'pl' ? 'Nadwyżka' : (state.currentLang === 'en' ? 'Surplus' : 'Перебор');
+      remEl.textContent = `${surplusPrefix} +${Math.abs(remaining).toLocaleString()} kcal`;
+    }
+  }
+
+  // Macro pills
+  const pEl = document.getElementById('home-macro-protein');
+  if (pEl) pEl.textContent = `${totalProtein} / ${profile.targetProtein} g`;
+
+  const fEl = document.getElementById('home-macro-fat');
+  if (fEl) fEl.textContent = `${totalFat} / ${profile.targetFat} g`;
+
+  const cEl = document.getElementById('home-macro-carbs');
+  if (cEl) cEl.textContent = `${totalCarbs} / ${profile.targetCarbs} g`;
+
+  // Today meals row
+  const bKcal = meals.filter(m => m.mealType === 'breakfast').reduce((sum, m) => sum + m.calories, 0);
+  const lKcal = meals.filter(m => m.mealType === 'lunch').reduce((sum, m) => sum + m.calories, 0);
+  const dKcal = meals.filter(m => m.mealType === 'dinner').reduce((sum, m) => sum + m.calories, 0);
+  const sKcal = meals.filter(m => m.mealType === 'snack').reduce((sum, m) => sum + m.calories, 0);
+
+  const bEl = document.getElementById('home-meal-breakfast-kcal');
+  if (bEl) bEl.textContent = bKcal > 0 ? `${bKcal} kcal` : '0 kcal';
+
+  const lEl = document.getElementById('home-meal-lunch-kcal');
+  if (lEl) lEl.textContent = lKcal > 0 ? `${lKcal} kcal` : '0 kcal';
+
+  const dEl = document.getElementById('home-meal-dinner-kcal');
+  if (dEl) dEl.textContent = dKcal > 0 ? `${dKcal} kcal` : '0 kcal';
+
+  const sEl = document.getElementById('home-meal-snack-kcal');
+  if (sEl) sEl.textContent = sKcal > 0 ? `${sKcal} kcal` : '0 kcal';
+
+  // Recommended recipes cards
+  const recsContainer = document.getElementById('home-recipes-grid');
+  if (recsContainer) {
+    recsContainer.innerHTML = '';
+    const featuredRecipes = state.recipes.slice(0, 2);
+    featuredRecipes.forEach(recipe => {
+      const card = document.createElement('div');
+      card.className = 'zuvia-solid-card';
+      card.innerHTML = `
+        <img src="${recipe.image}" alt="${recipe.title[state.currentLang]}" class="zuvia-solid-card-bg" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';">
+        <div class="zuvia-solid-card-content">
+          <span class="zuvia-card-tag">${recipe.prepTime[state.currentLang]}</span>
+          <div class="zuvia-card-title">${recipe.title[state.currentLang]}</div>
+          <div class="zuvia-card-meta">${recipe.calories} kcal</div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        openRecipeModal(recipe.id);
+      });
+      recsContainer.appendChild(card);
+    });
+  }
+
+  // Deals cards
+  const dealsContainer = document.getElementById('home-deals-grid');
+  if (dealsContainer) {
+    dealsContainer.innerHTML = '';
+    const promos = getDynamicPromotions();
+    const featuredPromos = promos.slice(0, 2);
+    featuredPromos.forEach(promo => {
+      const card = document.createElement('div');
+      card.className = 'zuvia-solid-card';
+      card.innerHTML = `
+        <img src="${promo.image}" alt="${promo.productName[state.currentLang]}" class="zuvia-solid-card-bg" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80';">
+        <div class="zuvia-solid-card-content">
+          <span class="zuvia-card-tag deal-tag">${promo.discountBadge} ${promo.storeName}</span>
+          <div class="zuvia-card-title">${promo.productName[state.currentLang]}</div>
+          <div class="zuvia-card-meta">${promo.promoPrice} zł <span style="text-decoration:line-through;opacity:0.7">${promo.originalPrice} zł</span></div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        const title = promo.productName[state.currentLang];
+        const price = typeof promo.promoPrice === 'number' ? promo.promoPrice : (parseFloat(promo.promoPrice as any) || 0);
+        state.shoppingList.push({
+          name: { ru: title, en: title, pl: title },
+          qty: 1,
+          unit: { ru: 'шт', en: 'pcs', pl: 'szt' },
+          basePrice: price,
+          checked: false,
+          isDiscrete: true
+        });
+        saveShoppingState();
+        renderShoppingList();
+        renderStores();
+        switchView('view-shopping');
+      });
+      dealsContainer.appendChild(card);
+    });
+  }
 }
 
 // --- Recipes ---
@@ -665,9 +870,17 @@ function openRecipeModal(recipeId: string) {
             <span>⭐ ${recipe.rating}</span>
           </div>
         </div>
-        <button class="btn btn-action-cook" id="btn-start-cooking" data-id="${recipe.id}">
-          ${tr.letscookBtn}
-        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-fav-recipe" data-id="${recipe.id}" title="Dodaj do ulubionych" style="border-radius: var(--radius-full); padding: 7px 12px;">
+            ❤️ ${lang === 'pl' ? 'Ulubione' : (lang === 'en' ? 'Favorite' : 'В избранное')}
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-mark-cooked" data-id="${recipe.id}" title="Oznacz jako ugotowane" style="border-radius: var(--radius-full); padding: 7px 12px;">
+            🍳 ${lang === 'pl' ? 'Ugotowane' : (lang === 'en' ? 'Cooked' : 'Приготовлено')}
+          </button>
+          <button class="btn btn-action-cook" id="btn-start-cooking" data-id="${recipe.id}">
+            ${tr.letscookBtn}
+          </button>
+        </div>
       </div>
 
       <p style="color: var(--text-muted); margin-bottom: 18px; line-height: 1.4;">${recipe.description[lang]}</p>
@@ -695,6 +908,61 @@ function openRecipeModal(recipeId: string) {
   `;
 
   modal.classList.remove('hidden');
+
+  // Favorites button event
+  const btnFav = document.getElementById('btn-fav-recipe') as HTMLButtonElement | null;
+  if (btnFav) {
+    btnFav.addEventListener('click', async () => {
+      if (!authService.isAuthenticated()) {
+        (window as any).openAuthModal?.('login');
+        return;
+      }
+      try {
+        const isFav = await authService.toggleFavorite({
+          recipeId: recipe.id,
+          title: recipe.title[lang],
+          image: recipe.image,
+          calories: recipe.calories
+        });
+        btnFav.innerHTML = isFav 
+          ? `💖 ${lang === 'pl' ? 'W ulubionych' : (lang === 'en' ? 'Saved' : 'В избранном')}`
+          : `❤️ ${lang === 'pl' ? 'Ulubione' : (lang === 'en' ? 'Favorite' : 'В избранное')}`;
+      } catch (e) {
+        console.error('Favorite error:', e);
+      }
+    });
+  }
+
+  // Mark as Cooked button event
+  const btnCooked = document.getElementById('btn-mark-cooked') as HTMLButtonElement | null;
+  if (btnCooked) {
+    btnCooked.addEventListener('click', async () => {
+      if (!authService.isAuthenticated()) {
+        (window as any).openAuthModal?.('login');
+        return;
+      }
+      try {
+        await authService.recordCookedRecipe({
+          recipeId: recipe.id,
+          title: recipe.title[lang],
+          image: recipe.image,
+          calories: recipe.calories,
+          servings: state.servingsCount
+        });
+        const originalText = btnCooked.innerHTML;
+        btnCooked.innerHTML = `✅ ${lang === 'pl' ? 'Zapisano w historii!' : (lang === 'en' ? 'Saved to history!' : 'Сохранено в историю!')}`;
+        btnCooked.style.borderColor = 'var(--accent-primary)';
+        setTimeout(() => {
+          if (btnCooked) {
+            btnCooked.innerHTML = originalText;
+            btnCooked.style.borderColor = '';
+          }
+        }, 2200);
+      } catch (e) {
+        console.error('Mark cooked error:', e);
+      }
+    });
+  }
 
   const btnStart = document.getElementById('btn-start-cooking');
   if (btnStart) {
@@ -2084,7 +2352,7 @@ function initDiary() {
   });
 
   // Save Meal to Diary
-  document.getElementById('btn-save-meal-entry')?.addEventListener('click', () => {
+  document.getElementById('btn-save-meal-entry')?.addEventListener('click', async () => {
     const name = mealNameInput?.value.trim() || (state.currentLang === 'pl' ? 'Posiłek domowy' : (state.currentLang === 'en' ? 'Homemade meal' : 'Домашнее блюдо'));
     const calories = parseInt(mealKcalInput?.value || '350') || 0;
     const protein = parseInt(mealPInput?.value || '20') || 0;
@@ -2102,6 +2370,26 @@ function initDiary() {
       mealType,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
+
+    if (authService.isAuthenticated()) {
+      try {
+        const savedBackend = await authService.saveDiaryMeal({
+          name,
+          calories,
+          protein,
+          fat,
+          carbs,
+          mealType,
+          date: new Date().toISOString().split('T')[0],
+          time: newMeal.time
+        });
+        if (savedBackend?.id) {
+          newMeal.id = savedBackend.id;
+        }
+      } catch (e) {
+        console.warn('Could not save meal to backend:', e);
+      }
+    }
 
     if (!state.loggedMeals) state.loggedMeals = [];
     state.loggedMeals.push(newMeal);
@@ -2352,6 +2640,9 @@ function renderDiary() {
       mealsList.querySelectorAll<HTMLButtonElement>('.btn-remove-meal').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.id;
+          if (id && authService.isAuthenticated()) {
+            authService.deleteDiaryMeal(id).catch(console.error);
+          }
           state.loggedMeals = (state.loggedMeals || []).filter(m => m.id !== id);
           localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
           renderDiary();
@@ -2359,6 +2650,8 @@ function renderDiary() {
       });
     }
   }
+
+  renderHomeDashboard();
 }
 
 function applyTheme(theme: 'dark' | 'light') {
@@ -2400,3 +2693,434 @@ function initThemeToggle() {
     applyTheme(nextTheme);
   });
 }
+
+// --- Authentication & User Profile Modals (Prisma-backed) ---
+function initAuth() {
+  const authModal = document.getElementById('auth-modal');
+  const profileModal = document.getElementById('profile-modal');
+  const btnCloseAuth = document.getElementById('btn-close-auth-modal');
+  const btnCloseProfile = document.getElementById('btn-close-profile-modal');
+  const avatarBtn = document.querySelector('.user-avatar');
+
+  const tabLogin = document.getElementById('tab-auth-login');
+  const tabRegister = document.getElementById('tab-auth-register');
+  const authNameGroup = document.getElementById('auth-name-group');
+  const authForm = document.getElementById('auth-form') as HTMLFormElement | null;
+  const inputName = document.getElementById('auth-input-name') as HTMLInputElement | null;
+  const inputEmail = document.getElementById('auth-input-email') as HTMLInputElement | null;
+  const inputPassword = document.getElementById('auth-input-password') as HTMLInputElement | null;
+  const btnAuthSubmit = document.getElementById('btn-auth-submit') as HTMLButtonElement | null;
+  const authSubtitle = document.getElementById('auth-modal-subtitle');
+  const authError = document.getElementById('auth-error-msg');
+  const authSuccess = document.getElementById('auth-success-msg');
+
+  let currentAuthMode: 'login' | 'register' = 'login';
+
+  const showAuthError = (msg: string) => {
+    if (authError) {
+      authError.textContent = msg;
+      authError.classList.remove('hidden');
+    }
+    if (authSuccess) authSuccess.classList.add('hidden');
+  };
+
+  const showAuthSuccess = (msg: string) => {
+    if (authSuccess) {
+      authSuccess.textContent = msg;
+      authSuccess.classList.remove('hidden');
+    }
+    if (authError) authError.classList.add('hidden');
+  };
+
+  const clearAuthMessages = () => {
+    if (authError) authError.classList.add('hidden');
+    if (authSuccess) authSuccess.classList.add('hidden');
+  };
+
+  const setAuthMode = (mode: 'login' | 'register') => {
+    currentAuthMode = mode;
+    clearAuthMessages();
+    const lang = state.currentLang;
+
+    if (mode === 'login') {
+      tabLogin?.classList.add('active');
+      tabRegister?.classList.remove('active');
+      authNameGroup?.classList.add('hidden');
+      if (authSubtitle) {
+        authSubtitle.textContent = lang === 'pl' ? 'Zaloguj się do swojego konta' : (lang === 'en' ? 'Log in to your account' : 'Войдите в свой аккаунт');
+      }
+      if (btnAuthSubmit) {
+        btnAuthSubmit.textContent = lang === 'pl' ? 'ZALOGUJ SIĘ' : (lang === 'en' ? 'LOG IN' : 'ВОЙТИ');
+      }
+    } else {
+      tabRegister?.classList.add('active');
+      tabLogin?.classList.remove('active');
+      authNameGroup?.classList.remove('hidden');
+      if (authSubtitle) {
+        authSubtitle.textContent = lang === 'pl' ? 'Stwórz nowe konto ZUVIA' : (lang === 'en' ? 'Create new ZUVIA account' : 'Создайте новый аккаунт ZUVIA');
+      }
+      if (btnAuthSubmit) {
+        btnAuthSubmit.textContent = lang === 'pl' ? 'ZAREJESTRUJ SIĘ' : (lang === 'en' ? 'REGISTER' : 'ЗАРЕГИСТРИРОВАТЬСЯ');
+      }
+    }
+  };
+
+  const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+    setAuthMode(mode);
+    authModal?.classList.remove('hidden');
+  };
+
+  const closeAuthModal = () => {
+    authModal?.classList.add('hidden');
+    clearAuthMessages();
+  };
+
+  const openProfileModal = async () => {
+    const user = authService.getUser();
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+
+    const nameEl = document.getElementById('profile-display-name');
+    const emailEl = document.getElementById('profile-display-email');
+    const avatarLargeEl = document.getElementById('profile-avatar-display');
+    const targetCalEl = document.getElementById('stat-target-cal');
+
+    const displayName = user.name || user.email.split('@')[0];
+    const initials = (user.name ? user.name.split(' ').map(s => s[0]).join('') : user.email.slice(0, 2)).toUpperCase();
+
+    if (nameEl) nameEl.textContent = displayName;
+    if (emailEl) emailEl.textContent = user.email;
+    if (avatarLargeEl) avatarLargeEl.innerHTML = `<span>${initials}</span>`;
+    if (targetCalEl) targetCalEl.textContent = (user.targetCalories || state.userProfile?.targetCalories || 2200).toLocaleString();
+
+    switchProfileTab('history');
+    profileModal?.classList.remove('hidden');
+
+    await Promise.all([
+      loadProfileHistory(),
+      loadProfileDiary(),
+      loadProfileFavorites()
+    ]);
+  };
+
+  const closeProfileModal = () => {
+    profileModal?.classList.add('hidden');
+  };
+
+  // Avatar click handler
+  avatarBtn?.addEventListener('click', () => {
+    if (authService.isAuthenticated()) {
+      openProfileModal();
+    } else {
+      openAuthModal('login');
+    }
+  });
+
+  // Tabs in Auth Modal
+  tabLogin?.addEventListener('click', () => setAuthMode('login'));
+  tabRegister?.addEventListener('click', () => setAuthMode('register'));
+
+  // Close modals
+  btnCloseAuth?.addEventListener('click', closeAuthModal);
+  authModal?.addEventListener('click', (e) => {
+    if (e.target === authModal) closeAuthModal();
+  });
+
+  btnCloseProfile?.addEventListener('click', closeProfileModal);
+  profileModal?.addEventListener('click', (e) => {
+    if (e.target === profileModal) closeProfileModal();
+  });
+
+  // Auth Form Submit
+  authForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearAuthMessages();
+
+    const email = inputEmail?.value.trim() || '';
+    const password = inputPassword?.value.trim() || '';
+    const name = inputName?.value.trim() || '';
+
+    if (!email || !password) {
+      showAuthError(state.currentLang === 'pl' ? 'Wprowadź adres e-mail i hasło' : (state.currentLang === 'en' ? 'Please enter email and password' : 'Введите e-mail и пароль'));
+      return;
+    }
+
+    if (currentAuthMode === 'register' && password.length < 6) {
+      showAuthError(state.currentLang === 'pl' ? 'Hasło musi mieć co najmniej 6 znaków' : (state.currentLang === 'en' ? 'Password must be at least 6 characters' : 'Пароль должен содержать от 6 символов'));
+      return;
+    }
+
+    if (btnAuthSubmit) {
+      btnAuthSubmit.disabled = true;
+      btnAuthSubmit.textContent = '...';
+    }
+
+    try {
+      if (currentAuthMode === 'register') {
+        await authService.register(email, password, name);
+        showAuthSuccess(state.currentLang === 'pl' ? 'Konto zostało pomyślnie utworzone!' : (state.currentLang === 'en' ? 'Account created successfully!' : 'Аккаунт успешно создан!'));
+        setTimeout(() => {
+          closeAuthModal();
+          openProfileModal();
+        }, 600);
+      } else {
+        await authService.login(email, password);
+        showAuthSuccess(state.currentLang === 'pl' ? 'Zalogowano pomyślnie!' : (state.currentLang === 'en' ? 'Logged in successfully!' : 'Вход выполнен успешно!'));
+        setTimeout(() => {
+          closeAuthModal();
+        }, 500);
+      }
+    } catch (err: any) {
+      showAuthError(err.message || (state.currentLang === 'pl' ? 'Wystąpił błąd' : 'Error occurred'));
+    } finally {
+      if (btnAuthSubmit) {
+        btnAuthSubmit.disabled = false;
+        setAuthMode(currentAuthMode);
+      }
+    }
+  });
+
+  // Profile Modal Subtabs
+  const tabHistory = document.getElementById('tab-profile-history');
+  const tabDiary = document.getElementById('tab-profile-diary');
+  const tabFavs = document.getElementById('tab-profile-favorites');
+
+  const contentHistory = document.getElementById('prof-content-history');
+  const contentDiary = document.getElementById('prof-content-diary');
+  const contentFavs = document.getElementById('prof-content-favorites');
+
+  const switchProfileTab = (tab: 'history' | 'diary' | 'favorites') => {
+    [tabHistory, tabDiary, tabFavs].forEach(b => b?.classList.remove('active'));
+    [contentHistory, contentDiary, contentFavs].forEach(c => c?.classList.add('hidden'));
+
+    if (tab === 'history') {
+      tabHistory?.classList.add('active');
+      contentHistory?.classList.remove('hidden');
+    } else if (tab === 'diary') {
+      tabDiary?.classList.add('active');
+      contentDiary?.classList.remove('hidden');
+    } else {
+      tabFavs?.classList.add('active');
+      contentFavs?.classList.remove('hidden');
+    }
+  };
+
+  tabHistory?.addEventListener('click', () => switchProfileTab('history'));
+  tabDiary?.addEventListener('click', () => switchProfileTab('diary'));
+  tabFavs?.addEventListener('click', () => switchProfileTab('favorites'));
+
+  // Logout button
+  document.getElementById('btn-profile-logout')?.addEventListener('click', () => {
+    authService.logout();
+    closeProfileModal();
+  });
+
+  // Render History List
+  const loadProfileHistory = async () => {
+    const historyList = document.getElementById('profile-history-list');
+    const cookedCountEl = document.getElementById('stat-cooked-count');
+    if (!historyList) return;
+
+    try {
+      const history = await authService.fetchCookingHistory();
+      if (cookedCountEl) cookedCountEl.textContent = history.length.toString();
+
+      if (history.length === 0) {
+        historyList.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem;">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">🍳</div>
+            <p>${state.currentLang === 'pl' ? 'Brak ugotowanych dań w historii. Otwórz przepis i kliknij «🍳 Ugotowane»!' : (state.currentLang === 'en' ? 'No cooked dishes yet. Open a recipe and click «🍳 Cooked»!' : 'Пока нет приготовленных блюд. Откройте рецепт и нажмите «🍳 Приготовлено»!')}</p>
+          </div>
+        `;
+        return;
+      }
+
+      historyList.innerHTML = history.map(item => {
+        const dateStr = new Date(item.cookedAt).toLocaleDateString(state.currentLang === 'pl' ? 'pl-PL' : (state.currentLang === 'en' ? 'en-US' : 'ru-RU'), {
+          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+        });
+        const img = item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80';
+        return `
+          <div class="profile-record-item">
+            <img src="${img}" alt="${item.title}" class="profile-record-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80';">
+            <div class="profile-record-info">
+              <div class="profile-record-title">${item.title}</div>
+              <div class="profile-record-meta">
+                <span>🔥 ${item.calories} kcal</span>
+                <span>⏱️ ${dateStr}</span>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm btn-reopen-recipe" data-recipe-id="${item.recipeId}" title="Otwórz przepis">
+              📖
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      historyList.querySelectorAll<HTMLButtonElement>('.btn-reopen-recipe').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const rId = btn.dataset.recipeId;
+          if (rId) {
+            closeProfileModal();
+            openRecipeModal(rId);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Failed to load cooking history:', err);
+    }
+  };
+
+  // Render Diary List
+  const loadProfileDiary = async () => {
+    const diaryList = document.getElementById('profile-diary-list');
+    const diaryCountEl = document.getElementById('stat-diary-count');
+    if (!diaryList) return;
+
+    try {
+      const meals = await authService.fetchDiary();
+      if (diaryCountEl) diaryCountEl.textContent = meals.length.toString();
+
+      if (meals.length === 0) {
+        diaryList.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem;">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">📊</div>
+            <p>${state.currentLang === 'pl' ? 'Brak wpisów w dzienniku żywienia. Dodaj posiłki w zakładce «Dziennik»!' : (state.currentLang === 'en' ? 'No food logs yet. Add meals in the «Calories» tab!' : 'Дневник питания пуст. Добавьте блюда во вкладке «Калории»!')}</p>
+          </div>
+        `;
+        return;
+      }
+
+      diaryList.innerHTML = meals.map(m => {
+        return `
+          <div class="profile-record-item">
+            <div style="font-size: 1.6rem; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: var(--radius-md); flex-shrink: 0; margin-right: 12px;">
+              ${m.mealType === 'breakfast' ? '🌅' : m.mealType === 'dinner' ? '🌙' : m.mealType === 'snack' ? '🍎' : '☀️'}
+            </div>
+            <div class="profile-record-info">
+              <div class="profile-record-title">${m.name}</div>
+              <div class="profile-record-meta">
+                <span>🔥 ${m.calories} kcal</span>
+                <span>P: ${m.protein}g</span>
+                <span>F: ${m.fat}g</span>
+                <span>C: ${m.carbs}g</span>
+                <span>📅 ${m.date} ${m.time || ''}</span>
+              </div>
+            </div>
+            <button class="btn-remove-meal" data-meal-id="${m.id}" title="Usuń wpis">🗑️</button>
+          </div>
+        `;
+      }).join('');
+
+      diaryList.querySelectorAll<HTMLButtonElement>('.btn-remove-meal').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.mealId;
+          if (id) {
+            await authService.deleteDiaryMeal(id);
+            await loadProfileDiary();
+            renderDiary();
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Failed to load diary history:', err);
+    }
+  };
+
+  // Render Favorites List
+  const loadProfileFavorites = async () => {
+    const favList = document.getElementById('profile-favorites-list');
+    if (!favList) return;
+
+    try {
+      const favorites = await authService.fetchFavorites();
+      if (favorites.length === 0) {
+        favList.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem;">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">⭐</div>
+            <p>${state.currentLang === 'pl' ? 'Brak ulubionych przepisów. Oznacz przepis serduszkiem «❤️»!' : (state.currentLang === 'en' ? 'No favorites yet. Click «❤️» on any recipe!' : 'Нет избранных рецептов. Нажмите «❤️» на любом рецепте!')}</p>
+          </div>
+        `;
+        return;
+      }
+
+      favList.innerHTML = favorites.map(item => {
+        const img = item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80';
+        return `
+          <div class="profile-record-item">
+            <img src="${img}" alt="${item.title}" class="profile-record-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80';">
+            <div class="profile-record-info">
+              <div class="profile-record-title">${item.title}</div>
+              <div class="profile-record-meta">
+                <span>🔥 ${item.calories} kcal</span>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm btn-reopen-recipe" data-recipe-id="${item.recipeId}" title="Otwórz przepis">
+              📖
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      favList.querySelectorAll<HTMLButtonElement>('.btn-reopen-recipe').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const rId = btn.dataset.recipeId;
+          if (rId) {
+            closeProfileModal();
+            openRecipeModal(rId);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
+    }
+  };
+
+  // Auth state listener
+  authService.onAuthStateChanged(async (user) => {
+    const avatarEl = document.querySelector('.user-avatar');
+    if (!avatarEl) return;
+
+    if (user) {
+      const initials = (user.name ? user.name.split(' ').map(s => s[0]).join('') : user.email.slice(0, 2)).toUpperCase();
+      avatarEl.innerHTML = `<span style="font-weight: 700; font-size: 0.85rem; color: #fff; line-height: 1;">${initials}</span>`;
+      avatarEl.setAttribute('title', `${user.name || user.email} (ZUVIA Account)`);
+      avatarEl.classList.add('user-avatar-active');
+
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const backendMeals = await authService.fetchDiary(todayStr);
+        if (backendMeals && backendMeals.length > 0) {
+          state.loggedMeals = backendMeals.map(bm => ({
+            id: bm.id,
+            name: bm.name,
+            calories: bm.calories,
+            protein: bm.protein,
+            fat: bm.fat,
+            carbs: bm.carbs,
+            mealType: bm.mealType,
+            time: bm.time || '12:00'
+          }));
+          localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
+          renderDiary();
+        }
+      } catch (e) {
+        console.warn('Could not sync meals on auth change:', e);
+      }
+    } else {
+      avatarEl.innerHTML = `
+        <svg class="user-avatar-svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      `;
+      avatarEl.setAttribute('title', 'ZUVIA ACCOUNT');
+      avatarEl.classList.remove('user-avatar-active');
+    }
+  });
+
+  (window as any).openAuthModal = openAuthModal;
+  (window as any).openProfileModal = openProfileModal;
+}
+

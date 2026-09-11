@@ -1,29 +1,132 @@
 import { Ingredient, Supermarket } from '../types';
 import { SUPERMARKETS } from '../data/recipes';
 import { getCartActiveTotal } from './supermarketPriceService';
-
-function getHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c);
-}
+import { 
+  getHaversineDistance, 
+  getStoresNearLocation, 
+  mapStoreDetails, 
+  CURATED_POLAND_SUPERMARKETS 
+} from '../data/supermarketsData';
 
 export async function fetchRealSupermarkets(lat: number, lng: number): Promise<Supermarket[] | null> {
+  // 1. Try serverless backend proxy endpoint
   try {
     const url = `/api/supermarkets?lat=${lat}&lng=${lng}`;
     const res = await fetch(url);
-    if (!res.ok) return null;
-    return await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    }
   } catch (e) {
-    console.warn('Failed to fetch from supermarkets API proxy:', e);
-    return null;
+    console.warn('API proxy /api/supermarkets unavailable, trying client-side fallback:', e);
   }
+
+  // 2. Client-side Overpass API direct fallback (for Vercel serverless resilience)
+  try {
+    const query = `[out:json][timeout:5];(node(around:6000,${lat},${lng})[shop=supermarket];way(around:6000,${lat},${lng})[shop=supermarket];);out center 80;`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const endpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter'
+    ];
+
+    let osmRes: Response | null = null;
+    for (const ep of endpoints) {
+      try {
+        const r = await fetch(ep, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+          body: 'data=' + encodeURIComponent(query),
+          signal: controller.signal
+        });
+        if (r.ok) {
+          osmRes = r;
+          break;
+        }
+      } catch (err) {
+        // try next endpoint
+      }
+    }
+    clearTimeout(timeoutId);
+
+    if (osmRes && osmRes.ok) {
+      const osmData = await osmRes.json();
+      const elements = osmData.elements || [];
+      const knownChains = ['biedronka', 'lidl', 'żabka', 'zabka', 'carrefour', 'auchan', 'dino', 'kaufland', 'stokrotka', 'netto', 'aldi'];
+      const mapped: Supermarket[] = [];
+      const seenIds = new Set<string>();
+
+      elements.forEach((el: any) => {
+        const id = String(el.id);
+        if (seenIds.has(id)) return;
+        const tags = el.tags || {};
+        if (tags['disused:shop'] || tags['abandoned:shop'] || tags.closed === 'yes') return;
+
+        const rawName = tags.name || tags.operator || tags.brand || '';
+        const brandLower = (rawName + ' ' + (tags.brand || '') + ' ' + (tags.operator || '')).toLowerCase();
+        const isRecognizedChain = knownChains.some(c => brandLower.includes(c));
+        const isSupermarket = tags.shop === 'supermarket';
+        if (!isRecognizedChain && !isSupermarket) return;
+        if (!rawName || rawName.trim().length < 3) return;
+
+        const storeLat = parseFloat(el.lat || (el.center && el.center.lat));
+        const storeLng = parseFloat(el.lon || (el.center && el.center.lon));
+        if (isNaN(storeLat) || isNaN(storeLng)) return;
+
+        seenIds.add(id);
+        const dist = getHaversineDistance(lat, lng, storeLat, storeLng);
+        if (dist > 6000) return;
+
+        let addrText = 'Polska';
+        if (tags['addr:street']) {
+          const street = tags['addr:street'];
+          const house = tags['addr:housenumber'] || '';
+          addrText = street + (house ? ' ' + house : '');
+        }
+
+        const walkMinutes = Math.max(1, Math.round(dist / 80));
+        const details = mapStoreDetails(rawName, tags);
+
+        mapped.push({
+          id: `osm_${id}`,
+          name: rawName,
+          logo: details.logo,
+          priceMultiplier: details.priceMultiplier,
+          distanceMeters: dist,
+          walkTime: {
+            ru: `${walkMinutes} мин пешком`,
+            en: `${walkMinutes} min walk`,
+            pl: `${walkMinutes} min pieszo`
+          },
+          badge: { ru: details.badgeText, en: details.badgeText, pl: details.badgeText },
+          deliveryAvailable: true,
+          deliveryUrl: details.deliveryUrl,
+          mapUrl: `https://www.google.com/maps/search/?api=1&query=${storeLat},${storeLng}`,
+          lat: storeLat,
+          lng: storeLng,
+          address: { ru: addrText, en: addrText, pl: addrText }
+        });
+      });
+
+      if (mapped.length > 0) {
+        return mapped;
+      }
+    }
+  } catch (err) {
+    console.warn('Client-side OSM lookup failed or timed out:', err);
+  }
+
+  // 3. Robust Curated dataset lookup based on user coordinates (100% offline & zero-latency guarantee)
+  const curatedMatches = getStoresNearLocation(lat, lng, 6000);
+  if (curatedMatches && curatedMatches.length > 0) {
+    return curatedMatches as Supermarket[];
+  }
+
+  return null;
 }
 
 export function calculateStoreTotals(
@@ -35,18 +138,16 @@ export function calculateStoreTotals(
 ): Supermarket[] {
   const baseTotal = getCartActiveTotal(shoppingList, servingsCount);
 
-  const sourceStores = (customStoresList && customStoresList.length > 0) ? customStoresList : SUPERMARKETS;
+  let sourceStores: Supermarket[] = [];
 
-  const offsets: Record<string, { lat: number; lng: number }> = {
-    s1: { lat: 0.0022, lng: -0.0019 }, // Biedronka
-    s2: { lat: -0.0042, lng: -0.0048 }, // Lidl
-    s3: { lat: 0.0011, lng: 0.0008 },   // Żabka
-    s4: { lat: -0.0028, lng: 0.0031 },  // Carrefour
-    s5: { lat: 0.0085, lng: -0.0078 },  // Auchan
-    s6: { lat: 0.0035, lng: 0.0028 },   // Dino
-    s7: { lat: 0.0090, lng: 0.0082 },   // Kaufland
-    s8: { lat: 0.0025, lng: 0.0035 }    // Stokrotka
-  };
+  if (customStoresList && customStoresList.length > 0) {
+    sourceStores = customStoresList;
+  } else if (userLoc) {
+    const nearbyCurated = getStoresNearLocation(userLoc.lat, userLoc.lng, 6000);
+    sourceStores = (nearbyCurated && nearbyCurated.length > 0) ? (nearbyCurated as Supermarket[]) : SUPERMARKETS;
+  } else {
+    sourceStores = SUPERMARKETS;
+  }
 
   let stores = sourceStores.map(store => {
     const totalCost = Math.round(baseTotal * store.priceMultiplier);
@@ -56,19 +157,7 @@ export function calculateStoreTotals(
     let dist = store.distanceMeters;
     let storeAddress = store.address;
 
-    const isRealCoordsStore = store.id.startsWith('osm_') || store.id.startsWith('google_') || store.id.startsWith('curated_');
-
-    if (userLoc && !isRealCoordsStore) {
-      const off = offsets[store.id] || { lat: 0, lng: 0 };
-      storeLat = userLoc.lat + off.lat;
-      storeLng = userLoc.lng + off.lng;
-      dist = getHaversineDistance(userLoc.lat, userLoc.lng, storeLat, storeLng);
-      storeAddress = {
-        pl: `Sklep w Twojej okolicy (ok. ${dist}m)`,
-        en: `Store in your area (~${dist}m)`,
-        ru: `Магазин поблизости (~${dist}м)`
-      };
-    } else if (userLoc && isRealCoordsStore) {
+    if (userLoc) {
       dist = getHaversineDistance(userLoc.lat, userLoc.lng, store.lat, store.lng);
     }
 

@@ -7,7 +7,70 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+}
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  password       String
+  name           String?
+  avatar         String?
+  gender         String?        @default("male")
+  age            Int?           @default(25)
+  weight         Float?         @default(75)
+  height         Float?         @default(178)
+  activity       String?        @default("moderate")
+  goal           String?        @default("maintain")
+  targetCalories Int?           @default(2200)
+  targetProtein  Int?           @default(120)
+  targetFat      Int?           @default(85)
+  targetCarbs    Int?           @default(300)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  meals          MealLog[]
+  cookingHistory CookedRecipe[]
+  savedRecipes   SavedRecipe[]
+}
+
+model MealLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  calories  Int
+  protein   Float    @default(0)
+  fat       Float    @default(0)
+  carbs     Float    @default(0)
+  mealType  String   // breakfast | lunch | dinner | snack
+  date      String   // YYYY-MM-DD
+  time      String   // HH:MM
+  createdAt DateTime @default(now())
+}
+
+model CookedRecipe {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId  String
+  title     String
+  image     String?
+  calories  Int
+  servings  Int      @default(2)
+  notes     String?
+  cookedAt  DateTime @default(now())
+}
+
+model SavedRecipe {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId  String
+  title     String
+  image     String?
+  calories  Int
+  savedAt   DateTime @default(now())
 }
 
 model GeocodingCache {

@@ -138,16 +138,24 @@ export interface Translations {
   saveMealBtn: string;
   clearDayBtn: string;
 
-  // Nav
+  // Nav & Home Dashboard
+  navHome: string;
   navRecipes: string;
   navScanner: string;
   navShopping: string;
   navDiary: string;
+  homeGreeting: string;
+  homeSubtitle: string;
+  homeProgressTitle: string;
+  homeLeftKcal: string;
+  homeTodayTitle: string;
+  homeRecsTitle: string;
+  homeDealsTitle: string;
 }
 
 export const TRANSLATIONS: Record<Language, Translations> = {
   ru: {
-    appName: "CookCraft",
+    appName: "ZUVIA",
     recipesTitle: "Кулинарные рецепты",
     recipesSubtitle: "Вкусные блюда с видеоуроками и расчетом ингредиентов",
     searchPlaceholder: "Поиск рецепта или ингредиента...",
@@ -278,11 +286,18 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     mealQuickSelect: "Быстрый выбор из меню:",
     saveMealBtn: "✅ Сохранить в дневник",
     clearDayBtn: "🗑️ Очистить дневник",
-
+    navHome: "Главная",
     navRecipes: "Рецепты",
     navScanner: "Сканер",
     navShopping: "Покупки",
-    navDiary: "Дневник"
+    navDiary: "Калории",
+    homeGreeting: "Добрый вечер!",
+    homeSubtitle: "Вот что происходит с твоим питанием сегодня",
+    homeProgressTitle: "Прогресс",
+    homeLeftKcal: "Осталось {count} kcal",
+    homeTodayTitle: "Сегодня",
+    homeRecsTitle: "Рекомендуемые рецепты",
+    homeDealsTitle: "Акции"
   },
   en: {
     appName: "CookCraft",
@@ -417,13 +432,21 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     saveMealBtn: "✅ Save to Diary",
     clearDayBtn: "🗑️ Clear Today's Log",
 
+    navHome: "Home",
     navRecipes: "Recipes",
     navScanner: "Scanner",
     navShopping: "Shopping",
-    navDiary: "Diary"
+    navDiary: "Calories",
+    homeGreeting: "Good evening!",
+    homeSubtitle: "Here is what's happening with your nutrition today",
+    homeProgressTitle: "Progress",
+    homeLeftKcal: "Remaining {count} kcal",
+    homeTodayTitle: "Today",
+    homeRecsTitle: "Recommended Recipes",
+    homeDealsTitle: "Promotions"
   },
   pl: {
-    appName: "CookCraft",
+    appName: "ZUVIA",
     recipesTitle: "Przepisy Kulinarne",
     recipesSubtitle: "Smaczne potrawy z wideo-instrukcjami i przelicznikiem składników",
     searchPlaceholder: "Szukaj przepisu lub składnika...",
@@ -555,9 +578,17 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     saveMealBtn: "✅ Zapisz posiłek",
     clearDayBtn: "🗑️ Wyczyść dzisiejszy dzień",
 
+    navHome: "Główna",
     navRecipes: "Przepisy",
     navScanner: "Skaner",
     navShopping: "Zakupy",
-    navDiary: "Dziennik"
+    navDiary: "Kalorie",
+    homeGreeting: "Dobry wieczór!",
+    homeSubtitle: "Oto co dzieje się dzisiaj z Twoim odżywianiem",
+    homeProgressTitle: "Postęp",
+    homeLeftKcal: "Pozostało {count} kcal",
+    homeTodayTitle: "Dzisiaj",
+    homeRecsTitle: "Polecane przepisy",
+    homeDealsTitle: "Promocje"
   }
 };
