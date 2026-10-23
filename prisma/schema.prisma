@@ -22,10 +22,14 @@ model User {
   height         Float?         @default(178)
   activity       String?        @default("moderate")
   goal           String?        @default("maintain")
+  formula        String?        @default("mifflin")
   targetCalories Int?           @default(2200)
   targetProtein  Int?           @default(120)
   targetFat      Int?           @default(85)
   targetCarbs    Int?           @default(300)
+  targetFiber    Int?           @default(30)
+  targetWaterMl  Int?           @default(2500)
+  waterConsumed  Int?           @default(0)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 

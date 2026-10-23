@@ -11,10 +11,18 @@ export interface AuthUser {
   height?: number;
   activity?: string;
   goal?: string;
+  formula?: string;
   targetCalories?: number;
   targetProtein?: number;
   targetFat?: number;
   targetCarbs?: number;
+  targetFiber?: number;
+  targetWaterMl?: number;
+  waterConsumed?: number;
+  bodyFatPercent?: number;
+  musclePercent?: number;
+  targetWeightGoal?: number;
+  targetMonthsRemaining?: number;
   createdAt: string;
 }
 
@@ -58,6 +66,37 @@ class AuthService {
         this.logout();
       });
     }
+  }
+
+  // Ensures there is ALWAYS a valid user account in Prisma for all profile/diary operations
+  public async ensureSession(): Promise<AuthUser> {
+    const token = this.getToken();
+    if (token) {
+      try {
+        const { user } = await this.fetchMe();
+        if (user) return user;
+      } catch (e) {
+        console.warn('[AuthService] Expired token, auto-creating Prisma guest session:', e);
+      }
+    }
+
+    try {
+      const res = await fetch('/api/auth/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success && data.token && data.user) {
+        this.setToken(data.token);
+        this.currentUser = data.user;
+        this.notify();
+        return data.user;
+      }
+    } catch (err) {
+      console.error('[AuthService] Guest session init failed:', err);
+    }
+
+    throw new Error('Failed to initialize Prisma session');
   }
 
   public getToken(): string | null {
@@ -264,7 +303,25 @@ class AuthService {
     return !!data.saved;
   }
 
-  // --- Profile Settings ---
+  // --- Profile Settings (Prisma-backed) ---
+  public async fetchUserProfile(): Promise<AuthUser | null> {
+    if (!this.isAuthenticated()) return null;
+    try {
+      const res = await fetch('/api/user/profile', {
+        headers: this.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (data.success && data.profile) {
+        this.currentUser = data.profile;
+        this.notify();
+        return data.profile;
+      }
+    } catch (e) {
+      console.warn('[AuthService] Failed to fetch profile from Prisma:', e);
+    }
+    return this.currentUser;
+  }
+
   public async updateProfile(settings: {
     gender?: string;
     age?: number;
@@ -272,10 +329,18 @@ class AuthService {
     height?: number;
     activity?: string;
     goal?: string;
+    formula?: string;
     targetCalories?: number;
     targetProtein?: number;
     targetFat?: number;
     targetCarbs?: number;
+    targetFiber?: number;
+    targetWaterMl?: number;
+    waterConsumed?: number;
+    bodyFatPercent?: number;
+    musclePercent?: number;
+    targetWeightGoal?: number;
+    targetMonthsRemaining?: number;
   }): Promise<AuthUser | null> {
     if (!this.isAuthenticated()) return null;
     const res = await fetch('/api/user/profile', {
@@ -290,6 +355,50 @@ class AuthService {
       return data.user;
     }
     return null;
+  }
+
+  // --- Water Intake (Prisma-backed) ---
+  public async updateWater(amount: number, action: 'add' | 'sub' | 'set' | 'reset'): Promise<number> {
+    if (!this.isAuthenticated()) return 0;
+    try {
+      const res = await fetch('/api/user/water', {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ amount, action })
+      });
+      const data = await res.json();
+      if (data.success && typeof data.waterConsumed === 'number') {
+        if (this.currentUser) {
+          this.currentUser.waterConsumed = data.waterConsumed;
+        }
+        return data.waterConsumed;
+      }
+    } catch (e) {
+      console.warn('[AuthService] Failed to update water in Prisma:', e);
+    }
+    return this.currentUser?.waterConsumed || 0;
+  }
+
+  // --- Clear Today's Diary in Prisma ---
+  public async clearDiaryDay(date?: string): Promise<boolean> {
+    if (!this.isAuthenticated()) return false;
+    try {
+      const q = date ? `?date=${encodeURIComponent(date)}` : '';
+      const res = await fetch(`/api/user/diary${q}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (this.currentStats) this.currentStats.diaryCount = 0;
+        if (this.currentUser) this.currentUser.waterConsumed = 0;
+        this.notify();
+        return true;
+      }
+    } catch (e) {
+      console.warn('[AuthService] Failed to clear diary day in Prisma:', e);
+    }
+    return false;
   }
 }
 

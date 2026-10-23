@@ -1,4 +1,4 @@
-// i18n Translation Dictionary for CookCraft (RU, EN, PL)
+// i18n Translation Dictionary for ZUVIA (RU, EN, PL)
 
 export type Language = 'ru' | 'en' | 'pl';
 
@@ -8,6 +8,10 @@ export interface Translations {
   recipesSubtitle: string;
   searchPlaceholder: string;
   catAll: string;
+  catSoup: string;
+  catMain: string;
+  catSnack: string;
+  catDessert: string;
   catBreakfast: string;
   catLunch: string;
   catHealthy: string;
@@ -138,6 +142,24 @@ export interface Translations {
   saveMealBtn: string;
   clearDayBtn: string;
 
+  // ZUVIA Calories Page
+  calGoalsTitle: string;
+  calWeightLossProgress: string;
+  calWorkouts: string;
+  calParamsTitle: string;
+  calBodyFat: string;
+  calMuscles: string;
+  calEdit: string;
+  calNormTitle: string;
+  calRecalculate: string;
+  calProgress: string;
+  calToday: string;
+  calStatistics: string;
+  calRemainingKg: string;
+  calRemainingMonths: string;
+  calWaterGlassesLabel: string;
+
+
   // Nav & Home Dashboard
   navHome: string;
   navRecipes: string;
@@ -151,6 +173,56 @@ export interface Translations {
   homeTodayTitle: string;
   homeRecsTitle: string;
   homeDealsTitle: string;
+
+  // Auth Modal
+  authModalTitle: string;
+  authSubtitleLogin: string;
+  authSubtitleRegister: string;
+  authTabLogin: string;
+  authTabRegister: string;
+  authNameLabel: string;
+  authNamePlaceholder: string;
+  authEmailLabel: string;
+  authEmailPlaceholder: string;
+  authPasswordLabel: string;
+  authForgotPassword: string;
+  authSubmitLogin: string;
+  authSubmitRegister: string;
+  authErrFill: string;
+  authErrPassLen: string;
+  authSuccessReg: string;
+  authSuccessLogin: string;
+
+  // Profile Modal
+  profileModalTitle: string;
+  profileBadge: string;
+  profileStatCooked: string;
+  profileStatDiary: string;
+  profileStatTarget: string;
+  profileTabHistory: string;
+  profileTabDiary: string;
+  profileTabFavorites: string;
+  profileLogoutBtn: string;
+  profileEmptyHistory: string;
+  profileEmptyDiary: string;
+  profileEmptyFavorites: string;
+
+  // Additional UI & Calculator labels
+  calTargetTitle: string;
+  calFoodTitle: string;
+  calRemainingTitle: string;
+  scannerShortcutBtn: string;
+  calcBadgeText: string;
+  modalCancelBtn: string;
+  modalSaveBtn: string;
+  modalPresetPlaceholder: string;
+  modalMealNamePlaceholder: string;
+  diaryEmptyCategory: string;
+  diaryClearConfirm: string;
+  diaryTargetSavedMsg: string;
+  locateBtnText: string;
+  locateBtnLocating: string;
+  locateBtnFound: string;
 }
 
 export const TRANSLATIONS: Record<Language, Translations> = {
@@ -160,6 +232,10 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     recipesSubtitle: "Вкусные блюда с видеоуроками и расчетом ингредиентов",
     searchPlaceholder: "Поиск рецепта или ингредиента...",
     catAll: "Все",
+    catSoup: "Первые блюда",
+    catMain: "Вторые блюда",
+    catSnack: "Закуски",
+    catDessert: "Десерты & Торты",
     catBreakfast: "Завтраки",
     catLunch: "Обеды & Ужины",
     catHealthy: "ПП & Фитнес",
@@ -192,7 +268,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     tabDeals: "🔥 Выгодно сейчас (Акции)",
     addToCartBtn: "➕ В список покупок",
     validUntilPrefix: "⏰ Акция до:",
-    clearCartBtn: "Очистить список",
+    clearCartBtn: "🗑️ Очистить",
     servingsLabel: "Количество порций:",
     addCustomPlaceholder: "+ Добавить свой продукт (напр. Молоко, Яйца)...",
     addBtn: "Добавить",
@@ -286,25 +362,97 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     mealQuickSelect: "Быстрый выбор из меню:",
     saveMealBtn: "✅ Сохранить в дневник",
     clearDayBtn: "🗑️ Очистить дневник",
+
+    // ZUVIA Calories Page
+    calGoalsTitle: "Цели",
+    calWeightLossProgress: "Прогресс похудения",
+    calWorkouts: "Тренировки",
+    calParamsTitle: "Параметры",
+    calBodyFat: "Жир",
+    calMuscles: "Мышцы",
+    calEdit: "Редактировать",
+    calNormTitle: "Норма каллорий",
+    calRecalculate: "Пересчитать",
+    calProgress: "Прогресс",
+    calToday: "Сегодня",
+    calStatistics: "Статистика",
+    calRemainingKg: "Осталось {kg} килограмма",
+    calRemainingMonths: "Осталось {m} месяца",
+    calWaterGlassesLabel: "Трекер воды",
+
     navHome: "Главная",
     navRecipes: "Рецепты",
     navScanner: "Сканер",
     navShopping: "Покупки",
     navDiary: "Калории",
-    homeGreeting: "Добрый вечер!",
+    homeGreeting: "Добрый день!",
     homeSubtitle: "Вот что происходит с твоим питанием сегодня",
     homeProgressTitle: "Прогресс",
     homeLeftKcal: "Осталось {count} kcal",
     homeTodayTitle: "Сегодня",
     homeRecsTitle: "Рекомендуемые рецепты",
-    homeDealsTitle: "Акции"
+    homeDealsTitle: "Акции",
+
+    // Auth Modal
+    authModalTitle: "ZUVIA ACCOUNT",
+    authSubtitleLogin: "Войдите в свой аккаунт",
+    authSubtitleRegister: "Создайте новый аккаунт ZUVIA",
+    authTabLogin: "ВХОД",
+    authTabRegister: "РЕГИСТРАЦИЯ",
+    authNameLabel: "ИМЯ И ФАМИЛИЯ",
+    authNamePlaceholder: "напр. Иван Иванов",
+    authEmailLabel: "АДРЕС E-MAIL",
+    authEmailPlaceholder: "vash-email@domain.com",
+    authPasswordLabel: "ПАРОЛЬ",
+    authForgotPassword: "Забыли пароль?",
+    authSubmitLogin: "ВОЙТИ В АККАУНТ",
+    authSubmitRegister: "ЗАРЕГИСТРИРОВАТЬСЯ",
+    authErrFill: "Введите e-mail и пароль",
+    authErrPassLen: "Пароль должен содержать от 6 символов",
+    authSuccessReg: "Аккаунт успешно создан!",
+    authSuccessLogin: "Вход выполнен успешно!",
+
+    // Profile Modal
+    profileModalTitle: "Мой профиль ZUVIA",
+    profileBadge: "⭐ Участник ZUVIA",
+    profileStatCooked: "Приготовлено",
+    profileStatDiary: "Записей диеты",
+    profileStatTarget: "Цель ккал",
+    profileTabHistory: "🍳 История готовки",
+    profileTabDiary: "📊 История приемов",
+    profileTabFavorites: "⭐ Избранные рецепты",
+    profileLogoutBtn: "🚪 Выйти из аккаунта",
+    profileEmptyHistory: "Пока нет приготовленных блюд. Откройте рецепт и нажмите «🍳 Приготовлено»!",
+    profileEmptyDiary: "Дневник питания пуст. Добавьте блюда во вкладке «Калории»!",
+    profileEmptyFavorites: "Нет избранных рецептов. Нажмите «❤️» на любом рецепте!",
+
+    // Additional UI & Calculator
+    calTargetTitle: "Цель",
+    calFoodTitle: "Еда",
+    calRemainingTitle: "Осталось",
+    scannerShortcutBtn: "📷 Сканер по фото",
+    calcBadgeText: "Клиническая норма v2.4",
+    modalCancelBtn: "Отмена",
+    modalSaveBtn: "✅ Сохранить",
+    modalPresetPlaceholder: "-- Выберите готовое блюдо или введите свое ниже --",
+    modalMealNamePlaceholder: "Например, Овсянка с ягодами",
+    diaryEmptyCategory: "В этой категории пока нет записей. Нажмите «+ Добавить блюдо».",
+    diaryClearConfirm: "Вы уверены, что хотите очистить записи за сегодня и счетчик воды?",
+    diaryTargetSavedMsg: "✅ Цель сохранена в дневнике: {kcal} ккал!",
+    locateBtnText: "📍 Найти меня (GPS)",
+    locateBtnLocating: "⏳ Поиск GPS...",
+    locateBtnFound: "✅ Найдено (GPS)"
   },
   en: {
-    appName: "CookCraft",
+    appName: "ZUVIA",
     recipesTitle: "Culinary Recipes",
     recipesSubtitle: "Delicious meals with video guides and ingredient scalers",
     searchPlaceholder: "Search recipe or ingredient...",
     catAll: "All",
+    catSoup: "Soups",
+    catMain: "Main Courses",
+    catSnack: "Snacks",
+    catDessert: "Desserts & Cakes",
     catBreakfast: "Breakfast",
     catLunch: "Lunch & Dinner",
     catHealthy: "Healthy & Fitness",
@@ -337,7 +485,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     tabDeals: "🔥 Hot Deals & Promotions",
     addToCartBtn: "➕ Add to Shopping List",
     validUntilPrefix: "⏰ Valid until:",
-    clearCartBtn: "Clear list",
+    clearCartBtn: "🗑️ Clear",
     servingsLabel: "Number of servings:",
     addCustomPlaceholder: "+ Add custom item (e.g. Milk, Eggs)...",
     addBtn: "Add",
@@ -432,18 +580,86 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     saveMealBtn: "✅ Save to Diary",
     clearDayBtn: "🗑️ Clear Today's Log",
 
+    // ZUVIA Calories Page
+    calGoalsTitle: "Goals",
+    calWeightLossProgress: "Weight Loss Progress",
+    calWorkouts: "Workouts",
+    calParamsTitle: "Parameters",
+    calBodyFat: "Fat",
+    calMuscles: "Muscles",
+    calEdit: "Edit",
+    calNormTitle: "Calorie Norm",
+    calRecalculate: "Recalculate",
+    calProgress: "Progress",
+    calToday: "Today",
+    calStatistics: "Statistics",
+    calRemainingKg: "{kg} kilograms remaining",
+    calRemainingMonths: "{m} months remaining",
+    calWaterGlassesLabel: "Water tracker",
+
+
     navHome: "Home",
     navRecipes: "Recipes",
     navScanner: "Scanner",
     navShopping: "Shopping",
     navDiary: "Calories",
-    homeGreeting: "Good evening!",
+    homeGreeting: "Good day!",
     homeSubtitle: "Here is what's happening with your nutrition today",
     homeProgressTitle: "Progress",
     homeLeftKcal: "Remaining {count} kcal",
     homeTodayTitle: "Today",
     homeRecsTitle: "Recommended Recipes",
-    homeDealsTitle: "Promotions"
+    homeDealsTitle: "Promotions",
+
+    // Auth Modal
+    authModalTitle: "ZUVIA ACCOUNT",
+    authSubtitleLogin: "Log in to your account",
+    authSubtitleRegister: "Create a new ZUVIA account",
+    authTabLogin: "LOG IN",
+    authTabRegister: "REGISTER",
+    authNameLabel: "FULL NAME",
+    authNamePlaceholder: "e.g. John Doe",
+    authEmailLabel: "EMAIL ADDRESS",
+    authEmailPlaceholder: "your-email@domain.com",
+    authPasswordLabel: "PASSWORD",
+    authForgotPassword: "Forgot password?",
+    authSubmitLogin: "LOG IN",
+    authSubmitRegister: "CREATE ACCOUNT",
+    authErrFill: "Please enter email and password",
+    authErrPassLen: "Password must be at least 6 characters",
+    authSuccessReg: "Account created successfully!",
+    authSuccessLogin: "Logged in successfully!",
+
+    // Profile Modal
+    profileModalTitle: "My ZUVIA Profile",
+    profileBadge: "⭐ ZUVIA Member",
+    profileStatCooked: "Cooked",
+    profileStatDiary: "Diet logs",
+    profileStatTarget: "Target kcal",
+    profileTabHistory: "🍳 Cooking History",
+    profileTabDiary: "📊 Meal History",
+    profileTabFavorites: "⭐ Favorite Recipes",
+    profileLogoutBtn: "🚪 Log Out",
+    profileEmptyHistory: "No cooked dishes yet. Open a recipe and click «🍳 Cooked»!",
+    profileEmptyDiary: "No food logs yet. Add meals in the «Calories» tab!",
+    profileEmptyFavorites: "No favorites yet. Click «❤️» on any recipe!",
+
+    // Additional UI & Calculator
+    calTargetTitle: "Target",
+    calFoodTitle: "Food",
+    calRemainingTitle: "Remaining",
+    scannerShortcutBtn: "📷 Photo Scanner",
+    calcBadgeText: "Clinical Standard v2.4",
+    modalCancelBtn: "Cancel",
+    modalSaveBtn: "✅ Save",
+    modalPresetPlaceholder: "-- Choose a preset or enter custom meal below --",
+    modalMealNamePlaceholder: "e.g., Oatmeal with berries",
+    diaryEmptyCategory: "No meals logged in this category. Click «+ Add Meal».",
+    diaryClearConfirm: "Are you sure you want to clear today's diary and water intake?",
+    diaryTargetSavedMsg: "✅ Target saved to diary: {kcal} kcal!",
+    locateBtnText: "📍 Find me (GPS)",
+    locateBtnLocating: "⏳ Locating...",
+    locateBtnFound: "✅ Located (GPS)"
   },
   pl: {
     appName: "ZUVIA",
@@ -451,6 +667,10 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     recipesSubtitle: "Smaczne potrawy z wideo-instrukcjami i przelicznikiem składników",
     searchPlaceholder: "Szukaj przepisu lub składnika...",
     catAll: "Wszystkie",
+    catSoup: "Zupy",
+    catMain: "Dania główne",
+    catSnack: "Przekąski",
+    catDessert: "Desery i Ciasta",
     catBreakfast: "Śniadania",
     catLunch: "Obiady i Kolacje",
     catHealthy: "Zdrowe & Fitness",
@@ -483,7 +703,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     tabDeals: "🔥 Wyjątkowe Promocje",
     addToCartBtn: "➕ Dodaj do listy zakupów",
     validUntilPrefix: "⏰ Okazja do:",
-    clearCartBtn: "Wyczyść listę",
+    clearCartBtn: "🗑️ Wyczyść",
     servingsLabel: "Liczba porcji:",
     addCustomPlaceholder: "+ Dodaj własny produkt (np. Mleko, Jajka)...",
     addBtn: "Dodaj",
@@ -578,17 +798,85 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     saveMealBtn: "✅ Zapisz posiłek",
     clearDayBtn: "🗑️ Wyczyść dzisiejszy dzień",
 
+    // ZUVIA Calories Page
+    calGoalsTitle: "Cele",
+    calWeightLossProgress: "Postęp odchudzania",
+    calWorkouts: "Treningi",
+    calParamsTitle: "Parametry",
+    calBodyFat: "Tłuszcz",
+    calMuscles: "Mięśnie",
+    calEdit: "Edytuj",
+    calNormTitle: "Norma kalorii",
+    calRecalculate: "Przelicz",
+    calProgress: "Postęp",
+    calToday: "Dzisiaj",
+    calStatistics: "Statystyki",
+    calRemainingKg: "Zostało {kg} kg",
+    calRemainingMonths: "Zostało {m} miesiące",
+    calWaterGlassesLabel: "Licznik wody",
+
+
     navHome: "Główna",
     navRecipes: "Przepisy",
     navScanner: "Skaner",
     navShopping: "Zakupy",
     navDiary: "Kalorie",
-    homeGreeting: "Dobry wieczór!",
+    homeGreeting: "Dzień dobry!",
     homeSubtitle: "Oto co dzieje się dzisiaj z Twoim odżywianiem",
     homeProgressTitle: "Postęp",
     homeLeftKcal: "Pozostało {count} kcal",
     homeTodayTitle: "Dzisiaj",
     homeRecsTitle: "Polecane przepisy",
-    homeDealsTitle: "Promocje"
+    homeDealsTitle: "Promocje",
+
+    // Auth Modal
+    authModalTitle: "ZUVIA ACCOUNT",
+    authSubtitleLogin: "Zaloguj się do swojego konta",
+    authSubtitleRegister: "Stwórz nowe konto ZUVIA",
+    authTabLogin: "ZALOGUJ SIĘ",
+    authTabRegister: "REJESTRACJA",
+    authNameLabel: "IMIĘ I NAZWISKO",
+    authNamePlaceholder: "np. Jan Kowalski",
+    authEmailLabel: "ADRES E-MAIL",
+    authEmailPlaceholder: "twoj-email@domena.pl",
+    authPasswordLabel: "HASŁO",
+    authForgotPassword: "Zapomniałeś hasła?",
+    authSubmitLogin: "ZALOGUJ SIĘ",
+    authSubmitRegister: "ZAREJESTRUJ SIĘ",
+    authErrFill: "Wprowadź adres e-mail i hasło",
+    authErrPassLen: "Hasło musi mieć co najmniej 6 znaków",
+    authSuccessReg: "Konto zostało pomyślnie utworzone!",
+    authSuccessLogin: "Zalogowano pomyślnie!",
+
+    // Profile Modal
+    profileModalTitle: "Mój Profil ZUVIA",
+    profileBadge: "⭐ Członek ZUVIA",
+    profileStatCooked: "Ugotowane",
+    profileStatDiary: "Wpisy diety",
+    profileStatTarget: "Cel kcal",
+    profileTabHistory: "🍳 Historia gotowania",
+    profileTabDiary: "📊 Historia posiłków",
+    profileTabFavorites: "⭐ Ulubione przepisy",
+    profileLogoutBtn: "🚪 Wyloguj się",
+    profileEmptyHistory: "Brak ugotowanych dań w historii. Otwórz przepis i kliknij «🍳 Ugotowane»!",
+    profileEmptyDiary: "Brak wpisów w dzienniku żywienia. Dodaj posiłki w zakładce «Dziennik»!",
+    profileEmptyFavorites: "Brak ulubionych przepisów. Oznacz przepis serduszkiem «❤️»!",
+
+    // Additional UI & Calculator
+    calTargetTitle: "Cel",
+    calFoodTitle: "Zjedzone",
+    calRemainingTitle: "Pozostało",
+    scannerShortcutBtn: "📷 Skaner ze zdjęcia",
+    calcBadgeText: "Standard kliniczny v2.4",
+    modalCancelBtn: "Anuluj",
+    modalSaveBtn: "✅ Zapisz",
+    modalPresetPlaceholder: "-- Wybierz gotowe danie lub wpisz własne poniżej --",
+    modalMealNamePlaceholder: "np. Owsianka z borówkami",
+    diaryEmptyCategory: "Brak wpisanych dań w tej kategorii. Kliknij «+ Dodaj posiłek».",
+    diaryClearConfirm: "Czy na pewno chcesz wyczyścić dzisiejszy dziennik i licznik wody?",
+    diaryTargetSavedMsg: "✅ Zapisano cel w dzienniku: {kcal} kcal!",
+    locateBtnText: "📍 Znajdź mnie (GPS)",
+    locateBtnLocating: "⏳ Szukanie GPS...",
+    locateBtnFound: "✅ Zlokalizowano (GPS)"
   }
 };

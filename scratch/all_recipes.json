@@ -1,0 +1,765 @@
+[
+  {
+    "file": "breakfasts.ts",
+    "id": "cottage-cheese-syrniki",
+    "titleRu": "Нежные творожные сырники с ягодами",
+    "titleEn": "Fluffy Cottage Cheese Syrniki",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "eggs-benedict-salmon",
+    "titleRu": "Яйца Бенедикт со слабосоленым лососем на бриоши",
+    "titleEn": "Eggs Benedict with Smoked Salmon on Brioche",
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "shakshuka-feta",
+    "titleRu": "Израильская Шакшука с томатами и фетой",
+    "titleEn": "Traditional Shakshuka with Feta",
+    "image": "https://images.unsplash.com/photo-1590412200988-a436970781fa?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "fluffy-pancakes",
+    "titleRu": "Американские пышные панкейки",
+    "titleEn": "Fluffy American Buttermilk Pancakes",
+    "image": "https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "avocado-poached-toast",
+    "titleRu": "Авокадо-тост с яйцом пашот и семенами чиа",
+    "titleEn": "Avocado Toast with Poached Egg",
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "scrambled-croissant",
+    "titleRu": "Сливочный скрембл с теплым круассаном",
+    "titleEn": "Creamy Scrambled Eggs with Warm Croissant",
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "french-herb-omelette",
+    "titleRu": "Французский сливочный омлет с травами",
+    "titleEn": "Classic French Rolled Herb Omelette",
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "homemade-granola-bowl",
+    "titleRu": "Запеченная хрустящая гранола с греческим йогуртом",
+    "titleEn": "Toasted Honey Nut Granola Bowl",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "full-english-breakfast",
+    "titleRu": "Традиционный сытный английский завтрак",
+    "titleEn": "Full Traditional English Breakfast",
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "french-toast-brioche",
+    "titleRu": "Французские тосты бриошь с корицей и ягодами",
+    "titleEn": "Cinnamon Brioche French Toast",
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "breakfasts.ts",
+    "id": "chia-pudding-mango",
+    "titleRu": "Чиа-пудинг на кокосовом молоке с пюре манго",
+    "titleEn": "Coconut Mango Chia Seed Pudding",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "napoleon-cake",
+    "titleRu": "Классический торт «Наполеон»",
+    "titleEn": "Classic Napoleon Cake",
+    "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "medovik-cake",
+    "titleRu": "Домашний Медовик со сметанным кремом",
+    "titleEn": "Traditional Honey Cake Medovik",
+    "image": "https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "red-velvet-cake",
+    "titleRu": "Торт «Красный бархат» с крем-чизом",
+    "titleEn": "Red Velvet Cake with Cream Cheese",
+    "image": "https://images.unsplash.com/photo-1586788680434-30d324b2d46f?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "basque-cheesecake",
+    "titleRu": "Баскский обожженный чизкейк Сан-Себастьян",
+    "titleEn": "San Sebastian Basque Burnt Cheesecake",
+    "image": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "prague-cake",
+    "titleRu": "Шоколадный торт «Прага»",
+    "titleEn": "Classic Prague Chocolate Cake",
+    "image": "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "tiramisu-classico",
+    "titleRu": "Итальянский Тирамису на Савоярди",
+    "titleEn": "Classic Italian Tiramisu",
+    "image": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "chocolate-fondant",
+    "titleRu": "Шоколадный фондан с жидким центром",
+    "titleEn": "Molten Lava Chocolate Fondant",
+    "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "french-eclairs",
+    "titleRu": "Французские эклеры с ванильным кремом",
+    "titleEn": "French Vanilla Custard Eclairs",
+    "image": "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "apple-strudel",
+    "titleRu": "Венский яблочный штрудель с корицей",
+    "titleEn": "Viennese Apple Strudel with Cinnamon",
+    "image": "https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "fudgy-brownie",
+    "titleRu": "Шоколадный фадж-брауни с соленой карамелью",
+    "titleEn": "Fudgy Chocolate Brownie with Salted Caramel",
+    "image": "https://images.unsplash.com/photo-1607920591413-4ec007e70023?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "carrot-cake",
+    "titleRu": "Пряный морковный торт с пеканом",
+    "titleEn": "Spiced Carrot Cake with Pecans",
+    "image": "https://images.unsplash.com/photo-1621303837174-89787a7d4729?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "lemon-meringue-tart",
+    "titleRu": "Лимонный тарт с обожженной меренгой",
+    "titleEn": "Lemon Meringue Tart",
+    "image": "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "panna-cotta",
+    "titleRu": "Ванильная панна-котта с малиновым кули",
+    "titleEn": "Vanilla Panna Cotta with Raspberry Coulis",
+    "image": "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "belgian-waffles",
+    "titleRu": "Пышные бельгийские вафли с ягодами",
+    "titleEn": "Fluffy Belgian Waffles with Berries",
+    "image": "https://images.unsplash.com/photo-1562376552-0d160a2f238d?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "new-york-cheesecake",
+    "titleRu": "Классический чизкейк «Нью-Йорк»",
+    "titleEn": "Classic New York Cheesecake",
+    "image": "https://images.unsplash.com/photo-1524351199678-941a58a3df50?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "black-forest-cake",
+    "titleRu": "Торт «Черный лес» (Шварцвальд)",
+    "titleEn": "Black Forest Cherry Cake",
+    "image": "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "french-macarons",
+    "titleRu": "Французские макарон с фисташковым ганашем",
+    "titleEn": "Pistachio French Macarons",
+    "image": "https://images.unsplash.com/photo-1569864321390-dc82a939fdf7?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "pavlova-cake",
+    "titleRu": "Десерт «Павлова» с маракуйей и ягодами",
+    "titleEn": "Pavlova with Passion Fruit and Berries",
+    "image": "https://images.unsplash.com/photo-1579372786545-d24232daf58c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "cinnabon-rolls",
+    "titleRu": "Синнабоны с корицей и сливочной глазурью",
+    "titleEn": "Cinnabon Cinnamon Rolls with Cream Frosting",
+    "image": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "baklava-honey-nuts",
+    "titleRu": "Турецкая пахлава с фисташками и медом",
+    "titleEn": "Turkish Pistachio Baklava",
+    "image": "https://images.unsplash.com/photo-1519676867240-f03562e64548?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "profiteroles-chocolate",
+    "titleRu": "Профитроли с заварным кремом под шоколадом",
+    "titleEn": "Creamy Chocolate Profiteroles",
+    "image": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "pistachio-tiramisu",
+    "titleRu": "Фисташковый Тирамису с белым шоколадом",
+    "titleEn": "Sicilian Pistachio Tiramisu",
+    "image": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "desserts.ts",
+    "id": "berry-cheesecake",
+    "titleRu": "Чизкейк без выпечки с лесными ягодами",
+    "titleEn": "No-Bake Wild Berry Swirl Cheesecake",
+    "image": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "teriyaki-chicken-noodles",
+    "titleRu": "Wok-лапша удон с курицей и овощами",
+    "titleEn": "15-Minute Chicken Teriyaki Udon Wok",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "pasta-aglio-olio",
+    "titleRu": "Паста Аглио э Олио с чесноком и чили",
+    "titleEn": "Spaghetti Aglio e Olio with Chili",
+    "image": "/images/pasta_carbonara_1786617618459.jpg"
+  },
+  {
+    "file": "fast.ts",
+    "id": "croque-monsieur",
+    "titleRu": "Французский сэндвич Крок-Месье",
+    "titleEn": "Parisian Croque Monsieur Sandwich",
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "creamy-tuna-pasta",
+    "titleRu": "Быстрая сливочная паста с тунцом за 15 минут",
+    "titleEn": "15-Minute Creamy Tuna & Lemon Pasta",
+    "image": "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "asian-egg-fried-rice",
+    "titleRu": "Жареный рис по-азиатски с яйцом и овощами",
+    "titleEn": "Classic Chinese Egg Fried Rice",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "garlic-butter-shrimp",
+    "titleRu": "Креветки в чесночном масле за 10 минут",
+    "titleEn": "10-Minute Garlic Butter Shrimp",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "sulguni-lavash-roll",
+    "titleRu": "Лаваш с сыром сулугуни и зеленью на гриле",
+    "titleEn": "Grilled Lavash with Melted Sulguni Cheese",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "caprese-quick-salad",
+    "titleRu": "Классический салат Капрезе за 5 минут",
+    "titleEn": "5-Minute Classic Caprese Salad",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "couscous-sundried-tomatoes",
+    "titleRu": "Быстрый кускус с вялеными томатами за 10 минут",
+    "titleEn": "10-Minute Mediterranean Couscous",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "quesadilla-cheese-chili",
+    "titleRu": "Быстрая сырная кесадилья за 7 минут",
+    "titleEn": "7-Minute Cheesy Corn Quesadilla",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "fast.ts",
+    "id": "bruschetta-prosciutto-mozzarella",
+    "titleRu": "Брускетта с прошутто и моцареллой за 5 минут",
+    "titleEn": "5-Minute Prosciutto & Mozzarella Bruschetta",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "tuna-poke-quinoa",
+    "titleRu": "Поке-боул с диким тунцом и киноа",
+    "titleEn": "Ahi Tuna & Tri-Color Quinoa Poke Bowl",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "sous-vide-turkey-broccoli",
+    "titleRu": "Филе индейки су-вид со спаржей и брокколи",
+    "titleEn": "Sous-Vide Turkey Breast with Steamed Greens",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "salmon-edamame-bowl",
+    "titleRu": "Фитнес-боул с лососем, авокадо и эдамаме",
+    "titleEn": "Clean Fitness Salmon & Edamame Bowl",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "protein-oat-pancakes",
+    "titleRu": "Протеиновые овсяные оладьи без сахара",
+    "titleEn": "Sugar-Free High-Protein Oat Pancakes",
+    "image": "https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "baked-cod-ratatouille",
+    "titleRu": "Филе трески, запеченное с рататуем",
+    "titleEn": "Baked Atlantic Cod with Vegetable Ratatouille",
+    "image": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "nicoise-tuna-salad",
+    "titleRu": "Фитнес-салат Нисуаз с тунцом и стручковой фасолью",
+    "titleEn": "Protein-Packed French Niçoise Salad",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "greek-quinoa-salad",
+    "titleRu": "Средиземноморский салат из киноа со шпинатом и фетой",
+    "titleEn": "Mediterranean Quinoa Spinach & Feta Salad",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "chicken-sweet-potato",
+    "titleRu": "Куриная грудка гриль с запеченным бататом",
+    "titleEn": "Herb Grilled Chicken with Roasted Sweet Potato",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "grilled-tofu-rainbow-bowl",
+    "titleRu": "Радужный боул с хрустящим тофу и кунжутным соусом",
+    "titleEn": "Crispy Tofu Rainbow Protein Bowl",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "smoothie-bowl-acai",
+    "titleRu": "Смузи-боул с черникой, чиа и гранолой",
+    "titleEn": "Acai Berry & Chia Superfood Smoothie Bowl",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "healthy.ts",
+    "id": "quinoa-beet-goat-cheese",
+    "titleRu": "Салат из печеной свеклы с киноа и козьим сыром",
+    "titleEn": "Roasted Beetroot, Quinoa & Goat Cheese Salad",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "ribeye-steak",
+    "titleRu": "Стейк Рибай с розмарином и чесночным маслом",
+    "titleEn": "Ribeye Steak with Rosemary Butter",
+    "image": "/images/ribeye_steak_1786617848688.jpg"
+  },
+  {
+    "file": "mains.ts",
+    "id": "beef-stroganoff",
+    "titleRu": "Бефстроганов со сливочным соусом и пюре",
+    "titleEn": "Classic Beef Stroganoff with Mashed Potatoes",
+    "image": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "chicken-kiev",
+    "titleRu": "Котлеты по-киевски с зеленым маслом",
+    "titleEn": "Authentic Chicken Kiev",
+    "image": "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "lasagne-bolognese",
+    "titleRu": "Классическая Лазанья Болоньезе",
+    "titleEn": "Classic Lasagna Bolognese",
+    "image": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "uzbek-pilaf",
+    "titleRu": "Узбекский плов с бараниной в казане",
+    "titleEn": "Traditional Uzbek Lamb Pilaf",
+    "image": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "butter-chicken",
+    "titleRu": "Курица Карри Tikka Masala по-индийски",
+    "titleEn": "Indian Butter Chicken Curry",
+    "image": "/images/butter_chicken_1786619986389.jpg"
+  },
+  {
+    "file": "mains.ts",
+    "id": "grilled-salmon-asparagus",
+    "titleRu": "Лосось на гриле со спаржей и лимоном",
+    "titleEn": "Grilled Salmon with Asparagus",
+    "image": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "seafood-paella",
+    "titleRu": "Испанская паэлья с морепродуктами",
+    "titleEn": "Spanish Seafood Paella Marinera",
+    "image": "https://images.unsplash.com/photo-1534080564583-6be75777b70a?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "carbonara",
+    "titleRu": "Итальянская паста Карбонара",
+    "titleEn": "Italian Pasta Carbonara",
+    "image": "/images/pasta_carbonara_1786617618459.jpg"
+  },
+  {
+    "file": "mains.ts",
+    "id": "porcini-risotto",
+    "titleRu": "Кремовое ризотто с белыми грибами",
+    "titleEn": "Creamy Porcini Mushroom Risotto",
+    "image": "https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "moules-mariniere",
+    "titleRu": "Мидии в белом вине и сливках Муль Мариньер",
+    "titleEn": "French Mussels Mariniere",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "beef-tacos",
+    "titleRu": "Мексиканские Тако с говядиной и гуакамоле",
+    "titleEn": "Mexican Street Beef Tacos",
+    "image": "/images/beef_tacos_1786619969488.jpg"
+  },
+  {
+    "file": "mains.ts",
+    "id": "veal-schnitzel",
+    "titleRu": "Венский шницель из телятины",
+    "titleEn": "Traditional Viennese Veal Schnitzel",
+    "image": "https://images.unsplash.com/photo-1599921841143-8190253a93bb?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "bbq-pork-ribs",
+    "titleRu": "Запеченные свиные ребрышки барбекю",
+    "titleEn": "Sticky Glazed BBQ Pork Ribs",
+    "image": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "fettuccine-alfredo",
+    "titleRu": "Феттучине Альфредо с тигровыми креветками",
+    "titleEn": "Fettuccine Alfredo with Tiger Prawns",
+    "image": "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "hungarian-goulash",
+    "titleRu": "Наваристый венгерский гуляш",
+    "titleEn": "Hearty Hungarian Beef Goulash",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "sea-bass-baked",
+    "titleRu": "Запеченный сибас с лимоном и розмарином",
+    "titleEn": "Whole Baked Mediterranean Sea Bass",
+    "image": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "duck-breast-cherry",
+    "titleRu": "Утиная грудка с пряным вишневым соусом",
+    "titleEn": "Duck Breast with Spiced Cherry Glaze",
+    "image": "https://images.unsplash.com/photo-1514944298352-f38b292e921e?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "chicken-cordon-bleu",
+    "titleRu": "Куриный Кордон Блю с ветчиной и сыром",
+    "titleEn": "Chicken Cordon Bleu",
+    "image": "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "chicken-teriyaki-bowl",
+    "titleRu": "Курица Терияки с рисом и брокколи",
+    "titleEn": "Japanese Chicken Teriyaki with Rice",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "spaghetti-bolognese",
+    "titleRu": "Спагетти Болоньезе медленного томления",
+    "titleEn": "Slow-Cooked Spaghetti Bolognese",
+    "image": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "lamb-tagine",
+    "titleRu": "Марокканский таджин с бараниной и черносливом",
+    "titleEn": "Moroccan Lamb Tagine with Prunes",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "mains.ts",
+    "id": "chicken-fajitas",
+    "titleRu": "Мексиканские куриные фахитас со сладким перцем",
+    "titleEn": "Sizzling Mexican Chicken Fajitas",
+    "image": "https://images.unsplash.com/photo-1534080564583-6be75777b70a?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "bruschetta-trio",
+    "titleRu": "Трио брускетт: томаты, прошутто и лосось",
+    "titleEn": "Italian Bruschetta Trio",
+    "image": "https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "beef-tartare",
+    "titleRu": "Классический тартар из говядины с желтком",
+    "titleEn": "Classic French Steak Tartare",
+    "image": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "salmon-mango-tartare",
+    "titleRu": "Тартар из лосося с манго и авокадо",
+    "titleEn": "Salmon Mango Avocado Tartare",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "classic-hummus",
+    "titleRu": "Шелковистый хумус с тахини и теплой питой",
+    "titleEn": "Ultra-Creamy Hummus with Warm Pita",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "guacamole-nachos",
+    "titleRu": "Свежий гуакамоле с хрустящими начос",
+    "titleEn": "Fresh Guacamole with Tortilla Chips",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "spring-rolls-shrimp",
+    "titleRu": "Спринг-роллы с тигровыми креветками",
+    "titleEn": "Fresh Vietnamese Summer Spring Rolls",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "jalapeno-cheese-balls",
+    "titleRu": "Хрустящие сырные шарики с халапеньо",
+    "titleEn": "Fried Jalapeno Cheese Bombs",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "stuffed-portobello",
+    "titleRu": "Запеченные шляпки портобелло с сыром и чесноком",
+    "titleEn": "Garlic Herb Stuffed Portobello Mushrooms",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "beef-carpaccio",
+    "titleRu": "Карпаччо из говядины с рукколой и пармезаном",
+    "titleEn": "Classic Beef Carpaccio with Arugula",
+    "image": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "chicken-quesadilla",
+    "titleRu": "Кесадилья с курицей, кукурузой и сыром",
+    "titleEn": "Cheesy Chicken & Corn Quesadilla",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "buffalo-chicken-wings",
+    "titleRu": "Куриные крылышки Баффало с соусом Блю Чиз",
+    "titleEn": "Crispy Buffalo Chicken Wings",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "tzatziki-dip",
+    "titleRu": "Греческий соус Дзадзики со свежими огурцами",
+    "titleEn": "Authentic Greek Tzatziki Dip",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "snacks.ts",
+    "id": "caprese-skewers",
+    "titleRu": "Канапе Капрезе с мини-моцареллой и соусом песто",
+    "titleEn": "Mini Caprese Skewers with Pesto",
+    "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "borscht",
+    "titleRu": "Борщ домашний с говядиной",
+    "titleEn": "Homemade Beef Borscht",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "solyanka-meat",
+    "titleRu": "Солянка сборная мясная",
+    "titleEn": "Russian Meat Solyanka",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "tom-yum-kung",
+    "titleRu": "Тайский суп Том Ям с креветками",
+    "titleEn": "Thai Tom Yum Goong Soup",
+    "image": "https://images.unsplash.com/photo-1548943487-a2e4e43b4853?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "tonkotsu-ramen",
+    "titleRu": "Японский Рамен со свининой Тясю",
+    "titleEn": "Authentic Tonkotsu Pork Ramen",
+    "image": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "polish-zurek",
+    "titleRu": "Традиционный польский Журек с колбасой",
+    "titleEn": "Polish Sour Rye Soup Żurek",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "mushroom-cream-soup",
+    "titleRu": "Сливочный крем-суп из белых грибов",
+    "titleEn": "Creamy Porcini Mushroom Soup",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "french-onion-soup",
+    "titleRu": "Французский луковый суп с грюйером",
+    "titleEn": "French Onion Soup with Gruyere",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "finnish-lohikeitto",
+    "titleRu": "Финская сливочная уха с лососем Лохикейтто",
+    "titleEn": "Finnish Salmon Cream Soup Lohikeitto",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "andalusian-gazpacho",
+    "titleRu": "Освежающий андалузский гаспачо",
+    "titleEn": "Chilled Andalusian Gazpacho",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "vietnamese-pho-bo",
+    "titleRu": "Вьетнамский суп Фо Бо с говядиной",
+    "titleEn": "Vietnamese Pho Bo Beef Soup",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "kharcho-beef",
+    "titleRu": "Пряный грузинский суп Харчо с грецкими орехами",
+    "titleEn": "Georgian Spicy Beef Kharcho Soup",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "pumpkin-ginger-soup",
+    "titleRu": "Пряный тыквенный крем-суп с имбирем",
+    "titleEn": "Spiced Pumpkin Ginger Coconut Soup",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "turkish-mercimek",
+    "titleRu": "Турецкий чечевичный суп Мерджимек",
+    "titleEn": "Turkish Red Lentil Mercimek Soup",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "chicken-noodle-soup",
+    "titleRu": "Куриный бульон с домашней лапшой",
+    "titleEn": "Classic Chicken Noodle Soup",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "pea-soup-smoked-ribs",
+    "titleRu": "Гороховый суп с копчеными ребрышками",
+    "titleEn": "Split Pea Soup with Smoked Ribs",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "minestrone-classic",
+    "titleRu": "Итальянский овощной суп Минестроне",
+    "titleEn": "Classic Italian Minestrone",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "file": "soups.ts",
+    "id": "ukha-classic-fish",
+    "titleRu": "Уха царская с лососем и судаком",
+    "titleEn": "Royal Fish Soup Ukha",
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80"
+  }
+]

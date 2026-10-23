@@ -1,6 +1,6 @@
 import { Language } from '../i18n/translations';
 
-export type CategoryType = 'all' | 'breakfast' | 'lunch' | 'dinner' | 'healthy' | 'fast' | 'dessert';
+export type CategoryType = 'all' | 'soup' | 'main' | 'breakfast' | 'snack' | 'dessert' | 'healthy' | 'fast' | 'lunch' | 'dinner';
 
 export interface LocalizedString {
   ru: string;
@@ -89,6 +89,10 @@ export interface UserProfile {
   bmiCategory: 'underweight' | 'normal' | 'overweight' | 'obese';
   idealWeightMin: number;
   idealWeightMax: number;
+  bodyFatPercent?: number;
+  musclePercent?: number;
+  targetWeightGoal?: number;
+  targetMonthsRemaining?: number;
 }
 
 export interface MealEntry {

@@ -73,30 +73,33 @@ const SMART_MEAL_PRESETS = [
   }
 ];
 
-let savedLang = localStorage.getItem('cookcraft_lang') as Language;
-if (!savedLang || savedLang === 'ru') {
-  savedLang = 'pl';
-  localStorage.setItem('cookcraft_lang', 'pl');
-}
+let savedLang = (localStorage.getItem('cookcraft_lang') as Language) || 'ru';
 
-// Load persisted user profile or create default
-const savedProfileRaw = localStorage.getItem('cookcraft_user_profile');
-const defaultProfile: UserProfile = savedProfileRaw 
-  ? JSON.parse(savedProfileRaw)
-  : createFullUserProfile('male', 25, 75, 178, 'moderate', 'maintain');
+// Strictly purge all legacy profile and meal data from localStorage
+localStorage.removeItem('cookcraft_user_profile');
+localStorage.removeItem('cookcraft_logged_meals');
+localStorage.removeItem('cookcraft_water_consumed');
 
-// Load persisted logged meals or create default sample meals
-const savedMealsRaw = localStorage.getItem('cookcraft_logged_meals');
-const defaultMeals: MealEntry[] = savedMealsRaw
-  ? JSON.parse(savedMealsRaw)
-  : [
-      { id: 'meal_1', name: 'Owsianka z bananem', calories: 320, protein: 10, fat: 8, carbs: 54, mealType: 'breakfast', time: '08:30' },
-      { id: 'meal_2', name: 'Cheeseburger Black Angus', calories: 720, protein: 42, fat: 38, carbs: 52, mealType: 'lunch', time: '13:15' }
-    ];
+// Default in-memory profile and meals matching ZUVIA design while loading from Prisma
+const defaultProfile: UserProfile = createFullUserProfile('male', 25, 75, 178, 'moderate', 'maintain');
+defaultProfile.bodyFatPercent = 34;
+defaultProfile.musclePercent = 49;
+defaultProfile.targetWeightGoal = 72;
+defaultProfile.targetMonthsRemaining = 2;
+defaultProfile.targetCalories = 2702;
+defaultProfile.targetProtein = 120;
+defaultProfile.targetFat = 120;
+defaultProfile.targetCarbs = 120;
 
-// Load persisted water consumption
-const savedWaterRaw = localStorage.getItem('cookcraft_water_consumed');
-const defaultWater = savedWaterRaw ? parseInt(savedWaterRaw) || 0 : 750;
+const defaultMeals: MealEntry[] = [
+  { id: 'sample_breakfast', name: 'Овсянка с ягодами и протеином', calories: 420, protein: 28, fat: 18, carbs: 36, mealType: 'breakfast', time: '08:30' },
+  { id: 'sample_lunch', name: 'Куриная грудка с рисом и авокадо', calories: 680, protein: 42, fat: 38, carbs: 42, mealType: 'lunch', time: '13:15' },
+  { id: 'sample_dinner', name: 'Лосось на гриле со свежими овощами', calories: 540, protein: 22, fat: 36, carbs: 14, mealType: 'dinner', time: '19:00' },
+  { id: 'sample_snack', name: 'Греческий йогурт с орехами', calories: 200, protein: 0, fat: 0, carbs: 0, mealType: 'snack', time: '16:30' }
+];
+const defaultWater = 1000;
+let selectedDiaryDate = '15/09/2027';
+let activeDetailsMealType: 'breakfast' | 'lunch' | 'dinner' | 'snack' = 'breakfast';
 
 // Load persisted shopping list
 const savedShoppingListRaw = localStorage.getItem('cookcraft_shopping_list');
@@ -127,7 +130,7 @@ const state: AppState = {
   servingsCount: defaultServings,
   shoppingList: defaultShoppingList,
   storeFilterMode: 'best-price',
-  diaryConsumed: 1040,
+  diaryConsumed: 0,
   waterConsumedMl: defaultWater,
   cameraStream: null,
   theme: 'dark',
@@ -143,7 +146,63 @@ function saveShoppingState() {
   localStorage.setItem('cookcraft_shopping_recipe', JSON.stringify(state.activeRecipeForShopping));
 }
 
-function startApp() {
+function applyPrismaUserToState(user: AuthUser) {
+  const gender = (user.gender as any) || 'male';
+  const age = user.age || 23;
+  const weight = user.weight || 89;
+  const height = user.height || 190;
+  const activity = (user.activity as any) || 'moderate';
+  const goal = (user.goal as any) || 'lose';
+  const formula = (user.formula as any) || 'mifflin';
+
+  const prof = createFullUserProfile(gender, age, weight, height, activity, goal, formula);
+  if (user.targetCalories) prof.targetCalories = user.targetCalories;
+  if (user.targetProtein) prof.targetProtein = user.targetProtein;
+  if (user.targetFat) prof.targetFat = user.targetFat;
+  if (user.targetCarbs) prof.targetCarbs = user.targetCarbs;
+  if (user.targetFiber) prof.targetFiber = user.targetFiber;
+  if (user.targetWaterMl) prof.targetWaterMl = user.targetWaterMl;
+  if (user.bodyFatPercent) prof.bodyFatPercent = user.bodyFatPercent;
+  if (user.musclePercent) prof.musclePercent = user.musclePercent;
+  if (user.targetWeightGoal) prof.targetWeightGoal = user.targetWeightGoal;
+  if (user.targetMonthsRemaining) prof.targetMonthsRemaining = user.targetMonthsRemaining;
+
+  state.userProfile = prof;
+  if (user.waterConsumed !== undefined) {
+    state.waterConsumedMl = user.waterConsumed;
+  }
+}
+
+async function syncPrismaUserData() {
+  try {
+    const user = await authService.ensureSession();
+    if (user) {
+      applyPrismaUserToState(user);
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const meals = await authService.fetchDiary(todayStr);
+    if (meals && Array.isArray(meals) && meals.length > 0) {
+      state.loggedMeals = meals.map(bm => ({
+        id: bm.id,
+        name: bm.name,
+        calories: bm.calories,
+        protein: bm.protein,
+        fat: bm.fat,
+        carbs: bm.carbs,
+        mealType: bm.mealType,
+        time: bm.time || '12:00'
+      }));
+    }
+
+    renderDiary();
+    renderHomeDashboard();
+  } catch (err) {
+    console.warn('[Prisma Sync] Error loading user data from Prisma:', err);
+  }
+}
+
+async function startApp() {
   initLangSwitcher();
   initNavigation();
   initHomeDashboard();
@@ -156,6 +215,9 @@ function startApp() {
   renderAll();
   renderPromotions();
   updateStaticTexts();
+
+  // Load and sync user profile & diary meals directly from Prisma ORM!
+  await syncPrismaUserData();
 }
 
 if (document.readyState === 'loading') {
@@ -196,6 +258,68 @@ function initLangSwitcher() {
   });
 }
 
+function syncCustomSelects() {
+  const lang = state.currentLang;
+  const actSelectEl = document.getElementById('edit-param-activity') as HTMLSelectElement | null;
+  const goalSelectEl = document.getElementById('edit-param-goal') as HTMLSelectElement | null;
+  const actVal = actSelectEl?.value || state.userProfile?.activity || 'moderate';
+  const goalVal = goalSelectEl?.value || state.userProfile?.goal || 'maintain';
+
+  // Activity labels mapping
+  const actLabels: Record<string, { emoji: string; text: string }> = {
+    sedentary: { emoji: '💤', text: lang === 'ru' ? 'Сидячий образ жизни (x1.2)' : (lang === 'pl' ? 'Siedzący tryb życia (x1.2)' : 'Sedentary lifestyle (x1.2)') },
+    light: { emoji: '🚶', text: lang === 'ru' ? 'Легкие тренировки 1-3 р/нед (x1.375)' : (lang === 'pl' ? 'Lekki trening 1-3 razy/tydz. (x1.375)' : 'Light exercise 1-3 times/wk (x1.375)') },
+    moderate: { emoji: '🏃', text: lang === 'ru' ? 'Умеренная активность 3-5 р/нед (x1.55)' : (lang === 'pl' ? 'Umiarkowana aktywność 3-5 razy/tydz. (x1.55)' : 'Moderate activity 3-5 times/wk (x1.55)') },
+    very: { emoji: '🔥', text: lang === 'ru' ? 'Высокая активность 6-7 р/нед (x1.725)' : (lang === 'pl' ? 'Wysoka aktywność 6-7 razy/tydz. (x1.725)' : 'High activity 6-7 times/wk (x1.725)') },
+    extra: { emoji: '⚡', text: lang === 'ru' ? 'Экстремальный / Физический труд (x1.9)' : (lang === 'pl' ? 'Ekstremalny / praca fizyczna (x1.9)' : 'Extreme / physical labor (x1.9)') }
+  };
+
+  // Goal labels mapping
+  const goalLabels: Record<string, { emoji: string; text: string }> = {
+    lose: { emoji: '📉', text: lang === 'ru' ? 'Похудение (-15% дефицит)' : (lang === 'pl' ? 'Redukcja wagi (-15% deficyt)' : 'Weight loss (-15% deficit)') },
+    maintain: { emoji: '⚖️', text: lang === 'ru' ? 'Поддержание веса (баланс)' : (lang === 'pl' ? 'Utrzymanie wagi (balans)' : 'Maintain weight (balance)') },
+    gain: { emoji: '📈', text: lang === 'ru' ? 'Набор массы (+15% профицит)' : (lang === 'pl' ? 'Budowanie masy (+15% nadwyżka)' : 'Muscle gain (+15% surplus)') }
+  };
+
+  // Update Activity Trigger & Options
+  const currentAct = actLabels[actVal] || actLabels['moderate'];
+  const actBtnLbl = document.getElementById('lbl-custom-activity');
+  const actIcon = document.getElementById('activity-capsule-icon');
+  if (actBtnLbl) actBtnLbl.textContent = currentAct.text;
+  if (actIcon) actIcon.textContent = currentAct.emoji;
+
+  const actDropdown = document.getElementById('dropdown-activity');
+  if (actDropdown) {
+    actDropdown.querySelectorAll<HTMLElement>('.zuvia-custom-option').forEach(opt => {
+      const val = opt.dataset.value;
+      if (val && actLabels[val]) {
+        const textSpan = opt.querySelector<HTMLElement>('.opt-text');
+        if (textSpan) textSpan.textContent = actLabels[val].text;
+        opt.classList.toggle('selected', val === actVal);
+      }
+    });
+  }
+
+  // Update Goal Trigger & Options
+  const currentGoal = goalLabels[goalVal] || goalLabels['maintain'];
+  const goalBtnLbl = document.getElementById('lbl-custom-goal');
+  const goalIcon = document.getElementById('goal-capsule-icon');
+  if (goalBtnLbl) goalBtnLbl.textContent = currentGoal.text;
+  if (goalIcon) goalIcon.textContent = currentGoal.emoji;
+
+  const goalDropdown = document.getElementById('dropdown-goal');
+  if (goalDropdown) {
+    goalDropdown.querySelectorAll<HTMLElement>('.zuvia-custom-option').forEach(opt => {
+      const val = opt.dataset.value;
+      if (val && goalLabels[val]) {
+        const textSpan = opt.querySelector<HTMLElement>('.opt-text');
+        if (textSpan) textSpan.textContent = goalLabels[val].text;
+        opt.classList.toggle('selected', val === goalVal);
+      }
+    });
+  }
+}
+
 function updateStaticTexts() {
   const lang = state.currentLang;
   const tr = t();
@@ -211,6 +335,10 @@ function updateStaticTexts() {
   document.querySelectorAll<HTMLButtonElement>('.category-pills .pill').forEach(pill => {
     const cat = pill.dataset.cat;
     if (cat === 'all') pill.textContent = tr.catAll;
+    if (cat === 'soup') pill.textContent = tr.catSoup;
+    if (cat === 'main') pill.textContent = tr.catMain;
+    if (cat === 'snack') pill.textContent = tr.catSnack;
+    if (cat === 'dessert') pill.textContent = tr.catDessert;
     if (cat === 'breakfast') pill.textContent = tr.catBreakfast;
     if (cat === 'lunch') pill.textContent = tr.catLunch;
     if (cat === 'healthy') pill.textContent = tr.catHealthy;
@@ -351,6 +479,103 @@ function updateStaticTexts() {
   const diarySub = document.getElementById('diary-subtitle');
   if (diaryTitle) diaryTitle.textContent = tr.diaryTitle;
   if (diarySub) diarySub.textContent = tr.diarySubtitle;
+
+  // ZUVIA Calories Page Static Translations
+  const diaryProgressTitle = document.getElementById('diary-progress-title');
+  const diaryTodayTitle = document.getElementById('diary-today-title');
+  const diaryStatsTitle = document.getElementById('diary-stats-title');
+  const diaryGoalsTitle = document.getElementById('diary-goals-title');
+  const diaryGoalWeightTitle = document.getElementById('diary-goal-weight-title');
+  const diaryGoalWorkoutsTitle = document.getElementById('diary-goal-workouts-title');
+  const diaryParamsTitle = document.getElementById('diary-params-title');
+  const diaryWaterTitle = document.getElementById('diary-water-title');
+  const diaryNormTitle = document.getElementById('diary-norm-title');
+  const btnEditParams = document.getElementById('diary-btn-edit-params');
+  const btnRecalculate = document.getElementById('diary-btn-recalculate');
+
+  if (diaryProgressTitle) diaryProgressTitle.textContent = tr.calProgress;
+  if (diaryTodayTitle) diaryTodayTitle.textContent = tr.calToday;
+  if (diaryStatsTitle) diaryStatsTitle.textContent = tr.calStatistics;
+  if (diaryGoalsTitle) diaryGoalsTitle.textContent = tr.calGoalsTitle;
+  if (diaryGoalWeightTitle) diaryGoalWeightTitle.textContent = tr.calWeightLossProgress;
+  if (diaryGoalWorkoutsTitle) diaryGoalWorkoutsTitle.textContent = tr.calWorkouts;
+  if (diaryParamsTitle) diaryParamsTitle.textContent = tr.calParamsTitle;
+  if (diaryWaterTitle) diaryWaterTitle.textContent = tr.waterTrackerTitle;
+  if (diaryNormTitle) diaryNormTitle.textContent = tr.calNormTitle;
+  if (btnEditParams) btnEditParams.textContent = tr.calEdit;
+  if (btnRecalculate) btnRecalculate.textContent = tr.calRecalculate;
+
+  const lblProtein = document.getElementById('diary-lbl-protein');
+  const lblFat = document.getElementById('diary-lbl-fat');
+  const lblCarbs = document.getElementById('diary-lbl-carbs');
+  if (lblProtein) lblProtein.textContent = tr.proteinLabel;
+  if (lblFat) lblFat.textContent = tr.fatLabel;
+  if (lblCarbs) lblCarbs.textContent = tr.carbsLabel;
+
+  const mealBTitle = document.getElementById('diary-meal-breakfast-title');
+  const mealLTitle = document.getElementById('diary-meal-lunch-title');
+  const mealDTitle = document.getElementById('diary-meal-dinner-title');
+  const mealSTitle = document.getElementById('diary-meal-snack-title');
+  if (mealBTitle) mealBTitle.textContent = tr.mealBreakfast;
+  if (mealLTitle) mealLTitle.textContent = tr.mealLunch;
+  if (mealDTitle) mealDTitle.textContent = tr.mealDinner;
+  if (mealSTitle) mealSTitle.textContent = tr.mealSnack;
+
+  const paramWeightLbl = document.getElementById('diary-param-weight-lbl');
+  const paramHeightLbl = document.getElementById('diary-param-height-lbl');
+  const paramAgeLbl = document.getElementById('diary-param-age-lbl');
+  const paramFatLbl = document.getElementById('diary-param-fat-lbl');
+  const paramMuscleLbl = document.getElementById('diary-param-muscle-lbl');
+  const paramGenderLbl = document.getElementById('diary-param-gender-lbl');
+  const btnToggleGender = document.getElementById('btn-toggle-gender') as HTMLButtonElement | null;
+  const genderToggleText = document.getElementById('gender-toggle-text');
+  const lblSaveParamsText = document.getElementById('lbl-save-params-text');
+  const lblPreviewNormTag = document.getElementById('lbl-preview-norm-tag');
+
+  if (paramWeightLbl) paramWeightLbl.textContent = lang === 'ru' ? 'Вес (кг)' : (lang === 'pl' ? 'Waga (kg)' : 'Weight (kg)');
+  if (paramHeightLbl) paramHeightLbl.textContent = lang === 'ru' ? 'Рост (см)' : (lang === 'pl' ? 'Wzrost (cm)' : 'Height (cm)');
+  if (paramAgeLbl) paramAgeLbl.textContent = lang === 'ru' ? 'Возраст (лет)' : (lang === 'pl' ? 'Wiek (lat)' : 'Age (years)');
+  if (paramFatLbl) paramFatLbl.textContent = lang === 'ru' ? 'Жир (%)' : (lang === 'pl' ? 'Tłuszcz' : 'Body Fat');
+  if (paramMuscleLbl) paramMuscleLbl.textContent = lang === 'ru' ? 'Мышцы (%)' : (lang === 'pl' ? 'Mięśnie' : 'Muscles');
+  if (paramGenderLbl) paramGenderLbl.textContent = lang === 'ru' ? 'Пол' : (lang === 'pl' ? 'Płeć' : 'Gender');
+
+  if (genderToggleText && btnToggleGender) {
+    const isFemale = btnToggleGender.dataset.gender === 'female';
+    if (isFemale) {
+      genderToggleText.textContent = lang === 'ru' ? 'Женщина' : (lang === 'pl' ? 'Kobieta' : 'Female');
+    } else {
+      genderToggleText.textContent = lang === 'ru' ? 'Мужчина' : (lang === 'pl' ? 'Mężczyzna' : 'Male');
+    }
+  }
+
+  if (lblSaveParamsText) lblSaveParamsText.textContent = lang === 'ru' ? 'Сохранить' : (lang === 'pl' ? 'Zapisz parametry' : 'Save parameters');
+  if (lblPreviewNormTag) lblPreviewNormTag.textContent = lang === 'ru' ? 'Норма:' : (lang === 'pl' ? 'Norma:' : 'Target:');
+
+  const actSelectEl = document.getElementById('edit-param-activity') as HTMLSelectElement | null;
+  if (actSelectEl) {
+    const opt0 = actSelectEl.querySelector('option[value="sedentary"]');
+    const opt1 = actSelectEl.querySelector('option[value="light"]');
+    const opt2 = actSelectEl.querySelector('option[value="moderate"]');
+    const opt3 = actSelectEl.querySelector('option[value="very"]');
+    const opt4 = actSelectEl.querySelector('option[value="extra"]');
+    if (opt0) opt0.textContent = lang === 'ru' ? '💤 Сидячий образ жизни (x1.2)' : (lang === 'pl' ? '💤 Siedzący tryb życia (x1.2)' : '💤 Sedentary lifestyle (x1.2)');
+    if (opt1) opt1.textContent = lang === 'ru' ? '🚶 Легкие тренировки 1-3 р/нед (x1.375)' : (lang === 'pl' ? '🚶 Lekki trening 1-3 razy/tydz. (x1.375)' : '🚶 Light exercise 1-3 times/wk (x1.375)');
+    if (opt2) opt2.textContent = lang === 'ru' ? '🏃 Умеренная активность 3-5 р/нед (x1.55)' : (lang === 'pl' ? '🏃 Umiarkowana aktywność 3-5 razy/tydz. (x1.55)' : '🏃 Moderate activity 3-5 times/wk (x1.55)');
+    if (opt3) opt3.textContent = lang === 'ru' ? '🔥 Высокая активность 6-7 р/нед (x1.725)' : (lang === 'pl' ? '🔥 Wysoka aktywność 6-7 razy/tydz. (x1.725)' : '🔥 High activity 6-7 times/wk (x1.725)');
+    if (opt4) opt4.textContent = lang === 'ru' ? '⚡ Экстремальный / Физический труд (x1.9)' : (lang === 'pl' ? '⚡ Ekstremalny / praca fizyczna (x1.9)' : '⚡ Extreme / physical labor (x1.9)');
+  }
+
+  const goalSelectEl = document.getElementById('edit-param-goal') as HTMLSelectElement | null;
+  if (goalSelectEl) {
+    const optL = goalSelectEl.querySelector('option[value="lose"]');
+    const optM = goalSelectEl.querySelector('option[value="maintain"]');
+    const optG = goalSelectEl.querySelector('option[value="gain"]');
+    if (optL) optL.textContent = lang === 'ru' ? '📉 Похудение (-15% дефицит)' : (lang === 'pl' ? '📉 Redukcja wagi (-15% deficyt)' : '📉 Weight loss (-15% deficit)');
+    if (optM) optM.textContent = lang === 'ru' ? '⚖️ Поддержание веса (баланс)' : (lang === 'pl' ? '⚖️ Utrzymanie wagi (balans)' : '⚖️ Maintain weight (balance)');
+    if (optG) optG.textContent = lang === 'ru' ? '📈 Набор массы (+15% профицит)' : (lang === 'pl' ? '📈 Budowanie masy (+15% nadwyżka)' : '📈 Muscle gain (+15% surplus)');
+  }
+
+  syncCustomSelects();
 
   const calcH2 = document.getElementById('calc-header-title');
   const calcDesc = document.getElementById('calc-desc-text');
@@ -527,6 +752,113 @@ function updateStaticTexts() {
   if (homeMealD) homeMealD.textContent = tr.mealDinner.replace(/^[^\wа-яА-ЯёЁąęółśżźćńĄĘÓŁŚŻŹĆŃ]+/u, '');
   const homeMealS = document.getElementById('home-meal-snack-title');
   if (homeMealS) homeMealS.textContent = tr.mealSnack.replace(/^[^\wа-яА-ЯёЁąęółśżźćńĄĘÓŁŚŻŹĆŃ]+/u, '');
+
+  // Additional ZUVIA Home Section Titles
+  const homeStatsTitle = document.getElementById('diary-stats-title');
+  if (homeStatsTitle) homeStatsTitle.textContent = state.currentLang === 'pl' ? 'Statystyki' : (state.currentLang === 'en' ? 'Statistics' : 'Статистика');
+  const homeGoalsTitle = document.getElementById('diary-goals-title');
+  if (homeGoalsTitle) homeGoalsTitle.textContent = state.currentLang === 'pl' ? 'Cele' : (state.currentLang === 'en' ? 'Goals' : 'Цели');
+  const homeGoalWeightTitle = document.getElementById('diary-goal-weight-title');
+  if (homeGoalWeightTitle) homeGoalWeightTitle.textContent = state.currentLang === 'pl' ? 'Postęp odchudzania' : (state.currentLang === 'en' ? 'Weight loss progress' : 'Прогресс похудения');
+  const homeGoalWorkoutsTitle = document.getElementById('diary-goal-workouts-title');
+  if (homeGoalWorkoutsTitle) homeGoalWorkoutsTitle.textContent = state.currentLang === 'pl' ? 'Treningi' : (state.currentLang === 'en' ? 'Workouts' : 'Тренировки');
+  const homeParamsTitle = document.getElementById('diary-params-title');
+  if (homeParamsTitle) homeParamsTitle.textContent = state.currentLang === 'pl' ? 'Parametry' : (state.currentLang === 'en' ? 'Parameters' : 'Параметры');
+  const homeWeightLbl = document.getElementById('diary-param-weight-lbl');
+  if (homeWeightLbl) homeWeightLbl.textContent = state.currentLang === 'pl' ? 'Waga (kg)' : (state.currentLang === 'en' ? 'Weight (kg)' : 'Вес (кг)');
+  const homeHeightLbl = document.getElementById('diary-param-height-lbl');
+  if (homeHeightLbl) homeHeightLbl.textContent = state.currentLang === 'pl' ? 'Wzrost (cm)' : (state.currentLang === 'en' ? 'Height (cm)' : 'Рост (см)');
+  const homeAgeLbl = document.getElementById('diary-param-age-lbl');
+  if (homeAgeLbl) homeAgeLbl.textContent = state.currentLang === 'pl' ? 'Wiek (lat)' : (state.currentLang === 'en' ? 'Age (years)' : 'Возраст (лет)');
+  const homeFatLbl = document.getElementById('diary-param-fat-lbl');
+  if (homeFatLbl) homeFatLbl.textContent = state.currentLang === 'pl' ? 'Tłuszcz (%)' : (state.currentLang === 'en' ? 'Body fat (%)' : 'Жир (%)');
+  const homeMuscleLbl = document.getElementById('diary-param-muscle-lbl');
+  if (homeMuscleLbl) homeMuscleLbl.textContent = state.currentLang === 'pl' ? 'Mięśnie (%)' : (state.currentLang === 'en' ? 'Muscle (%)' : 'Мышцы (%)');
+  const homeGenderLbl = document.getElementById('diary-param-gender-lbl');
+  if (homeGenderLbl) homeGenderLbl.textContent = state.currentLang === 'pl' ? 'Płeć' : (state.currentLang === 'en' ? 'Gender' : 'Пол');
+  const homeWaterTitle = document.getElementById('diary-water-title');
+  if (homeWaterTitle) homeWaterTitle.textContent = state.currentLang === 'pl' ? 'Nawodnienie' : (state.currentLang === 'en' ? 'Water tracker' : 'Трекер воды');
+  const btnAddWaterEl = document.getElementById('btn-diary-add-water');
+  if (btnAddWaterEl) btnAddWaterEl.title = state.currentLang === 'pl' ? 'Dodaj 250 ml' : (state.currentLang === 'en' ? 'Add 250 ml' : 'Добавить 250 мл');
+  const btnRemWaterEl = document.getElementById('btn-diary-remove-water');
+  if (btnRemWaterEl) btnRemWaterEl.title = state.currentLang === 'pl' ? 'Odejmij 250 ml' : (state.currentLang === 'en' ? 'Remove 250 ml' : 'Уменьшить 250 мл');
+  const homeNormTitle = document.getElementById('diary-norm-title');
+  if (homeNormTitle) homeNormTitle.textContent = state.currentLang === 'pl' ? 'Norma kalorii' : (state.currentLang === 'en' ? 'Calorie norm' : 'Норма калорий');
+  const homeRecalcNorm = document.getElementById('diary-btn-recalc-norm');
+  if (homeRecalcNorm) homeRecalcNorm.textContent = state.currentLang === 'pl' ? 'Przelicz' : (state.currentLang === 'en' ? 'Recalculate' : 'Пересчитать');
+  const homeSaveParams = document.getElementById('lbl-save-params-text');
+  if (homeSaveParams) homeSaveParams.textContent = state.currentLang === 'pl' ? 'Zapisz' : (state.currentLang === 'en' ? 'Save' : 'Сохранить');
+
+  // Diary Header Actions & Badges
+  const btnDiaryScanner = document.getElementById('btn-diary-scanner');
+  if (btnDiaryScanner) btnDiaryScanner.textContent = tr.scannerShortcutBtn;
+  const btnOpenMealModal = document.getElementById('btn-open-meal-modal');
+  if (btnOpenMealModal) btnOpenMealModal.textContent = tr.addMealBtn;
+  const btnClearDiaryDay = document.getElementById('btn-clear-diary-day');
+  if (btnClearDiaryDay) btnClearDiaryDay.textContent = tr.clearDayBtn;
+  const calcBadgeV = document.getElementById('calc-badge-v');
+  if (calcBadgeV) calcBadgeV.textContent = tr.calcBadgeText;
+
+  // Meal Modal Dynamic Labels
+  const lblModalProtein = document.getElementById('lbl-modal-protein');
+  if (lblModalProtein) lblModalProtein.textContent = `${tr.proteinLabel} (g)`;
+  const lblModalFat = document.getElementById('lbl-modal-fat');
+  if (lblModalFat) lblModalFat.textContent = `${tr.fatLabel} (g)`;
+  const lblModalCarbs = document.getElementById('lbl-modal-carbs');
+  if (lblModalCarbs) lblModalCarbs.textContent = `${tr.carbsLabel} (g)`;
+  const mealInputNameEl = document.getElementById('meal-input-name') as HTMLInputElement | null;
+  if (mealInputNameEl) mealInputNameEl.placeholder = tr.modalMealNamePlaceholder;
+
+  const mealInputTypeSelect = document.getElementById('meal-input-type') as HTMLSelectElement | null;
+  if (mealInputTypeSelect) {
+    const optB = mealInputTypeSelect.querySelector('option[value="breakfast"]');
+    const optL = mealInputTypeSelect.querySelector('option[value="lunch"]');
+    const optD = mealInputTypeSelect.querySelector('option[value="dinner"]');
+    const optS = mealInputTypeSelect.querySelector('option[value="snack"]');
+    if (optB) optB.textContent = tr.mealBreakfast;
+    if (optL) optL.textContent = tr.mealLunch;
+    if (optD) optD.textContent = tr.mealDinner;
+    if (optS) optS.textContent = tr.mealSnack;
+  }
+
+  // Auth Modal Static Texts
+  const authModalTitleEl = document.querySelector('.auth-modal-title');
+  if (authModalTitleEl) authModalTitleEl.textContent = tr.authModalTitle;
+  const tabAuthLogin = document.getElementById('tab-auth-login');
+  const tabAuthRegister = document.getElementById('tab-auth-register');
+  const lblAuthName = document.getElementById('lbl-auth-name');
+  const inputAuthName = document.getElementById('auth-input-name') as HTMLInputElement | null;
+  const lblAuthEmail = document.getElementById('lbl-auth-email');
+  const inputAuthEmail = document.getElementById('auth-input-email') as HTMLInputElement | null;
+  const lblAuthPassword = document.getElementById('lbl-auth-password');
+  const btnForgotPassword = document.getElementById('btn-forgot-password');
+  
+  if (tabAuthLogin) tabAuthLogin.textContent = tr.authTabLogin;
+  if (tabAuthRegister) tabAuthRegister.textContent = tr.authTabRegister;
+  if (lblAuthName) lblAuthName.textContent = tr.authNameLabel;
+  if (inputAuthName) inputAuthName.placeholder = tr.authNamePlaceholder;
+  if (lblAuthEmail) lblAuthEmail.textContent = tr.authEmailLabel;
+  if (inputAuthEmail) inputAuthEmail.placeholder = tr.authEmailPlaceholder;
+  if (lblAuthPassword) lblAuthPassword.textContent = tr.authPasswordLabel;
+  if (btnForgotPassword) btnForgotPassword.textContent = tr.authForgotPassword;
+
+  // Profile Modal Static Texts
+  const badgeMember = document.getElementById('profile-badge-member');
+  if (badgeMember) badgeMember.textContent = tr.profileBadge;
+  const lblStatCooked = document.getElementById('lbl-stat-cooked');
+  if (lblStatCooked) lblStatCooked.textContent = tr.profileStatCooked;
+  const lblStatDiary = document.getElementById('lbl-stat-diary');
+  if (lblStatDiary) lblStatDiary.textContent = tr.profileStatDiary;
+  const lblStatTarget = document.getElementById('lbl-stat-target');
+  if (lblStatTarget) lblStatTarget.textContent = tr.profileStatTarget;
+  const tabProfileHist = document.getElementById('tab-profile-history');
+  if (tabProfileHist) tabProfileHist.textContent = tr.profileTabHistory;
+  const tabProfileDiary = document.getElementById('tab-profile-diary');
+  if (tabProfileDiary) tabProfileDiary.textContent = tr.profileTabDiary;
+  const tabProfileFav = document.getElementById('tab-profile-favorites');
+  if (tabProfileFav) tabProfileFav.textContent = tr.profileTabFavorites;
+  const btnProfileLogout = document.getElementById('btn-profile-logout');
+  if (btnProfileLogout) btnProfileLogout.textContent = tr.profileLogoutBtn;
 }
 
 function renderAll() {
@@ -588,8 +920,140 @@ function switchView(targetId: string) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Numeric Scrubber for horizontal dragging on parameter pills
+function setupNumericScrubber(
+  pillEl: HTMLElement,
+  inputEl: HTMLInputElement,
+  config: { min: number; max: number; step: number; pxPerStep?: number }
+) {
+  let isDown = false;
+  let hasDragged = false;
+  let startX = 0;
+  let startVal = 0;
+  const pxPerStep = config.pxPerStep || 8;
+
+  const onPointerDown = (clientX: number) => {
+    isDown = true;
+    hasDragged = false;
+    startX = clientX;
+    startVal = parseFloat(inputEl.value) || config.min;
+  };
+
+  const onPointerMove = (clientX: number, e: Event) => {
+    if (!isDown) return;
+    const dx = clientX - startX;
+    if (Math.abs(dx) > 3) {
+      if (!hasDragged) {
+        hasDragged = true;
+        pillEl.classList.add('is-scrubbing');
+        document.body.classList.add('is-scrubbing');
+      }
+      e.preventDefault();
+      const steps = Math.round(dx / pxPerStep);
+      let newVal = startVal + steps * config.step;
+      newVal = Math.min(config.max, Math.max(config.min, newVal));
+      if (config.step < 1) {
+        newVal = Math.round(newVal * 10) / 10;
+      } else {
+        newVal = Math.round(newVal);
+      }
+      if (parseFloat(inputEl.value) !== newVal) {
+        inputEl.value = newVal.toString();
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+  };
+
+  const onPointerUp = () => {
+    if (!isDown) return;
+    isDown = false;
+    if (hasDragged) {
+      pillEl.classList.remove('is-scrubbing');
+      document.body.classList.remove('is-scrubbing');
+      inputEl.blur();
+    }
+  };
+
+  pillEl.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    onPointerDown(e.clientX);
+
+    const mouseMoveHandler = (ev: MouseEvent) => {
+      onPointerMove(ev.clientX, ev);
+    };
+
+    const mouseUpHandler = () => {
+      window.removeEventListener('mousemove', mouseMoveHandler);
+      window.removeEventListener('mouseup', mouseUpHandler);
+      onPointerUp();
+    };
+
+    window.addEventListener('mousemove', mouseMoveHandler);
+    window.addEventListener('mouseup', mouseUpHandler);
+  });
+
+  pillEl.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    onPointerDown(e.touches[0].clientX);
+  }, { passive: true });
+
+  pillEl.addEventListener('touchmove', (e) => {
+    if (!isDown || e.touches.length !== 1) return;
+    onPointerMove(e.touches[0].clientX, e);
+  }, { passive: false });
+
+  pillEl.addEventListener('touchend', onPointerUp);
+  pillEl.addEventListener('touchcancel', onPointerUp);
+}
+
 // --- ZUVIA Home Dashboard ---
 function initHomeDashboard() {
+  // 1. Date Picker Modal
+  const dateModal = document.getElementById('date-picker-modal');
+  const btnDatePicker = document.getElementById('btn-home-date-picker');
+  const btnCloseDateModal = document.getElementById('btn-close-date-modal');
+  const btnApplyDate = document.getElementById('btn-apply-date');
+  const customDateInput = document.getElementById('input-custom-date') as HTMLInputElement | null;
+
+  btnDatePicker?.addEventListener('click', () => {
+    dateModal?.classList.remove('hidden');
+  });
+
+  const closeDateModal = () => dateModal?.classList.add('hidden');
+  btnCloseDateModal?.addEventListener('click', closeDateModal);
+
+  document.querySelectorAll<HTMLButtonElement>('.zuvia-date-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.zuvia-date-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const offset = parseInt(btn.dataset.dayOffset || '0');
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      selectedDiaryDate = `${day}/${month}/${year}`;
+      if (btnDatePicker) btnDatePicker.textContent = selectedDiaryDate;
+      if (customDateInput) customDateInput.value = `${year}-${month}-${day}`;
+      closeDateModal();
+      renderAll();
+    });
+  });
+
+  btnApplyDate?.addEventListener('click', () => {
+    if (customDateInput?.value) {
+      const parts = customDateInput.value.split('-');
+      if (parts.length === 3) {
+        selectedDiaryDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        if (btnDatePicker) btnDatePicker.textContent = selectedDiaryDate;
+      }
+    }
+    closeDateModal();
+    renderAll();
+  });
+
+  // 2. Add Meal Plus Button
   const plusBtn = document.getElementById('btn-home-add-meal');
   if (plusBtn) {
     plusBtn.addEventListener('click', () => {
@@ -597,15 +1061,469 @@ function initHomeDashboard() {
     });
   }
 
+  // 3. Meal Details Modal & Meal Pills
+  const mealDetailsModal = document.getElementById('meal-details-modal');
+  const btnCloseMealDetails = document.getElementById('btn-close-meal-details-modal');
+  const btnAddItemToThisMeal = document.getElementById('btn-add-item-to-this-meal');
+
+  const openMealDetails = (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+    activeDetailsMealType = mealType;
+    const tr = t();
+    const titleEl = document.getElementById('lbl-meal-details-title');
+    const kcalEl = document.getElementById('lbl-meal-details-kcal');
+    const listEl = document.getElementById('meal-details-items-list');
+
+    const mealNames = {
+      breakfast: tr.mealBreakfast || 'Завтрак',
+      lunch: tr.mealLunch || 'Обед',
+      dinner: tr.mealDinner || 'Ужин',
+      snack: tr.mealSnack || 'Перекус'
+    };
+
+    if (titleEl) titleEl.textContent = mealNames[mealType];
+
+    const meals = (state.loggedMeals || []).filter(m => m.mealType === mealType);
+    const mealSumKcal = meals.reduce((sum, m) => sum + m.calories, 0);
+    if (kcalEl) kcalEl.textContent = `${mealSumKcal} kcal`;
+
+    if (listEl) {
+      if (meals.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 20px 10px; font-size: 0.9rem;">
+            🍽️ ${tr.diaryEmptyCategory || 'В этом приёме пока нет блюд'}
+          </div>
+        `;
+      } else {
+        listEl.innerHTML = meals.map(m => `
+          <div class="meal-details-item">
+            <div class="meal-details-item-main">
+              <strong class="item-title">${m.name}</strong>
+              <span class="item-time">⏱️ ${m.time} &bull; P:${m.protein}g F:${m.fat}g C:${m.carbs}g</span>
+            </div>
+            <div class="meal-details-item-right">
+              <span class="item-kcal">${m.calories} kcal</span>
+              <button type="button" class="btn-delete-meal-entry" data-id="${m.id}" title="Удалить">🗑️</button>
+            </div>
+          </div>
+        `).join('');
+
+        listEl.querySelectorAll<HTMLButtonElement>('.btn-delete-meal-entry').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            if (id) {
+              await authService.deleteDiaryMeal(id).catch(console.error);
+              state.loggedMeals = (state.loggedMeals || []).filter(m => m.id !== id);
+              openMealDetails(activeDetailsMealType);
+              renderAll();
+            }
+          });
+        });
+      }
+    }
+
+    mealDetailsModal?.classList.remove('hidden');
+  };
+
   document.querySelectorAll<HTMLElement>('.zuvia-meal-pill').forEach(pill => {
     pill.addEventListener('click', () => {
-      const mealType = pill.dataset.meal;
-      if (mealType) {
-        triggerMealModal(mealType);
-      }
+      const type = (pill.dataset.meal as any) || 'breakfast';
+      openMealDetails(type);
     });
   });
 
+  btnCloseMealDetails?.addEventListener('click', () => {
+    mealDetailsModal?.classList.add('hidden');
+  });
+
+  btnAddItemToThisMeal?.addEventListener('click', () => {
+    mealDetailsModal?.classList.add('hidden');
+    triggerMealModal(activeDetailsMealType);
+  });
+
+  // 4. Weekly Statistics Accordion Toggle
+  const btnToggleStats = document.getElementById('btn-toggle-stats');
+  const statsContent = document.getElementById('zuvia-stats-content');
+  btnToggleStats?.addEventListener('click', () => {
+    statsContent?.classList.toggle('hidden');
+  });
+
+  // 5. Goals Modal & Trigger Cards
+  const goalsModal = document.getElementById('goals-modal');
+  const btnAddGoal = document.getElementById('btn-diary-add-goal');
+  const btnGoalWeight = document.getElementById('btn-goal-weight');
+  const btnGoalWorkouts = document.getElementById('btn-goal-workouts');
+  const btnCloseGoals = document.getElementById('btn-close-goals-modal');
+  const btnCancelGoals = document.getElementById('btn-cancel-goals-modal');
+  const btnSaveGoals = document.getElementById('btn-save-goals-modal');
+  const inputGoalWeight = document.getElementById('edit-goal-target-weight') as HTMLInputElement | null;
+  const inputGoalMonths = document.getElementById('edit-goal-months') as HTMLInputElement | null;
+  const hintWeightRemaining = document.getElementById('hint-weight-remaining');
+
+  const updateGoalHint = () => {
+    if (!hintWeightRemaining) return;
+    const curWeight = state.userProfile?.weight || 75;
+    const targetWeight = parseFloat(inputGoalWeight?.value || '72') || 72;
+    const diff = Math.max(0, Math.round((curWeight - targetWeight) * 10) / 10);
+    hintWeightRemaining.textContent = `${state.currentLang === 'ru' ? 'Текущий вес' : (state.currentLang === 'pl' ? 'Aktualna waga' : 'Current weight')}: ${curWeight} kg • ${state.currentLang === 'ru' ? 'Осталось сбросить' : (state.currentLang === 'pl' ? 'Do zrzucenia' : 'To lose')}: ${diff} kg`;
+  };
+
+  const openGoalsModal = () => {
+    if (!goalsModal) return;
+    if (inputGoalWeight) inputGoalWeight.value = (state.userProfile?.targetWeightGoal || 72).toString();
+    if (inputGoalMonths) inputGoalMonths.value = (state.userProfile?.targetMonthsRemaining || 2).toString();
+    updateGoalHint();
+    goalsModal.classList.remove('hidden');
+  };
+
+  const closeGoalsModal = () => goalsModal?.classList.add('hidden');
+
+  btnAddGoal?.addEventListener('click', openGoalsModal);
+  btnGoalWeight?.addEventListener('click', openGoalsModal);
+  btnGoalWorkouts?.addEventListener('click', openGoalsModal);
+  btnCloseGoals?.addEventListener('click', closeGoalsModal);
+  btnCancelGoals?.addEventListener('click', closeGoalsModal);
+
+  inputGoalWeight?.addEventListener('input', updateGoalHint);
+
+  btnSaveGoals?.addEventListener('click', async () => {
+    const targetW = parseFloat(inputGoalWeight?.value || '72') || 72;
+    const targetM = parseInt(inputGoalMonths?.value || '2') || 2;
+    if (state.userProfile) {
+      state.userProfile.targetWeightGoal = targetW;
+      state.userProfile.targetMonthsRemaining = targetM;
+    }
+    try {
+      await authService.updateProfile({
+        targetWeightGoal: targetW,
+        targetMonthsRemaining: targetM
+      });
+    } catch (e) {
+      console.warn('[Prisma] Error saving goals:', e);
+    }
+    closeGoalsModal();
+    renderAll();
+  });
+
+  // 6. Body Parameters Unified Block
+  const btnSaveParams = document.getElementById('btn-save-params');
+  const inputParamWeight = document.getElementById('edit-param-weight') as HTMLInputElement | null;
+  const inputParamHeight = document.getElementById('edit-param-height') as HTMLInputElement | null;
+  const inputParamAge = document.getElementById('edit-param-age') as HTMLInputElement | null;
+  const inputParamFat = document.getElementById('edit-param-fat') as HTMLInputElement | null;
+  const inputParamMuscle = document.getElementById('edit-param-muscle') as HTMLInputElement | null;
+  const btnToggleGender = document.getElementById('btn-toggle-gender') as HTMLButtonElement | null;
+  const selectParamActivity = document.getElementById('edit-param-activity') as HTMLSelectElement | null;
+  const selectParamGoal = document.getElementById('edit-param-goal') as HTMLSelectElement | null;
+
+  const getGenderText = (gender: string) => {
+    const lang = state.currentLang;
+    if (gender === 'female') {
+      return lang === 'ru' ? 'Женщина' : (lang === 'pl' ? 'Kobieta' : 'Female');
+    }
+    return lang === 'ru' ? 'Мужчина' : (lang === 'pl' ? 'Mężczyzna' : 'Male');
+  };
+
+  const updateGenderDisplay = (gender: string) => {
+    if (!btnToggleGender) return;
+    btnToggleGender.dataset.gender = gender;
+    const iconEl = document.getElementById('gender-toggle-icon');
+    const textEl = document.getElementById('gender-toggle-text');
+    if (iconEl) iconEl.textContent = gender === 'female' ? '👩' : '🧔';
+    if (textEl) textEl.textContent = getGenderText(gender);
+  };
+
+  btnToggleGender?.addEventListener('click', () => {
+    const cur = btnToggleGender.dataset.gender || 'male';
+    const next = cur === 'male' ? 'female' : 'male';
+    updateGenderDisplay(next);
+    updateParamsModalPreview();
+  });
+
+  const updateParamsModalPreview = () => {
+    const gender = (btnToggleGender?.dataset.gender as any) || 'male';
+    const age = parseInt(inputParamAge?.value || '25') || 25;
+    const weight = parseFloat(inputParamWeight?.value || '75') || 75;
+    const height = parseFloat(inputParamHeight?.value || '178') || 178;
+    const activity = (selectParamActivity?.value as any) || 'moderate';
+    const goal = (selectParamGoal?.value as any) || 'maintain';
+
+    const tempProf = createFullUserProfile(gender, age, weight, height, activity, goal, 'mifflin');
+    const bmrEl = document.getElementById('preview-bmr-val');
+    const tdeeEl = document.getElementById('preview-tdee-val');
+    const targetEl = document.getElementById('preview-target-val');
+
+    if (bmrEl) bmrEl.innerText = `${Math.round(tempProf.bmr).toLocaleString()} kcal`;
+    if (tdeeEl) tdeeEl.innerText = `${Math.round(tempProf.tdee).toLocaleString()} kcal`;
+    if (targetEl) targetEl.innerText = `${Math.round(tempProf.targetCalories).toLocaleString()} kcal/${state.currentLang === 'ru' ? 'день' : (state.currentLang === 'pl' ? 'dzień' : 'day')}`;
+
+    // Live update weight progress bar and remaining subtext as numbers change
+    const goalWeightFill = document.getElementById('goal-weight-fill');
+    const goalWeightSub = document.getElementById('diary-goal-weight-sub');
+    const targetWeight = state.userProfile?.targetWeightGoal || 72;
+    const startWeight = Math.max(targetWeight + 8, (state.userProfile?.weight || 75) + 3);
+    const totalDiff = Math.max(0.5, startWeight - targetWeight);
+    const lostKg = Math.max(0, startWeight - weight);
+    const progressPct = weight <= targetWeight ? 100 : Math.min(100, Math.max(5, Math.round((lostKg / totalDiff) * 100)));
+    const diff = Math.max(0, Math.round((weight - targetWeight) * 10) / 10);
+
+    if (goalWeightFill) goalWeightFill.style.width = `${progressPct}%`;
+    if (goalWeightSub) {
+      if (weight <= targetWeight) {
+        goalWeightSub.innerText = state.currentLang === 'ru' ? 'Цель достигнута!' : (state.currentLang === 'pl' ? 'Cel osiągnięty!' : 'Goal reached!');
+      } else {
+        goalWeightSub.innerText = state.currentLang === 'ru'
+          ? `Осталось ${diff} кг`
+          : (state.currentLang === 'pl' ? `Pozostało ${diff} kg` : `${diff} kg remaining`);
+      }
+    }
+  };
+
+  const syncParamsToInputs = () => {
+    const prof = state.userProfile || defaultProfile;
+    if (inputParamWeight) inputParamWeight.value = (prof.weight || 75).toString();
+    if (inputParamHeight) inputParamHeight.value = (prof.height || 178).toString();
+    if (inputParamAge) inputParamAge.value = (prof.age || 25).toString();
+    if (inputParamFat) inputParamFat.value = (prof.bodyFatPercent || 34).toString();
+    if (inputParamMuscle) inputParamMuscle.value = (prof.musclePercent || 49).toString();
+    if (selectParamActivity && prof.activity) selectParamActivity.value = prof.activity;
+    if (selectParamGoal && prof.goal) selectParamGoal.value = prof.goal;
+
+    updateGenderDisplay(prof.gender || 'male');
+    syncCustomSelects();
+    updateParamsModalPreview();
+  };
+
+  syncParamsToInputs();
+
+  [inputParamWeight, inputParamHeight, inputParamAge, inputParamFat, inputParamMuscle, selectParamActivity, selectParamGoal].forEach(el => {
+    el?.addEventListener('input', () => {
+      syncCustomSelects();
+      updateParamsModalPreview();
+    });
+    el?.addEventListener('change', () => {
+      syncCustomSelects();
+      updateParamsModalPreview();
+    });
+  });
+
+  // Attach horizontal drag scrubber to all 5 numeric blue pills
+  const setupPillScrubber = (input: HTMLInputElement | null, cfg: { min: number; max: number; step: number; pxPerStep?: number }) => {
+    if (!input) return;
+    const pill = input.closest('.param-val-pill') as HTMLElement | null;
+    if (pill) {
+      setupNumericScrubber(pill, input, cfg);
+    }
+  };
+
+  setupPillScrubber(inputParamWeight, { min: 30, max: 250, step: 0.5, pxPerStep: 7 });
+  setupPillScrubber(inputParamHeight, { min: 100, max: 230, step: 1, pxPerStep: 5 });
+  setupPillScrubber(inputParamAge, { min: 12, max: 100, step: 1, pxPerStep: 8 });
+  setupPillScrubber(inputParamFat, { min: 3, max: 60, step: 0.5, pxPerStep: 8 });
+  setupPillScrubber(inputParamMuscle, { min: 10, max: 80, step: 0.5, pxPerStep: 8 });
+
+  // Custom Select Dropdown Toggle & Selection
+  const actWrap = document.getElementById('custom-select-activity-wrap');
+  const actBtn = document.getElementById('btn-custom-activity');
+  const actDropdown = document.getElementById('dropdown-activity');
+
+  const goalWrap = document.getElementById('custom-select-goal-wrap');
+  const goalBtn = document.getElementById('btn-custom-goal');
+  const goalDropdown = document.getElementById('dropdown-goal');
+
+  const closeCustomDropdowns = () => {
+    actWrap?.classList.remove('open');
+    actDropdown?.classList.add('hidden');
+    actBtn?.setAttribute('aria-expanded', 'false');
+
+    goalWrap?.classList.remove('open');
+    goalDropdown?.classList.add('hidden');
+    goalBtn?.setAttribute('aria-expanded', 'false');
+  };
+
+  actBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wasOpen = actWrap?.classList.contains('open');
+    closeCustomDropdowns();
+    if (!wasOpen && actWrap && actDropdown) {
+      actWrap.classList.add('open');
+      actDropdown.classList.remove('hidden');
+      actBtn.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  goalBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wasOpen = goalWrap?.classList.contains('open');
+    closeCustomDropdowns();
+    if (!wasOpen && goalWrap && goalDropdown) {
+      goalWrap.classList.add('open');
+      goalDropdown.classList.remove('hidden');
+      goalBtn.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.zuvia-custom-select-wrap')) {
+      closeCustomDropdowns();
+    }
+  });
+
+  actDropdown?.querySelectorAll<HTMLElement>('.zuvia-custom-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const val = opt.dataset.value;
+      if (val && selectParamActivity) {
+        selectParamActivity.value = val;
+        selectParamActivity.dispatchEvent(new Event('change'));
+        selectParamActivity.dispatchEvent(new Event('input'));
+      }
+      closeCustomDropdowns();
+      syncCustomSelects();
+    });
+  });
+
+  goalDropdown?.querySelectorAll<HTMLElement>('.zuvia-custom-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const val = opt.dataset.value;
+      if (val && selectParamGoal) {
+        selectParamGoal.value = val;
+        selectParamGoal.dispatchEvent(new Event('change'));
+        selectParamGoal.dispatchEvent(new Event('input'));
+      }
+      closeCustomDropdowns();
+      syncCustomSelects();
+    });
+  });
+
+  btnSaveParams?.addEventListener('click', async () => {
+    const gender = (btnToggleGender?.dataset.gender as any) || 'male';
+    const age = parseInt(inputParamAge?.value || '25') || 25;
+    const weight = parseFloat(inputParamWeight?.value || '75') || 75;
+    const height = parseFloat(inputParamHeight?.value || '178') || 178;
+    const fat = parseFloat(inputParamFat?.value || '34') || 34;
+    const muscle = parseFloat(inputParamMuscle?.value || '49') || 49;
+    const activity = (selectParamActivity?.value as any) || 'moderate';
+    const goal = (selectParamGoal?.value as any) || 'maintain';
+
+    const updated = createFullUserProfile(gender, age, weight, height, activity, goal, 'mifflin');
+    updated.bodyFatPercent = fat;
+    updated.musclePercent = muscle;
+    if (state.userProfile?.targetWeightGoal) updated.targetWeightGoal = state.userProfile.targetWeightGoal;
+    if (state.userProfile?.targetMonthsRemaining) updated.targetMonthsRemaining = state.userProfile.targetMonthsRemaining;
+
+    state.userProfile = updated;
+
+    try {
+      await authService.updateProfile({
+        gender: updated.gender,
+        age: updated.age,
+        weight: updated.weight,
+        height: updated.height,
+        activity: updated.activity,
+        goal: updated.goal,
+        formula: 'mifflin',
+        targetCalories: updated.targetCalories,
+        targetProtein: updated.targetProtein,
+        targetFat: updated.targetFat,
+        targetCarbs: updated.targetCarbs,
+        targetFiber: updated.targetFiber,
+        targetWaterMl: updated.targetWaterMl,
+        bodyFatPercent: fat,
+        musclePercent: muscle
+      });
+    } catch (e) {
+      console.warn('[Prisma] Error saving profile:', e);
+    }
+
+    if (btnSaveParams) {
+      const lblSaveText = document.getElementById('lbl-save-params-text');
+      const originalText = lblSaveText ? lblSaveText.textContent : 'Сохранить';
+      if (lblSaveText) {
+        lblSaveText.textContent = state.currentLang === 'ru' ? 'Сохранено!' : (state.currentLang === 'pl' ? 'Zapisano!' : 'Saved!');
+      }
+      setTimeout(() => {
+        if (lblSaveText && originalText) lblSaveText.textContent = originalText;
+      }, 1400);
+    }
+
+    renderAll();
+  });
+
+  // 7. Water Tracker on Home
+  const btnAddWater = document.getElementById('btn-diary-add-water');
+  btnAddWater?.addEventListener('click', async () => {
+    const current = state.waterConsumedMl || 0;
+    const next = Math.min(3000, current + 250);
+    state.waterConsumedMl = next;
+    try {
+      await authService.updateWater(250, 'add');
+    } catch (e) {
+      console.warn('[Prisma] Water update error:', e);
+    }
+    renderAll();
+  });
+
+  const btnRemoveWater = document.getElementById('btn-diary-remove-water');
+  btnRemoveWater?.addEventListener('click', async () => {
+    const current = state.waterConsumedMl || 0;
+    const next = Math.max(0, current - 250);
+    state.waterConsumedMl = next;
+    try {
+      await authService.updateWater(next, 'set');
+    } catch (e) {
+      console.warn('[Prisma] Water update error:', e);
+    }
+    renderAll();
+  });
+
+  // 8. Calorie Norm & Recalculate
+  const btnRecalcNorm = document.getElementById('btn-recalculate-norm');
+  const btnNormBadge = document.getElementById('btn-norm-badge');
+
+  const triggerNormRecalculation = async () => {
+    if (btnNormBadge) {
+      btnNormBadge.classList.add('norm-pulsing');
+      setTimeout(() => btnNormBadge.classList.remove('norm-pulsing'), 900);
+    }
+
+    const prof = state.userProfile || defaultProfile;
+    const recalculated = createFullUserProfile(
+      prof.gender || 'male',
+      prof.age || 25,
+      prof.weight || 75,
+      prof.height || 178,
+      prof.activity || 'moderate',
+      prof.goal || 'maintain',
+      'mifflin'
+    );
+
+    prof.bmr = recalculated.bmr;
+    prof.tdee = recalculated.tdee;
+    prof.targetCalories = recalculated.targetCalories;
+    prof.targetProtein = recalculated.targetProtein;
+    prof.targetFat = recalculated.targetFat;
+    prof.targetCarbs = recalculated.targetCarbs;
+
+    try {
+      await authService.updateProfile({
+        targetCalories: prof.targetCalories,
+        targetProtein: prof.targetProtein,
+        targetFat: prof.targetFat,
+        targetCarbs: prof.targetCarbs
+      });
+    } catch (e) {
+      console.warn('[Prisma] Recalculate update error:', e);
+    }
+
+    renderAll();
+  };
+
+  btnRecalcNorm?.addEventListener('click', triggerNormRecalculation);
+  btnNormBadge?.addEventListener('click', triggerNormRecalculation);
+
+  // 9. Links to other views
   document.querySelectorAll<HTMLElement>('.zuvia-view-all-link').forEach(link => {
     link.addEventListener('click', () => {
       const target = link.dataset.target;
@@ -637,8 +1555,10 @@ function triggerMealModal(mealType?: string) {
 function renderHomeDashboard() {
   const profile = state.userProfile || defaultProfile;
   const meals = state.loggedMeals || [];
+  const lang = state.currentLang;
+  const tr = TRANSLATIONS[lang];
 
-  // Calories
+  // 1. Calories
   const totalCalories = meals.reduce((sum, m) => sum + m.calories, 0);
   const totalProtein = Math.round(meals.reduce((sum, m) => sum + m.protein, 0));
   const totalFat = Math.round(meals.reduce((sum, m) => sum + m.fat, 0));
@@ -656,17 +1576,18 @@ function renderHomeDashboard() {
   if (fillEl) fillEl.style.width = `${Math.max(6, Math.round(ratio * 100))}%`;
 
   const remaining = profile.targetCalories - totalCalories;
-  const tr = TRANSLATIONS[state.currentLang];
   if (remEl) {
     if (remaining >= 0) {
       remEl.textContent = tr.homeLeftKcal.replace('{count}', remaining.toLocaleString());
+      remEl.style.color = 'var(--text-main)';
     } else {
-      const surplusPrefix = state.currentLang === 'pl' ? 'Nadwyżka' : (state.currentLang === 'en' ? 'Surplus' : 'Перебор');
+      const surplusPrefix = lang === 'pl' ? 'Nadwyżka' : (lang === 'en' ? 'Surplus' : 'Перебор');
       remEl.textContent = `${surplusPrefix} +${Math.abs(remaining).toLocaleString()} kcal`;
+      remEl.style.color = '#ff6b6b';
     }
   }
 
-  // Macro pills
+  // 2. Macro pills
   const pEl = document.getElementById('home-macro-protein');
   if (pEl) pEl.textContent = `${totalProtein} / ${profile.targetProtein} g`;
 
@@ -676,7 +1597,7 @@ function renderHomeDashboard() {
   const cEl = document.getElementById('home-macro-carbs');
   if (cEl) cEl.textContent = `${totalCarbs} / ${profile.targetCarbs} g`;
 
-  // Today meals row
+  // 3. Today meals row
   const bKcal = meals.filter(m => m.mealType === 'breakfast').reduce((sum, m) => sum + m.calories, 0);
   const lKcal = meals.filter(m => m.mealType === 'lunch').reduce((sum, m) => sum + m.calories, 0);
   const dKcal = meals.filter(m => m.mealType === 'dinner').reduce((sum, m) => sum + m.calories, 0);
@@ -694,7 +1615,175 @@ function renderHomeDashboard() {
   const sEl = document.getElementById('home-meal-snack-kcal');
   if (sEl) sEl.textContent = sKcal > 0 ? `${sKcal} kcal` : '0 kcal';
 
-  // Recommended recipes cards
+  // 4. Date Picker Pill
+  const btnDate = document.getElementById('btn-home-date-picker');
+  if (btnDate) btnDate.textContent = selectedDiaryDate;
+
+  // 5. Statistics Chart Bars
+  const chartContainer = document.getElementById('stats-bars-container');
+  if (chartContainer) {
+    const daysRu = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    const daysPl = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'];
+    const daysEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayLabels = lang === 'ru' ? daysRu : (lang === 'pl' ? daysPl : daysEn);
+    const mockKcal = [1850, 2100, 1920, 2050, 1840, 2250, totalCalories || 1840];
+
+    chartContainer.innerHTML = dayLabels.map((lbl, idx) => {
+      const kcal = mockKcal[idx];
+      const pct = Math.min(100, Math.round((kcal / profile.targetCalories) * 100));
+      const isToday = idx === 6;
+      return `
+        <div class="chart-col ${isToday ? 'current' : ''}">
+          <div class="bar-val-pop">${kcal}</div>
+          <div class="chart-bar-bg">
+            <div class="chart-bar-fill" style="height: ${pct}%;"></div>
+          </div>
+          <span class="chart-day-lbl">${lbl}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 6. Goals Row
+  const curWeight = profile.weight || 75;
+  const goalWeight = profile.targetWeightGoal || 72;
+  const startWeight = Math.max(goalWeight + 8, curWeight + 3);
+  const totalToLose = Math.max(0.5, startWeight - goalWeight);
+  const lostKg = Math.max(0, startWeight - curWeight);
+  const weightProgressPct = curWeight <= goalWeight ? 100 : Math.min(100, Math.max(5, Math.round((lostKg / totalToLose) * 100)));
+  const remainingKg = Math.max(0, Math.round((curWeight - goalWeight) * 10) / 10);
+  const goalWeightFill = document.getElementById('goal-weight-fill');
+  const goalWeightSub = document.getElementById('diary-goal-weight-sub');
+
+  if (goalWeightFill) goalWeightFill.style.width = `${weightProgressPct}%`;
+  if (goalWeightSub) {
+    if (curWeight <= goalWeight) {
+      goalWeightSub.innerText = lang === 'ru' ? 'Цель достигнута!' : (lang === 'pl' ? 'Cel osiągnięty!' : 'Goal reached!');
+    } else {
+      goalWeightSub.innerText = lang === 'ru'
+        ? `Осталось ${remainingKg} кг`
+        : (lang === 'pl' ? `Pozostało ${remainingKg} kg` : `${remainingKg} kg remaining`);
+    }
+  }
+
+  const goalMonths = profile.targetMonthsRemaining ?? 2;
+  const totalMonths = 6;
+  const completedMonths = Math.max(0, totalMonths - goalMonths);
+  const workoutProgressPct = goalMonths <= 0 ? 100 : Math.min(100, Math.max(6, Math.round((completedMonths / totalMonths) * 100)));
+  const goalWorkoutsFill = document.getElementById('goal-workouts-fill');
+  const goalWorkoutsSub = document.getElementById('diary-goal-workouts-sub');
+
+  if (goalWorkoutsFill) goalWorkoutsFill.style.width = `${workoutProgressPct}%`;
+  if (goalWorkoutsSub) {
+    if (goalMonths <= 0) {
+      goalWorkoutsSub.innerText = lang === 'ru' ? 'Программа завершена!' : (lang === 'pl' ? 'Program ukończony!' : 'Program completed!');
+    } else {
+      goalWorkoutsSub.innerText = lang === 'ru'
+        ? `Осталось ${goalMonths} месяца`
+        : (lang === 'pl' ? `Pozostało ${goalMonths} mies.` : `${goalMonths} months remaining`);
+    }
+  }
+
+  // 7. Parameters Capsules & Unified Inputs
+  const inputWeight = document.getElementById('edit-param-weight') as HTMLInputElement | null;
+  const inputHeight = document.getElementById('edit-param-height') as HTMLInputElement | null;
+  const inputAge = document.getElementById('edit-param-age') as HTMLInputElement | null;
+  const inputFat = document.getElementById('edit-param-fat') as HTMLInputElement | null;
+  const inputMuscle = document.getElementById('edit-param-muscle') as HTMLInputElement | null;
+  const btnToggleGender = document.getElementById('btn-toggle-gender') as HTMLButtonElement | null;
+  const iconGender = document.getElementById('gender-toggle-icon');
+  const textGender = document.getElementById('gender-toggle-text');
+  const selectActivity = document.getElementById('edit-param-activity') as HTMLSelectElement | null;
+  const selectGoal = document.getElementById('edit-param-goal') as HTMLSelectElement | null;
+
+  if (inputWeight && document.activeElement !== inputWeight) inputWeight.value = (profile.weight || 75).toString();
+  if (inputHeight && document.activeElement !== inputHeight) inputHeight.value = (profile.height || 178).toString();
+  if (inputAge && document.activeElement !== inputAge) inputAge.value = (profile.age || 25).toString();
+  if (inputFat && document.activeElement !== inputFat) inputFat.value = (profile.bodyFatPercent || 34).toString();
+  if (inputMuscle && document.activeElement !== inputMuscle) inputMuscle.value = (profile.musclePercent || 49).toString();
+  if (selectActivity && profile.activity) selectActivity.value = profile.activity;
+  if (selectGoal && profile.goal) selectGoal.value = profile.goal;
+  syncCustomSelects();
+
+  if (btnToggleGender) {
+    btnToggleGender.dataset.gender = profile.gender || 'male';
+    if (iconGender) iconGender.textContent = profile.gender === 'female' ? '👩' : '🧔';
+    if (textGender) {
+      if (profile.gender === 'female') {
+        textGender.textContent = lang === 'ru' ? 'Женщина' : (lang === 'pl' ? 'Kobieta' : 'Female');
+      } else {
+        textGender.textContent = lang === 'ru' ? 'Мужчина' : (lang === 'pl' ? 'Mężczyzna' : 'Male');
+      }
+    }
+  }
+
+  // Sync calculation preview
+  const bmrEl = document.getElementById('preview-bmr-val');
+  const tdeeEl = document.getElementById('preview-tdee-val');
+  const previewTargetEl = document.getElementById('preview-target-val');
+  if (bmrEl && profile.bmr) bmrEl.innerText = `${Math.round(profile.bmr).toLocaleString()} kcal`;
+  if (tdeeEl && profile.tdee) tdeeEl.innerText = `${Math.round(profile.tdee).toLocaleString()} kcal`;
+  if (previewTargetEl && profile.targetCalories) previewTargetEl.innerText = `${Math.round(profile.targetCalories).toLocaleString()} kcal/${lang === 'ru' ? 'день' : (lang === 'pl' ? 'dzień' : 'day')}`;
+
+  // 8. Water Tracker (6 SVG Glasses)
+  const waterContainer = document.getElementById('zuvia-water-container');
+  if (waterContainer) {
+    const consumedWater = state.waterConsumedMl ?? 1000;
+    const filledCount = Math.min(6, Math.floor(consumedWater / 250));
+
+    let glassesHtml = '';
+    for (let i = 0; i < 6; i++) {
+      const isFilled = i < filledCount;
+      glassesHtml += `
+        <div class="water-glass-item ${isFilled ? 'filled' : ''}" data-idx="${i}" role="button" tabindex="0" title="${(i + 1) * 250} ml">
+          <svg viewBox="0 0 36 46" class="zuvia-glass-svg" xmlns="http://www.w3.org/2000/svg">
+            ${isFilled 
+              ? `
+                <polygon points="4,2 32,2 26,42 10,42" fill="#ffffff" />
+                <text x="18" y="27" text-anchor="middle" font-size="7.5" font-weight="800" font-family="'Outfit', sans-serif" fill="#7aaaf0">250 ml</text>
+              `
+              : `
+                <polygon points="4,2 32,2 26,42 10,42" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" />
+              `
+            }
+          </svg>
+        </div>
+      `;
+    }
+    waterContainer.innerHTML = glassesHtml;
+
+    waterContainer.querySelectorAll<HTMLElement>('.water-glass-item').forEach(glass => {
+      glass.addEventListener('click', async () => {
+        const idx = parseInt(glass.dataset.idx || '0');
+        let newWater = (idx + 1) * 250;
+        if (newWater === state.waterConsumedMl) {
+          newWater = Math.max(0, newWater - 250);
+        }
+
+        glass.classList.add('glass-animating');
+        state.waterConsumedMl = newWater;
+        try {
+          await authService.updateWater(newWater, 'set');
+        } catch (e) {
+          console.warn('[Prisma] Water update error:', e);
+        }
+        renderAll();
+      });
+    });
+  }
+
+  // 9. Calorie Norm Badge
+  const normVal = document.getElementById('diary-norm-val');
+  const normUnit = document.getElementById('diary-norm-unit');
+  const dayWord = lang === 'ru' ? 'день' : (lang === 'pl' ? 'dzień' : 'day');
+  if (normVal) {
+    normVal.innerText = (profile.targetCalories || 2200).toLocaleString();
+  }
+  if (normUnit) {
+    normUnit.innerText = `kcal/${dayWord}`;
+  }
+
+  // 10. Recommended recipes cards
   const recsContainer = document.getElementById('home-recipes-grid');
   if (recsContainer) {
     recsContainer.innerHTML = '';
@@ -703,10 +1792,10 @@ function renderHomeDashboard() {
       const card = document.createElement('div');
       card.className = 'zuvia-solid-card';
       card.innerHTML = `
-        <img src="${recipe.image}" alt="${recipe.title[state.currentLang]}" class="zuvia-solid-card-bg" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';">
+        <img src="${recipe.image}" alt="${recipe.title[lang]}" class="zuvia-solid-card-bg" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';">
         <div class="zuvia-solid-card-content">
-          <span class="zuvia-card-tag">${recipe.prepTime[state.currentLang]}</span>
-          <div class="zuvia-card-title">${recipe.title[state.currentLang]}</div>
+          <span class="zuvia-card-tag">${recipe.prepTime[lang]}</span>
+          <div class="zuvia-card-title">${recipe.title[lang]}</div>
           <div class="zuvia-card-meta">${recipe.calories} kcal</div>
         </div>
       `;
@@ -717,7 +1806,7 @@ function renderHomeDashboard() {
     });
   }
 
-  // Deals cards
+  // 11. Deals cards
   const dealsContainer = document.getElementById('home-deals-grid');
   if (dealsContainer) {
     dealsContainer.innerHTML = '';
@@ -727,15 +1816,15 @@ function renderHomeDashboard() {
       const card = document.createElement('div');
       card.className = 'zuvia-solid-card';
       card.innerHTML = `
-        <img src="${promo.image}" alt="${promo.productName[state.currentLang]}" class="zuvia-solid-card-bg" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80';">
+        <img src="${promo.image}" alt="${promo.productName[lang]}" class="zuvia-solid-card-bg" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80';">
         <div class="zuvia-solid-card-content">
           <span class="zuvia-card-tag deal-tag">${promo.discountBadge} ${promo.storeName}</span>
-          <div class="zuvia-card-title">${promo.productName[state.currentLang]}</div>
+          <div class="zuvia-card-title">${promo.productName[lang]}</div>
           <div class="zuvia-card-meta">${promo.promoPrice} zł <span style="text-decoration:line-through;opacity:0.7">${promo.originalPrice} zł</span></div>
         </div>
       `;
       card.addEventListener('click', () => {
-        const title = promo.productName[state.currentLang];
+        const title = promo.productName[lang];
         const price = typeof promo.promoPrice === 'number' ? promo.promoPrice : (parseFloat(promo.promoPrice as any) || 0);
         state.shoppingList.push({
           name: { ru: title, en: title, pl: title },
@@ -2133,7 +3222,7 @@ function renderScanResult(result: VisionScanResult) {
     document.getElementById('dyn-carbs')!.innerText = `${Math.round(result.carbs * ratio * 10) / 10} g`;
   });
 
-  document.getElementById('btn-add-to-diary')?.addEventListener('click', () => {
+  document.getElementById('btn-add-to-diary')?.addEventListener('click', async () => {
     const finalKcal = parseInt(document.getElementById('dyn-calories')?.innerText || result.calories.toString());
     const finalP = Math.round(parseFloat(document.getElementById('dyn-protein')?.innerText || result.protein.toString()));
     const finalF = Math.round(parseFloat(document.getElementById('dyn-fat')?.innerText || result.fat.toString()));
@@ -2150,16 +3239,31 @@ function renderScanResult(result: VisionScanResult) {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
+    try {
+      const saved = await authService.saveDiaryMeal({
+        name: newMeal.name,
+        calories: newMeal.calories,
+        protein: newMeal.protein,
+        fat: newMeal.fat,
+        carbs: newMeal.carbs,
+        mealType: 'lunch',
+        date: new Date().toISOString().split('T')[0],
+        time: newMeal.time
+      });
+      if (saved?.id) newMeal.id = saved.id;
+    } catch (e) {
+      console.warn('[Prisma] Could not save scanned meal:', e);
+    }
+
     if (!state.loggedMeals) state.loggedMeals = [];
     state.loggedMeals.push(newMeal);
-    localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
     alert(`+ ${result.title[lang]} (${finalKcal} kcal)`);
     switchView('view-diary');
   });
 }
 
 function initDiary() {
-  // Gender buttons
+  // 1. Gender buttons
   const genderBtns = document.querySelectorAll<HTMLButtonElement>('.gender-btn');
   genderBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2172,7 +3276,7 @@ function initDiary() {
     });
   });
 
-  // Inputs
+  // 2. Calculator Inputs
   const inputs = ['calc-age', 'calc-weight', 'calc-height', 'calc-activity', 'calc-goal', 'calc-formula'];
   inputs.forEach(id => {
     const el = document.getElementById(id);
@@ -2180,20 +3284,38 @@ function initDiary() {
     el?.addEventListener('change', updateLiveCalculatorOutput);
   });
 
-  // Apply Target to Diary Button
-  document.getElementById('btn-apply-profile')?.addEventListener('click', () => {
+  // 3. Apply Target to Profile & Diary
+  document.getElementById('btn-apply-profile')?.addEventListener('click', async () => {
     const profile = getProfileFromInputs();
     state.userProfile = profile;
-    localStorage.setItem('cookcraft_user_profile', JSON.stringify(profile));
-    renderDiary();
+    try {
+      await authService.updateProfile({
+        gender: profile.gender,
+        age: profile.age,
+        weight: profile.weight,
+        height: profile.height,
+        activity: profile.activity,
+        goal: profile.goal,
+        formula: profile.formula,
+        targetCalories: profile.targetCalories,
+        targetProtein: profile.targetProtein,
+        targetFat: profile.targetFat,
+        targetCarbs: profile.targetCarbs,
+        targetFiber: profile.targetFiber,
+        targetWaterMl: profile.targetWaterMl
+      });
+    } catch (e) {
+      console.warn('[Prisma] Error updating profile:', e);
+    }
+    renderAll();
     const msg = state.currentLang === 'pl' 
-      ? `✅ Zapisano cel w dzienniku: ${profile.targetCalories.toLocaleString()} kcal!` 
-      : (state.currentLang === 'en' ? `✅ Calorie target saved: ${profile.targetCalories.toLocaleString()} kcal!` : `✅ Цель сохранена в дневнике: ${profile.targetCalories.toLocaleString()} ккал!`);
+      ? `✅ Zapisano cel w profilu: ${profile.targetCalories.toLocaleString()} kcal!` 
+      : (state.currentLang === 'en' ? `✅ Target saved: ${profile.targetCalories.toLocaleString()} kcal!` : `✅ Цель сохранена: ${profile.targetCalories.toLocaleString()} ккал!`);
     alert(msg);
   });
 
-  // Clear Day Button
-  document.getElementById('btn-clear-diary-day')?.addEventListener('click', () => {
+  // 4. Clear Day Button
+  document.getElementById('btn-clear-diary-day')?.addEventListener('click', async () => {
     const confirmMsg = state.currentLang === 'pl'
       ? 'Czy na pewno chcesz wyczyścić dzisiejszy dziennik i licznik wody?'
       : (state.currentLang === 'en' ? 'Are you sure you want to clear today\'s diary and water intake?' : 'Вы уверены, что хотите очистить записи за сегодня и счетчик воды?');
@@ -2201,32 +3323,47 @@ function initDiary() {
     if (confirm(confirmMsg)) {
       state.loggedMeals = [];
       state.waterConsumedMl = 0;
-      localStorage.setItem('cookcraft_logged_meals', JSON.stringify([]));
-      localStorage.setItem('cookcraft_water_consumed', '0');
-      renderDiary();
+      try {
+        await authService.updateWater(0, 'set');
+      } catch (e) {
+        console.warn('[Prisma] Clear day error:', e);
+      }
+      renderAll();
     }
   });
 
-  // Water Tracker controls
-  document.getElementById('btn-water-add')?.addEventListener('click', () => {
+  // 5. Water Tracker controls on Diary
+  document.getElementById('btn-water-add')?.addEventListener('click', async () => {
     state.waterConsumedMl = (state.waterConsumedMl || 0) + 250;
-    localStorage.setItem('cookcraft_water_consumed', state.waterConsumedMl.toString());
-    renderDiary();
+    try {
+      await authService.updateWater(250, 'add');
+    } catch (e) {
+      console.warn('[Prisma] Water add error:', e);
+    }
+    renderAll();
   });
 
-  document.getElementById('btn-water-sub')?.addEventListener('click', () => {
+  document.getElementById('btn-water-sub')?.addEventListener('click', async () => {
     state.waterConsumedMl = Math.max(0, (state.waterConsumedMl || 0) - 250);
-    localStorage.setItem('cookcraft_water_consumed', state.waterConsumedMl.toString());
-    renderDiary();
+    try {
+      await authService.updateWater(-250, 'add');
+    } catch (e) {
+      console.warn('[Prisma] Water sub error:', e);
+    }
+    renderAll();
   });
 
-  document.getElementById('btn-water-reset')?.addEventListener('click', () => {
+  document.getElementById('btn-water-reset')?.addEventListener('click', async () => {
     state.waterConsumedMl = 0;
-    localStorage.setItem('cookcraft_water_consumed', '0');
-    renderDiary();
+    try {
+      await authService.updateWater(0, 'set');
+    } catch (e) {
+      console.warn('[Prisma] Water reset error:', e);
+    }
+    renderAll();
   });
 
-  // Meal Category Filter Pills
+  // 6. Meal Category Filter Pills
   const filterTabs = document.querySelectorAll<HTMLButtonElement>('#meal-filter-tabs .pill');
   filterTabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -2237,7 +3374,7 @@ function initDiary() {
     });
   });
 
-  // Meal Logging Modal
+  // 7. Meal Logging Modal
   const mealModal = document.getElementById('meal-modal');
   const openModalBtn = document.getElementById('btn-open-meal-modal');
   const closeModalBtn = document.getElementById('btn-close-meal-modal');
@@ -2254,11 +3391,9 @@ function initDiary() {
     if (!mealModal) return;
     const lang = state.currentLang;
 
-    // Populate preset dropdown with recipes + smart presets
     if (presetSelect) {
       presetSelect.innerHTML = `<option value="">-- ${state.currentLang === 'pl' ? 'Wybierz gotowe danie lub wpisz własne' : (state.currentLang === 'en' ? 'Choose preset or type custom meal' : 'Выберите готовое блюдо или введите свое')} --</option>`;
 
-      // Add smart presets
       const presetGroup = document.createElement('optgroup');
       presetGroup.label = state.currentLang === 'pl' ? '💡 Popularne zdrowe posiłki' : (state.currentLang === 'en' ? '💡 Popular Healthy Meals' : '💡 Популярные ПП блюда');
       SMART_MEAL_PRESETS.forEach((p, idx) => {
@@ -2269,7 +3404,6 @@ function initDiary() {
       });
       presetSelect.appendChild(presetGroup);
 
-      // Add recipes from app
       const recipeGroup = document.createElement('optgroup');
       recipeGroup.label = state.currentLang === 'pl' ? '👨‍🍳 Przepisy z aplikacji' : (state.currentLang === 'en' ? '👨‍🍳 App Recipes' : '👨‍🍳 Рецепты из приложения');
       state.recipes.forEach(r => {
@@ -2298,7 +3432,6 @@ function initDiary() {
   closeModalBtn?.addEventListener('click', closeMealModal);
   cancelModalBtn?.addEventListener('click', closeMealModal);
 
-  // Preset Selection Change
   presetSelect?.addEventListener('change', () => {
     const val = presetSelect.value;
     const lang = state.currentLang;
@@ -2322,12 +3455,12 @@ function initDiary() {
         if (mealNameInput) mealNameInput.value = recipe.title[lang];
         if (mealTypeSelect) {
           if (recipe.category === 'breakfast') mealTypeSelect.value = 'breakfast';
-          else if (recipe.category === 'lunch') mealTypeSelect.value = 'lunch';
-          else if (recipe.category === 'dinner') mealTypeSelect.value = 'dinner';
+          else if (recipe.category === 'lunch' || recipe.category === 'soup') mealTypeSelect.value = 'lunch';
+          else if (recipe.category === 'dinner' || recipe.category === 'main') mealTypeSelect.value = 'dinner';
+          else if (recipe.category === 'snack' || recipe.category === 'dessert') mealTypeSelect.value = 'snack';
           else mealTypeSelect.value = 'lunch';
         }
         if (mealKcalInput) mealKcalInput.value = recipe.calories.toString();
-        // Estimated macro distribution for recipe
         if (mealPInput) mealPInput.value = Math.round((recipe.calories * 0.25) / 4).toString();
         if (mealFInput) mealFInput.value = Math.round((recipe.calories * 0.28) / 9).toString();
         if (mealCInput) mealCInput.value = Math.round((recipe.calories * 0.47) / 4).toString();
@@ -2335,7 +3468,6 @@ function initDiary() {
     }
   });
 
-  // Auto-estimate macros if user manually changes kcal
   mealKcalInput?.addEventListener('input', () => {
     const kcal = parseInt(mealKcalInput.value) || 0;
     if (kcal > 0 && mealPInput && mealFInput && mealCInput) {
@@ -2351,7 +3483,6 @@ function initDiary() {
     }
   });
 
-  // Save Meal to Diary
   document.getElementById('btn-save-meal-entry')?.addEventListener('click', async () => {
     const name = mealNameInput?.value.trim() || (state.currentLang === 'pl' ? 'Posiłek domowy' : (state.currentLang === 'en' ? 'Homemade meal' : 'Домашнее блюдо'));
     const calories = parseInt(mealKcalInput?.value || '350') || 0;
@@ -2371,31 +3502,28 @@ function initDiary() {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    if (authService.isAuthenticated()) {
-      try {
-        const savedBackend = await authService.saveDiaryMeal({
-          name,
-          calories,
-          protein,
-          fat,
-          carbs,
-          mealType,
-          date: new Date().toISOString().split('T')[0],
-          time: newMeal.time
-        });
-        if (savedBackend?.id) {
-          newMeal.id = savedBackend.id;
-        }
-      } catch (e) {
-        console.warn('Could not save meal to backend:', e);
+    try {
+      const savedBackend = await authService.saveDiaryMeal({
+        name,
+        calories,
+        protein,
+        fat,
+        carbs,
+        mealType,
+        date: new Date().toISOString().split('T')[0],
+        time: newMeal.time
+      });
+      if (savedBackend?.id) {
+        newMeal.id = savedBackend.id;
       }
+    } catch (e) {
+      console.warn('[Prisma] Could not save meal to backend:', e);
     }
 
     if (!state.loggedMeals) state.loggedMeals = [];
     state.loggedMeals.push(newMeal);
-    localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
     closeMealModal();
-    renderDiary();
+    renderAll();
   });
 }
 
@@ -2426,9 +3554,9 @@ function updateLiveCalculatorOutput() {
   const cEl = document.getElementById('res-macro-carbs');
   const fibEl = document.getElementById('res-macro-fiber');
 
-  if (bmrEl) bmrEl.innerText = `${profile.bmr.toLocaleString()} ${kcalUnit}`;
-  if (tdeeEl) tdeeEl.innerText = `${profile.tdee.toLocaleString()} ${kcalUnit}`;
-  if (targetEl) targetEl.innerText = `${profile.targetCalories.toLocaleString()} ${kcalUnit}`;
+  if (bmrEl) bmrEl.innerText = `${Math.round(profile.bmr).toLocaleString()} ${kcalUnit}`;
+  if (tdeeEl) tdeeEl.innerText = `${Math.round(profile.tdee).toLocaleString()} ${kcalUnit}`;
+  if (targetEl) targetEl.innerText = `${Math.round(profile.targetCalories).toLocaleString()} ${kcalUnit}`;
 
   if (pEl) pEl.innerText = `🥩 ${tr.proteinLabel}: ${profile.targetProtein}g`;
   if (fEl) fEl.innerText = `🥑 ${tr.fatLabel}: ${profile.targetFat}g`;
@@ -2452,7 +3580,6 @@ function updateLiveCalculatorOutput() {
   }
 
   if (bmiNeedleEl) {
-    // Map BMI range (15 to 35) to percentage (4% to 96%)
     const pct = Math.max(4, Math.min(96, ((profile.bmi - 14) / 22) * 100));
     bmiNeedleEl.style.left = `${pct}%`;
   }
@@ -2464,23 +3591,47 @@ function updateLiveCalculatorOutput() {
 
 function renderDiary() {
   const tr = t();
-  const profile = state.userProfile || createFullUserProfile('male', 25, 75, 178, 'moderate', 'maintain');
+  const profile = state.userProfile || defaultProfile;
   const meals = state.loggedMeals || [];
 
   // Update calculator inputs if form is loaded
   const ageInput = document.getElementById('calc-age') as HTMLInputElement | null;
-  if (ageInput && ageInput.value !== profile.age.toString()) ageInput.value = profile.age.toString();
+  if (ageInput && document.activeElement !== ageInput && ageInput.value !== profile.age.toString()) {
+    ageInput.value = profile.age.toString();
+  }
   
   const weightInput = document.getElementById('calc-weight') as HTMLInputElement | null;
-  if (weightInput && weightInput.value !== profile.weight.toString()) weightInput.value = profile.weight.toString();
+  if (weightInput && document.activeElement !== weightInput && weightInput.value !== profile.weight.toString()) {
+    weightInput.value = profile.weight.toString();
+  }
   
   const heightInput = document.getElementById('calc-height') as HTMLInputElement | null;
-  if (heightInput && heightInput.value !== profile.height.toString()) heightInput.value = profile.height.toString();
+  if (heightInput && document.activeElement !== heightInput && heightInput.value !== profile.height.toString()) {
+    heightInput.value = profile.height.toString();
+  }
 
   const formulaSelect = document.getElementById('calc-formula') as HTMLSelectElement | null;
   if (formulaSelect && profile.formula && formulaSelect.value !== profile.formula) {
     formulaSelect.value = profile.formula;
   }
+
+  const activitySelect = document.getElementById('calc-activity') as HTMLSelectElement | null;
+  if (activitySelect && profile.activity && activitySelect.value !== profile.activity) {
+    activitySelect.value = profile.activity;
+  }
+
+  const goalSelect = document.getElementById('calc-goal') as HTMLSelectElement | null;
+  if (goalSelect && profile.goal && goalSelect.value !== profile.goal) {
+    goalSelect.value = profile.goal;
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.gender-btn').forEach(btn => {
+    if (btn.dataset.gender === profile.gender) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
 
   updateLiveCalculatorOutput();
 
@@ -2489,7 +3640,7 @@ function renderDiary() {
   const totalProtein = Math.round(meals.reduce((sum, m) => sum + m.protein, 0));
   const totalFat = Math.round(meals.reduce((sum, m) => sum + m.fat, 0));
   const totalCarbs = Math.round(meals.reduce((sum, m) => sum + m.carbs, 0));
-  const totalFiber = Math.round((totalCalories / 1000) * 14 * 0.8); // Estimated consumed fiber
+  const totalFiber = Math.round((totalCalories / 1000) * 14 * 0.8);
 
   state.diaryConsumed = totalCalories;
 
@@ -2505,7 +3656,7 @@ function renderDiary() {
   const progressBar = document.getElementById('calorie-progress-bar') as SVGCircleElement | null;
   if (progressBar) {
     const radius = 42;
-    const circumference = 2 * Math.PI * radius; // ~263.89
+    const circumference = 2 * Math.PI * radius;
     const ratio = Math.min(totalCalories / profile.targetCalories, 1.0);
     const offset = Math.max(0, circumference - (circumference * ratio));
     progressBar.style.strokeDasharray = `${circumference}`;
@@ -2581,11 +3732,16 @@ function renderDiary() {
     waterCupsRow.innerHTML = cupsHtml;
 
     waterCupsRow.querySelectorAll<HTMLButtonElement>('.water-cup-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const idx = parseInt(btn.dataset.cupIdx || '0');
-        state.waterConsumedMl = (idx + 1) * 250;
-        localStorage.setItem('cookcraft_water_consumed', state.waterConsumedMl.toString());
-        renderDiary();
+        const newWater = (idx + 1) * 250;
+        state.waterConsumedMl = newWater;
+        try {
+          await authService.updateWater(newWater, 'set');
+        } catch (e) {
+          console.warn('[Prisma] Water update error:', e);
+        }
+        renderAll();
       });
     });
   }
@@ -2598,60 +3754,54 @@ function renderDiary() {
       : meals.filter(m => m.mealType === activeMealCategoryFilter);
 
     if (filteredMeals.length === 0) {
-      const emptyMsg = state.currentLang === 'pl' 
-        ? 'Brak wpisanych dań w tej kategorii. Kliknij «+ Dodaj блюдо», aby zapisać posiłek.' 
-        : (state.currentLang === 'en' ? 'No meals logged in this category. Click «+ Add Meal» to record food.' : 'В этой категории пока нет записей. Нажмите «+ Добавить блюдо».');
-
       mealsList.innerHTML = `
-        <div style="text-align: center; color: var(--text-muted); padding: 28px 20px; font-size: 0.9rem; background: var(--bg-input); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
-          <div style="font-size: 2rem; margin-bottom: 8px;">🍽️</div>
-          ${emptyMsg}
+        <div style="text-align: center; color: var(--text-muted); padding: 30px 10px; font-size: 0.9rem;">
+          🍽️ ${tr.diaryEmptyCategory || 'В этой категории пока нет записей'}
         </div>
       `;
     } else {
-      const getCategoryIcon = (type: string) => {
-        switch (type) {
-          case 'breakfast': return '🌅';
-          case 'lunch': return '☀️';
-          case 'dinner': return '🌙';
-          case 'snack': return '🍎';
-          default: return '🍴';
-        }
+      const mealTypeIcons: Record<string, string> = {
+        breakfast: '🌅',
+        lunch: '☀️',
+        dinner: '🌙',
+        snack: '🍎'
       };
 
       mealsList.innerHTML = filteredMeals.map(m => `
         <div class="meal-item">
-          <div class="meal-info-left">
-            <span class="meal-title-name">${getCategoryIcon(m.mealType)} ${m.name}</span>
-            <span class="meal-time-tag">⏱️ ${m.time}</span>
-            <div class="meal-macro-pills">
-              <span class="meal-macro-pill p">P: ${m.protein}g</span>
-              <span class="meal-macro-pill f">F: ${m.fat}g</span>
-              <span class="meal-macro-pill c">C: ${m.carbs}g</span>
+          <div class="meal-item-header">
+            <span class="meal-type-badge ${m.mealType}">
+              ${mealTypeIcons[m.mealType] || '🍽️'} ${tr[m.mealType === 'breakfast' ? 'mealBreakfast' : (m.mealType === 'lunch' ? 'mealLunch' : (m.mealType === 'dinner' ? 'mealDinner' : 'mealSnack'))]}
+            </span>
+            <span class="meal-time">⏱️ ${m.time}</span>
+          </div>
+          <div class="meal-item-body">
+            <div class="meal-name">${m.name}</div>
+            <div class="meal-macros">
+              <span>🥩 ${m.protein}g</span>
+              <span>🥑 ${m.fat}g</span>
+              <span>🌾 ${m.carbs}g</span>
             </div>
           </div>
-          <div class="meal-info-right">
-            <span class="meal-kcal-badge">${m.calories} kcal</span>
-            <button type="button" class="btn-remove-meal" data-id="${m.id}" title="Remove">🗑️</button>
+          <div class="meal-item-footer">
+            <strong class="meal-kcal">${m.calories} kcal</strong>
+            <button type="button" class="btn-delete-meal" data-id="${m.id}" title="Удалить">🗑️</button>
           </div>
         </div>
       `).join('');
 
-      mealsList.querySelectorAll<HTMLButtonElement>('.btn-remove-meal').forEach(btn => {
-        btn.addEventListener('click', () => {
+      mealsList.querySelectorAll<HTMLButtonElement>('.btn-delete-meal').forEach(btn => {
+        btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
-          if (id && authService.isAuthenticated()) {
-            authService.deleteDiaryMeal(id).catch(console.error);
+          if (id) {
+            await authService.deleteDiaryMeal(id).catch(console.error);
+            state.loggedMeals = (state.loggedMeals || []).filter(m => m.id !== id);
+            renderAll();
           }
-          state.loggedMeals = (state.loggedMeals || []).filter(m => m.id !== id);
-          localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
-          renderDiary();
         });
       });
     }
   }
-
-  renderHomeDashboard();
 }
 
 function applyTheme(theme: 'dark' | 'light') {
@@ -2912,9 +4062,10 @@ function initAuth() {
   tabFavs?.addEventListener('click', () => switchProfileTab('favorites'));
 
   // Logout button
-  document.getElementById('btn-profile-logout')?.addEventListener('click', () => {
+  document.getElementById('btn-profile-logout')?.addEventListener('click', async () => {
     authService.logout();
     closeProfileModal();
+    await syncPrismaUserData();
   });
 
   // Render History List
@@ -2931,7 +4082,7 @@ function initAuth() {
         historyList.innerHTML = `
           <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem;">
             <div style="font-size: 2.2rem; margin-bottom: 8px;">🍳</div>
-            <p>${state.currentLang === 'pl' ? 'Brak ugotowanych dań w historii. Otwórz przepis i kliknij «🍳 Ugotowane»!' : (state.currentLang === 'en' ? 'No cooked dishes yet. Open a recipe and click «🍳 Cooked»!' : 'Пока нет приготовленных блюд. Откройте рецепт и нажмите «🍳 Приготовлено»!')}</p>
+            <p>${t().profileEmptyHistory}</p>
           </div>
         `;
         return;
@@ -2987,7 +4138,7 @@ function initAuth() {
         diaryList.innerHTML = `
           <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem;">
             <div style="font-size: 2.2rem; margin-bottom: 8px;">📊</div>
-            <p>${state.currentLang === 'pl' ? 'Brak wpisów w dzienniku żywienia. Dodaj posiłki w zakładce «Dziennik»!' : (state.currentLang === 'en' ? 'No food logs yet. Add meals in the «Calories» tab!' : 'Дневник питания пуст. Добавьте блюда во вкладке «Калории»!')}</p>
+            <p>${t().profileEmptyDiary}</p>
           </div>
         `;
         return;
@@ -3040,7 +4191,7 @@ function initAuth() {
         favList.innerHTML = `
           <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem;">
             <div style="font-size: 2.2rem; margin-bottom: 8px;">⭐</div>
-            <p>${state.currentLang === 'pl' ? 'Brak ulubionych przepisów. Oznacz przepis serduszkiem «❤️»!' : (state.currentLang === 'en' ? 'No favorites yet. Click «❤️» on any recipe!' : 'Нет избранных рецептов. Нажмите «❤️» на любом рецепте!')}</p>
+            <p>${t().profileEmptyFavorites}</p>
           </div>
         `;
         return;
@@ -3078,12 +4229,14 @@ function initAuth() {
     }
   };
 
-  // Auth state listener
+  // Auth state listener (Synchronizes directly with Prisma ORM)
   authService.onAuthStateChanged(async (user) => {
     const avatarEl = document.querySelector('.user-avatar');
     if (!avatarEl) return;
 
     if (user) {
+      applyPrismaUserToState(user);
+
       const initials = (user.name ? user.name.split(' ').map(s => s[0]).join('') : user.email.slice(0, 2)).toUpperCase();
       avatarEl.innerHTML = `<span style="font-weight: 700; font-size: 0.85rem; color: #fff; line-height: 1;">${initials}</span>`;
       avatarEl.setAttribute('title', `${user.name || user.email} (ZUVIA Account)`);
@@ -3092,7 +4245,7 @@ function initAuth() {
       try {
         const todayStr = new Date().toISOString().split('T')[0];
         const backendMeals = await authService.fetchDiary(todayStr);
-        if (backendMeals && backendMeals.length > 0) {
+        if (backendMeals && Array.isArray(backendMeals)) {
           state.loggedMeals = backendMeals.map(bm => ({
             id: bm.id,
             name: bm.name,
@@ -3103,8 +4256,8 @@ function initAuth() {
             mealType: bm.mealType,
             time: bm.time || '12:00'
           }));
-          localStorage.setItem('cookcraft_logged_meals', JSON.stringify(state.loggedMeals));
           renderDiary();
+          renderHomeDashboard();
         }
       } catch (e) {
         console.warn('Could not sync meals on auth change:', e);

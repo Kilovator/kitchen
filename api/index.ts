@@ -755,6 +755,75 @@ app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
   }
 });
 
+// 2b. Guest Session (Prisma-backed session for visitors so all data is strictly in Prisma)
+app.post(['/api/auth/guest', '/auth/guest'], async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  try {
+    const guestId = crypto.randomUUID();
+    const guestEmail = `guest_${guestId.slice(0, 8)}@zuvia.local`;
+    const hashedPassword = hashPassword(guestId);
+
+    const user = await prisma.user.create({
+      data: {
+        id: guestId,
+        email: guestEmail,
+        password: hashedPassword,
+        name: 'Gość ZUVIA',
+        gender: 'male',
+        age: 25,
+        weight: 75,
+        height: 178,
+        activity: 'moderate',
+        goal: 'maintain',
+        formula: 'mifflin',
+        targetCalories: 2200,
+        targetProtein: 120,
+        targetFat: 85,
+        targetCarbs: 300,
+        targetFiber: 30,
+        targetWaterMl: 2500,
+        waterConsumed: 750,
+      }
+    });
+
+    // Seed default starter meals for the guest session in Prisma
+    const todayStr = new Date().toISOString().split('T')[0];
+    await prisma.mealLog.createMany({
+      data: [
+        {
+          userId: user.id,
+          name: 'Owsianka z owocami i orzechami',
+          calories: 340,
+          protein: 12,
+          fat: 9,
+          carbs: 52,
+          mealType: 'breakfast',
+          date: todayStr,
+          time: '08:30'
+        },
+        {
+          userId: user.id,
+          name: 'Cheeseburger Black Angus',
+          calories: 720,
+          protein: 42,
+          fat: 38,
+          carbs: 52,
+          mealType: 'lunch',
+          date: todayStr,
+          time: '13:15'
+        }
+      ]
+    });
+
+    const token = generateToken(user.id, user.email);
+    const { password: _, ...safeUser } = user;
+    return res.json({ success: true, token, user: safeUser });
+  } catch (err: any) {
+    console.error('Guest session creation error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // 3. Current User Profile (/me)
 app.get(['/api/auth/me', '/auth/me'], authMiddleware, async (req, res) => {
   if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
@@ -853,6 +922,32 @@ app.delete(['/api/user/diary/:id', '/user/diary/:id'], authMiddleware, async (re
   }
 });
 
+// Clear all meals for user today
+app.delete(['/api/user/diary', '/user/diary'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+  const { date } = req.query;
+
+  try {
+    const whereClause: any = { userId };
+    if (date) whereClause.date = String(date);
+
+    await prisma.mealLog.deleteMany({
+      where: whereClause
+    });
+
+    // Also reset water consumed on User in Prisma
+    await prisma.user.update({
+      where: { id: userId },
+      data: { waterConsumed: 0 }
+    });
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // 5. Cooking History: GET, POST
 app.get(['/api/user/history', '/user/history'], authMiddleware, async (req, res) => {
   if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
@@ -938,30 +1033,85 @@ app.post(['/api/user/favorites', '/user/favorites'], authMiddleware, async (req,
   }
 });
 
-// 7. Update User Profile Settings & Daily Targets
+// 7. User Profile Settings & Daily Targets
+app.get(['/api/user/profile', '/user/profile'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    const { password: _, ...safeUser } = user;
+    return res.json({ success: true, profile: safeUser, user: safeUser });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.put(['/api/user/profile', '/user/profile'], authMiddleware, async (req, res) => {
   if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
   const userId = (req as any).user.userId;
-  const { gender, age, weight, height, activity, goal, targetCalories, targetProtein, targetFat, targetCarbs } = req.body;
+  const { 
+    gender, age, weight, height, activity, goal, formula,
+    targetCalories, targetProtein, targetFat, targetCarbs, targetFiber, targetWaterMl, waterConsumed 
+  } = req.body;
 
   try {
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
-        gender,
-        age: age ? parseInt(age) : undefined,
-        weight: weight ? parseFloat(weight) : undefined,
-        height: height ? parseFloat(height) : undefined,
-        activity,
-        goal,
-        targetCalories: targetCalories ? parseInt(targetCalories) : undefined,
-        targetProtein: targetProtein ? parseInt(targetProtein) : undefined,
-        targetFat: targetFat ? parseInt(targetFat) : undefined,
-        targetCarbs: targetCarbs ? parseInt(targetCarbs) : undefined
+        gender: gender !== undefined ? gender : undefined,
+        age: age !== undefined ? parseInt(age) : undefined,
+        weight: weight !== undefined ? parseFloat(weight) : undefined,
+        height: height !== undefined ? parseFloat(height) : undefined,
+        activity: activity !== undefined ? activity : undefined,
+        goal: goal !== undefined ? goal : undefined,
+        formula: formula !== undefined ? formula : undefined,
+        targetCalories: targetCalories !== undefined ? parseInt(targetCalories) : undefined,
+        targetProtein: targetProtein !== undefined ? parseInt(targetProtein) : undefined,
+        targetFat: targetFat !== undefined ? parseInt(targetFat) : undefined,
+        targetCarbs: targetCarbs !== undefined ? parseInt(targetCarbs) : undefined,
+        targetFiber: targetFiber !== undefined ? parseInt(targetFiber) : undefined,
+        targetWaterMl: targetWaterMl !== undefined ? parseInt(targetWaterMl) : undefined,
+        waterConsumed: waterConsumed !== undefined ? parseInt(waterConsumed) : undefined,
       }
     });
     const { password: _, ...safeUser } = user;
-    return res.json({ success: true, user: safeUser });
+    return res.json({ success: true, user: safeUser, profile: safeUser });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 8. Water Intake Tracker
+app.put(['/api/user/water', '/user/water'], authMiddleware, async (req, res) => {
+  if (!prisma) return res.status(503).json({ error: 'Baza danych niedostępna' });
+  const userId = (req as any).user.userId;
+  const { amount, action } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'Nie znaleziono użytkownika' });
+
+    let current = user.waterConsumed || 0;
+    if (action === 'add') {
+      current += (parseInt(amount) || 250);
+    } else if (action === 'sub') {
+      current = Math.max(0, current - (parseInt(amount) || 250));
+    } else if (action === 'set') {
+      current = Math.max(0, parseInt(amount) || 0);
+    } else if (action === 'reset') {
+      current = 0;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { waterConsumed: current }
+    });
+
+    return res.json({ success: true, waterConsumed: updated.waterConsumed });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
